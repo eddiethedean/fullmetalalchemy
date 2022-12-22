@@ -86,6 +86,12 @@ def get_primary_key_constraints(
     return tuple()
 
 
+def missing_primary_key(
+    sa_table: sa.Table,
+):
+    ...
+
+
 def get_column_types(sa_table: sa.Table) -> dict:
     return {c.name: c.type for c in sa_table.c}
 

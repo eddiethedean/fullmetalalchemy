@@ -7,7 +7,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="sqlalchemize",
-    version="0.0.3",
+    version="0.0.4",
     description="Make changes to sql tables using SqlAlchmey",
     long_description=README,
     long_description_content_type="text/markdown",

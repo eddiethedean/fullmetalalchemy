@@ -21,6 +21,7 @@ def insert_from_table(
     sa_table2: sa.Table,
     engine: sa_engine.Engine
 ) -> None:
+    """neither table needs primary key"""
     session = sa_session.Session(engine)
     try:
         insert_from_table_session(sa_table1, sa_table2, session)
@@ -45,6 +46,9 @@ def insert_records(
     records: Sequence[types.Record],
     engine: sa_engine.Engine
 ) -> None:
+    """table needs primary key"""
+    if features.get_primary_key_constraints(sa_table)[0] is None:
+        raise types.MissingPrimaryKey()
     session = sa_session.Session(engine)
     try:
         insert_records_session(sa_table, records, session)
