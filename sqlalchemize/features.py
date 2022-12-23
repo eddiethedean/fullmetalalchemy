@@ -62,6 +62,8 @@ def get_class(
     metadata.reflect(connection, only=[name], schema=schema)
     Base = sa_automap.automap_base(metadata=metadata)
     Base.prepare()
+    if name not in Base.classes:
+        raise types.MissingPrimaryKey()
     return Base.classes[name]
 
 
@@ -89,7 +91,8 @@ def get_primary_key_constraints(
 def missing_primary_key(
     sa_table: sa.Table,
 ):
-    ...
+    pks = get_primary_key_constraints(sa_table)
+    return pks[0] is None
 
 
 def get_column_types(sa_table: sa.Table) -> dict:
