@@ -43,7 +43,6 @@ def get_table(
 ) -> sa.Table:
     metadata = get_metadata(connection, schema)
     autoload_with = get_connection(connection)
-
     return sa.Table(name,
                  metadata,
                  autoload=True,

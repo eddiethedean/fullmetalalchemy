@@ -38,9 +38,10 @@ def insert_records_session(
     records: Sequence[types.Record],
     session: sa_session.Session
 ) -> None:
-    table_class = features.get_class(sa_table.name, session, schema=sa_table.schema)
-    mapper = sa.inspect(table_class)
-    session.bulk_insert_mappings(mapper, records)
+    if features.missing_primary_key(sa_table):
+        insert_records_slow_session(sa_table, records, session)
+    else:
+        insert_records_fast_session(sa_table, records, session)
 
 
 def insert_records(
@@ -48,13 +49,66 @@ def insert_records(
     records: Sequence[types.Record],
     engine: Optional[sa_engine.Engine] = None
 ) -> None:
-    """table needs primary key"""
-    if features.get_primary_key_constraints(sa_table)[0] is None:
-        raise types.MissingPrimaryKey()
     engine = ex.check_for_engine(sa_table, engine)
     session = sa_session.Session(engine)
     try:
         insert_records_session(sa_table, records, session)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+
+
+def insert_records_fast(
+    sa_table: sa.Table,
+    records: Sequence[types.Record],
+    engine: Optional[sa_engine.Engine] = None
+) -> None:
+    """Fast insert needs primary key."""
+    if features.missing_primary_key(sa_table):
+        raise ex.MissingPrimaryKey()
+    engine = ex.check_for_engine(sa_table, engine)
+    session = sa_session.Session(engine)
+    try:
+        insert_records_fast_session(sa_table, records, session)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+
+
+def insert_records_fast_session(
+    sa_table: sa.Table,
+    records: Sequence[types.Record],
+    session: sa_session.Session
+) -> None:
+    """Fast insert needs primary key."""
+    if features.missing_primary_key(sa_table):
+        raise ex.MissingPrimaryKey()
+    table_class = features.get_class(sa_table.name, session, schema=sa_table.schema)
+    mapper = sa.inspect(table_class)
+    session.bulk_insert_mappings(mapper, records)
+
+
+def insert_records_slow_session(
+    sa_table: sa.Table,
+    records: Sequence[types.Record],
+    session: sa_session.Session
+) -> None:
+    """Slow insert does not need primary key."""
+    session.execute(sa_table.insert(), records)
+
+
+def insert_records_slow(
+    sa_table: sa.Table,
+    records: Sequence[types.Record],
+    engine: Optional[sa_engine.Engine] = None
+) -> None:
+    """Slow insert does not need primary key."""
+    engine = ex.check_for_engine(sa_table, engine)
+    session = sa_session.Session(engine)
+    try:
+        insert_records_slow_session(sa_table, records, session)
         session.commit()
     except Exception as e:
         session.rollback()
