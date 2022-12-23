@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Optional, Sequence
 
 import sqlalchemy as sa
 import sqlalchemy.orm.session as sa_session
@@ -6,6 +6,7 @@ import sqlalchemy.engine as sa_engine
 
 import sqlalchemize.types as types
 import sqlalchemize.features as features
+import sqlalchemize.exceptions as ex
 
 
 def update_records_session(
@@ -22,8 +23,9 @@ def update_records_session(
 def update_records(
     sa_table: sa.Table,
     records: Sequence[types.Record],
-    engine: sa_engine.Engine
+    engine: Optional[sa_engine.Engine] = None
 ) -> None:
+    engine = ex.check_for_engine(sa_table, engine)
     session = sa_session.Session(engine)
     try:
         update_records_session(sa_table, records, session)

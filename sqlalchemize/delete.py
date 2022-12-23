@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Optional, Sequence
 
 import sqlalchemy as sa
 import sqlalchemy.engine as sa_engine
@@ -7,6 +7,7 @@ from sqlalchemy.sql.expression import Select
 
 import sqlalchemize.features as features
 import sqlalchemize.types as types
+import sqlalchemize.exceptions as ex
 
 
 def delete_records_session(
@@ -23,8 +24,9 @@ def delete_records(
     sa_table: sa.Table,
     col_name: str,
     values: Sequence,
-    engine: sa_engine.Engine
+    engine: Optional[sa_engine.Engine] = None
 ) -> None:
+    engine = ex.check_for_engine(sa_table, engine)
     session = sa_session.Session(engine)
     delete_records_session(sa_table, col_name, values, session)
     try:
@@ -71,8 +73,9 @@ def delete_all_records_session(
 
 def delete_all_records(
     sa_table: sa.Table,
-    engine: sa_engine.Engine
+    engine: Optional[sa_engine.Engine] = None
 ) -> None:
+    engine = ex.check_for_engine(sa_table, engine)
     session = sa_session.Session(engine)
     try:
         delete_all_records_session(sa_table, session)

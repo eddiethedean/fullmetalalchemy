@@ -6,14 +6,16 @@ import sqlalchemize.types as types
 import sqlalchemize.features as features
 import sqlalchemize.exceptions as exceptions
 import sqlalchemy.sql.elements as sa_elements
+import sqlalchemize.exceptions as ex
 
 
 def select_records_all(
     sa_table: sa.Table,
-    connection: types.SqlConnection,
+    connection: Optional[types.SqlConnection],
     sorted: bool = False,
     include_columns: Optional[Sequence[str]] = None
 ) -> list[types.Record]:
+    connection = ex.check_for_engine(sa_table, connection)
     if include_columns is not None:
         columns = [features.get_column(sa_table, column_name) for column_name in include_columns]
         query = sa.select(*columns)
@@ -28,11 +30,12 @@ def select_records_all(
 
 def select_records_chunks(
     sa_table: sa.Table,
-    connection: types.SqlConnection,
+    connection: Optional[types.SqlConnection],
     chunksize: int = 2,
     sorted: bool = False,
     include_columns: Optional[Sequence[str]] = None
 ) -> Generator[list[types.Record], None, None]:
+    connection = ex.check_for_engine(sa_table, connection)
     if include_columns is not None:
         columns = [features.get_column(sa_table, column_name) for column_name in include_columns]
         query = sa.select(*columns)
@@ -80,12 +83,13 @@ def select_column_values_chunks(
 
 def select_records_slice(
     sa_table: sa.Table,
-    connection: types.SqlConnection,
+    connection: Optional[types.SqlConnection] = None,
     start: Optional[int] = None,
     stop: Optional[int] = None,
     sorted: bool = False,
     include_columns: Optional[Sequence[str]] = None
 ) -> list[types.Record]:
+    connection = ex.check_for_engine(sa_table, connection)
     start, stop = _convert_slice_indexes(sa_table, connection, start, stop)
     if stop < start:
         raise exceptions.SliceError('stop cannot be less than start.')

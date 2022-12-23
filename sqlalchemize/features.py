@@ -6,6 +6,7 @@ import sqlalchemy.ext.automap as sa_automap
 import sqlalchemy.engine as sa_engine
 
 import sqlalchemize.types as types
+import sqlalchemize.exceptions as ex
 
 
 def primary_key_columns(
@@ -112,12 +113,14 @@ def get_table_names(
 
 def get_row_count(
     sa_table: sa.Table,
-    session: types.SqlConnection
+    session: Optional[types.SqlConnection] = None
 ) -> int:
+    session = ex.check_for_engine(sa_table, session)
     col_name = get_column_names(sa_table)[0]
     col = get_column(sa_table, col_name)
     result = session.execute(sa.func.count(col)).scalar()
     return result if result is not None else 0
+
 
 def get_schemas(engine: sa_engine.Engine) -> list[str]:
     insp = sa.inspect(engine)

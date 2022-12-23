@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Optional, Sequence
 
 import sqlalchemy as sa
 import sqlalchemy.orm.session as sa_session
@@ -6,6 +6,7 @@ import sqlalchemy.engine as sa_engine
 
 import sqlalchemize.types as types
 import sqlalchemize.features as features
+import sqlalchemize.exceptions as ex
 
 
 def insert_from_table_session(
@@ -19,9 +20,10 @@ def insert_from_table_session(
 def insert_from_table(
     sa_table1: sa.Table,
     sa_table2: sa.Table,
-    engine: sa_engine.Engine
+    engine: Optional[sa_engine.Engine] = None
 ) -> None:
     """neither table needs primary key"""
+    engine = ex.check_for_engine(sa_table1, engine)
     session = sa_session.Session(engine)
     try:
         insert_from_table_session(sa_table1, sa_table2, session)
@@ -44,11 +46,12 @@ def insert_records_session(
 def insert_records(
     sa_table: sa.Table,
     records: Sequence[types.Record],
-    engine: sa_engine.Engine
+    engine: Optional[sa_engine.Engine] = None
 ) -> None:
     """table needs primary key"""
     if features.get_primary_key_constraints(sa_table)[0] is None:
         raise types.MissingPrimaryKey()
+    engine = ex.check_for_engine(sa_table, engine)
     session = sa_session.Session(engine)
     try:
         insert_records_session(sa_table, records, session)
