@@ -1,11 +1,10 @@
 creds.py
 notebooks/
-sqlalchemize.egg-info/
-sqlalchemize/__pycache__/
+src/sqlalchemize.egg-info/
+src/sqlalchemize/__pycache__/
 dist/
-data/
 build/
 .vscode/
-.ipynb_checkpoints/
+.ipynb_checkpoints/ 
 __pycache__/
 tests/__pycache__/
