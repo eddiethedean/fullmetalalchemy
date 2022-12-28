@@ -25,3 +25,8 @@ setup(
     python_requires='>=3.9',
     install_requires=['SQLAlchemy>=1.4']
 )
+
+from setuptools import setup
+
+if __name__ == "__main__":
+    setup()
