@@ -16,6 +16,30 @@ def delete_records_session(
     values: Sequence,
     session: sa_session.Session
 ) -> None:
+    """
+    Example
+    -------
+    import sqlalchemy as sa
+    import sqlalchemy.orm.session as session
+    from sqlalchemize.test_setup import create_test_table, insert_test_records
+    from sqlalchmize.select import select_all_records
+    from sqlalchmize.delete import delete_records_session
+
+    engine = sa.create_engine('data/sqlite:///test.db')
+    table = create_test_table(engine)
+    insert_test_records(table)
+
+    select_all_records(table) -> [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
+
+    session = session.Session(engine)
+    delete_records_session(table, 'id', [1], session)
+
+    select_all_records(table) -> [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
+
+    session.commit()
+
+    select_all_records(table) -> [{'id': 2, 'x': 2, 'y': 4}]
+    """
     col = features.get_column(sa_table, col_name)
     session.query(sa_table).filter(col.in_(values)).delete(synchronize_session=False)
 
@@ -26,6 +50,24 @@ def delete_records(
     values: Sequence,
     engine: Optional[sa_engine.Engine] = None
 ) -> None:
+    """
+    Example
+    -------
+    import sqlalchemy as sa
+    from sqlalchemize.test_setup import create_test_table, insert_test_records
+    from sqlalchmize.delete import delete_records
+    from sqlalchmize.select import select_all_records
+
+    engine = sa.create_engine('data/sqlite:///test.db')
+    table = create_test_table(engine)
+    insert_test_records(table)
+
+    select_all_records(table) -> [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
+
+    delete_records(table, 'id', [1])
+
+    select_all_records(table) -> [{'id': 2, 'x': 2, 'y': 4}]
+    """
     engine = ex.check_for_engine(sa_table, engine)
     session = sa_session.Session(engine)
     delete_records_session(sa_table, col_name, values, session)
@@ -68,6 +110,30 @@ def delete_all_records_session(
     table: sa.Table,
     session: sa_session.Session
 ) -> None:
+    """
+    Example
+    -------
+    import sqlalchemy as sa
+    import sqlalchemy.orm.session as session
+    from sqlalchemize.test_setup import create_test_table, insert_test_records
+    from sqlalchmize.select import select_all_records
+    from sqlalchmize.delete import delete_all_records_session
+
+    engine = sa.create_engine('data/sqlite:///test.db')
+    table = create_test_table(engine)
+    insert_test_records(table)
+
+    select_all_records(table) -> [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
+
+    session = session.Session(engine)
+    delete_all_records_session(table, session)
+
+    select_all_records(table) -> [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
+
+    session.commit()
+
+    select_all_records(table) -> []
+    """
     session.query(table).delete()
 
 
@@ -75,6 +141,24 @@ def delete_all_records(
     sa_table: sa.Table,
     engine: Optional[sa_engine.Engine] = None
 ) -> None:
+    """
+    Example
+    -------
+    import sqlalchemy as sa
+    from sqlalchemize.test_setup import create_test_table, insert_test_records
+    from sqlalchmize.select import select_all_records
+    from sqlalchmize.delete import delete_all_records
+
+    engine = sa.create_engine('data/sqlite:///test.db')
+    table = create_test_table(engine)
+    insert_test_records(table)
+
+    select_all_records(table) -> [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
+
+    delete_all_records(table)
+
+    select_all_records(table) -> []
+    """
     engine = ex.check_for_engine(sa_table, engine)
     session = sa_session.Session(engine)
     try:
