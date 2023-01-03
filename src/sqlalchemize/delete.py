@@ -83,13 +83,27 @@ def delete_records(
         raise e
 
 
+def delete_records_by_values(
+    sa_table: sa.Table,
+    engine: sa.engine.Engine,
+    records: list[dict]
+) -> None:
+    session = sa_session.Session(engine)
+    try:
+        delete_records_by_values_session(sa_table, records, session)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+
+
 def delete_record_by_values_session(
     sa_table: sa.Table,
     record: types.Record,
     session: sa_session.Session
 ) -> None:
-    where = build_where_from_record(sa_table, record)
-    session.query(sa_table).filter(where).delete(synchronize_session=False)
+    delete = build_delete_from_record(sa_table, record)
+    session.execute(delete)
 
 
 def delete_records_by_values_session(
@@ -109,6 +123,16 @@ def build_where_from_record(
     for col, val in record.items():
         s = s.where(sa_table.c[col]==val)
     return s
+
+
+def build_delete_from_record(
+    sa_table: sa.Table,
+    record
+) -> sa.sql.Delete:
+    d = sa.delete(sa_table)
+    for column, value in record.items():
+        d = d.where(sa_table.c[column]==value)
+    return d
 
 
 def delete_all_records_session(
