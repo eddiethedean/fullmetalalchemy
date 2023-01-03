@@ -83,3 +83,18 @@ def update_records(
     except Exception as e:
         session.rollback()
         raise e
+
+
+def update_records_fast(
+    sa_table: sa.Table,
+    records: list[dict],
+    engine
+) -> None:
+    """Only works with table with primary key"""
+    session = sa_session.Session(engine)
+    try:
+        update_records_fast_session(sa_table, records, session)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
