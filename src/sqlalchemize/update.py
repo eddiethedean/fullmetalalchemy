@@ -45,36 +45,37 @@ def make_update_statement(table, record_values, new_values):
 
 def update_record_slow_session(
     sa_table: sa.Table,
-    match_record: dict,
-    new_values: dict,
+    record: dict,
+    match_names: Sequence[str],
     session: sa_session.Session
 ) -> None:
-    stmt = make_update_statement(sa_table, match_record, new_values)
+    match_record = {col: val for col, val in record.items() if col in match_names}
+    stmt = make_update_statement(sa_table, match_record, record)
     session.add(stmt)
 
 
 def update_records_slow_session(
     sa_table: sa.Table,
-    match_records: Iterable[dict],
-    new_values: Iterable[dict],
+    records: Iterable[dict],
+    match_names: Sequence[str],
     session: sa_session.Session
 ) -> None:
     """Slow update does not need primary key.
     """
-    for record, new_value in zip(match_records, new_values):
-        update_record_slow_session(sa_table, record, new_value, session)
+    for record in records:
+        update_record_slow_session(sa_table, record, match_names, session)
     
 
 def update_records_slow(
     sa_table: sa.Table,
     records: Sequence[types.Record],
-    match_column_name: str,
+    match_column_names: Sequence[str],
     engine: Optional[sa_engine.Engine] = None
 ) -> None:
     engine = ex.check_for_engine(sa_table, engine)
     session = sa_session.Session(engine)
     try:
-        update_records_slow_session(sa_table, records, match_column_name, session)
+        update_records_slow_session(sa_table, records, match_column_names, session)
         session.commit()
     except Exception as e:
         session.rollback()
@@ -84,13 +85,14 @@ def update_records_slow(
 def update_records(
     sa_table: sa.Table,
     records: Sequence[types.Record],
-    match_column_name: str,
+    match_column_name: Optional[str] = None,
     engine: Optional[sa_engine.Engine] = None
 ) -> None:
     engine = ex.check_for_engine(sa_table, engine)
     session = sa_session.Session(engine)
+    # check for pk
     try:
-        update_records_session(sa_table, records, match_column_name, session)
+        update_records_session(sa_table, records, match_column_names, session)
         session.commit()
     except Exception as e:
         session.rollback()
