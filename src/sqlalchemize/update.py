@@ -1,8 +1,9 @@
-from typing import Optional, Sequence
+from typing import Iterable, Optional, Sequence
 
 import sqlalchemy as sa
 import sqlalchemy.orm.session as sa_session
 import sqlalchemy.engine as sa_engine
+from sqlalchemy import update
 
 import sqlalchemize.types as types
 import sqlalchemize.features as features
@@ -35,23 +36,34 @@ def update_records_fast_session(
     session.bulk_update_mappings(mapper, records)
 
 
+def make_update_statement(table, record_values, new_values):
+    up = update(table)
+    for col, val in record_values.items():
+        up = up.where(table.c[col]==val)
+    return up.values(**new_values)
+
+
+def update_record_slow_session(
+    sa_table: sa.Table,
+    match_record: dict,
+    new_values: dict,
+    session: sa_session.Session
+) -> None:
+    stmt = make_update_statement(sa_table, match_record, new_values)
+    session.add(stmt)
+
+
 def update_records_slow_session(
     sa_table: sa.Table,
-    records: Sequence[types.Record],
-    match_column_name: str,
+    match_records: Iterable[dict],
+    new_values: Iterable[dict],
     session: sa_session.Session
 ) -> None:
     """Slow update does not need primary key.
-    table.update().where(table.c.id==7).values(name='foo')
     """
-    match_column = features.get_column(sa_table, match_column_name)
-    for record in records:
-        query = sa_table.select().where(match_column==record[match_column_name])
-        
-        for row in session.execute(query):
-            for col, val in record.items():
-                ...
-                
+    for record, new_value in zip(match_records, new_values):
+        update_record_slow_session(sa_table, record, new_value, session)
+    
 
 def update_records_slow(
     sa_table: sa.Table,
