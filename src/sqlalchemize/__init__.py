@@ -1,4 +1,4 @@
-__version__ = '0.2.2'
+__version__ = '0.3.0'
 
 import sqlalchemize.create as create
 import sqlalchemize.delete as delete
@@ -8,3 +8,4 @@ import sqlalchemize.insert as insert
 import sqlalchemize.select as select
 import sqlalchemize.update as update
 import sqlalchemize.type_convert as type_convert
+import sqlalchemize.records as records

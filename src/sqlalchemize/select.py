@@ -186,6 +186,21 @@ def select_column_value_by_index(
     return connection.execute(query).scalars().all()[0]
 
 
+def select_record_by_index(
+    sa_table: _sa.Table,
+    index: int,
+    connection: _types.SqlConnection,
+) -> dict[str, _t.Any]:
+    if index < 0:
+        row_count = _features.get_row_count(sa_table, connection)
+        if index < -row_count:
+            raise IndexError('Index out of range.') 
+        index = _calc_positive_index(index, row_count)
+    query = _sa.select(sa_table).slice(index, index+1)
+    results = connection.execute(query)
+    return [dict(x) for x in results][0]
+
+
 def select_primary_key_records_by_slice(
     sa_table: _sa.Table,
     connection: _types.SqlConnection,
