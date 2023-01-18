@@ -1,20 +1,20 @@
-from typing import Optional, Sequence
+import typing as _t
 
-import sqlalchemy as sa
-import sqlalchemy.engine as sa_engine
-import sqlalchemy.orm.session as sa_session
-from sqlalchemy.sql.expression import Select
+import sqlalchemy as _sa
+import sqlalchemy.engine as _sa_engine
+import sqlalchemy.orm.session as _sa_session
+from sqlalchemy.sql.expression import Select as _Select
 
-import sqlalchemize.features as features
-import sqlalchemize.types as types
-import sqlalchemize.exceptions as ex
+import sqlalchemize.features as _features
+import sqlalchemize.types as _types
+import sqlalchemize.exceptions as _ex
 
 
 def delete_records_session(
-    sa_table: sa.Table,
+    sa_table: _sa.Table,
     col_name: str,
-    values: Sequence,
-    session: sa_session.Session
+    values: _t.Sequence,
+    session: _sa_session.Session
 ) -> None:
     """
     Example
@@ -43,15 +43,15 @@ def delete_records_session(
     >>> select_all_records(table)
     [{'id': 2, 'x': 2, 'y': 4}]
     """
-    col = features.get_column(sa_table, col_name)
+    col = _features.get_column(sa_table, col_name)
     session.query(sa_table).filter(col.in_(values)).delete(synchronize_session=False)
 
 
 def delete_records(
-    sa_table: sa.Table,
+    sa_table: _sa.Table,
     col_name: str,
-    values: Sequence,
-    engine: Optional[sa_engine.Engine] = None
+    values: _t.Sequence,
+    engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
     """
     Example
@@ -73,8 +73,8 @@ def delete_records(
     >>> select_all_records(table)
     [{'id': 2, 'x': 2, 'y': 4}]
     """
-    engine = ex.check_for_engine(sa_table, engine)
-    session = sa_session.Session(engine)
+    engine = _ex.check_for_engine(sa_table, engine)
+    session = _sa_session.Session(engine)
     delete_records_session(sa_table, col_name, values, session)
     try:
         session.commit()
@@ -84,11 +84,11 @@ def delete_records(
 
 
 def delete_records_by_values(
-    sa_table: sa.Table,
-    engine: sa.engine.Engine,
+    sa_table: _sa.Table,
+    engine: _sa.engine.Engine,
     records: list[dict]
 ) -> None:
-    session = sa_session.Session(engine)
+    session = _sa_session.Session(engine)
     try:
         delete_records_by_values_session(sa_table, records, session)
         session.commit()
@@ -98,46 +98,46 @@ def delete_records_by_values(
 
 
 def delete_record_by_values_session(
-    sa_table: sa.Table,
-    record: types.Record,
-    session: sa_session.Session
+    sa_table: _sa.Table,
+    record: _types.Record,
+    session: _sa_session.Session
 ) -> None:
-    delete = build_delete_from_record(sa_table, record)
+    delete = _build_delete_from_record(sa_table, record)
     session.execute(delete)
 
 
 def delete_records_by_values_session(
-    sa_table: sa.Table,
-    records: Sequence[types.Record],
-    session: sa_session.Session
+    sa_table: _sa.Table,
+    records: _t.Sequence[_types.Record],
+    session: _sa_session.Session
 ) -> None:
     for record in records:
         delete_record_by_values_session(sa_table, record, session)
 
         
-def build_where_from_record(
-    sa_table: sa.Table,
-    record: types.Record
-) -> Select:
-    s = sa.select(sa_table)
+def _build_where_from_record(
+    sa_table: _sa.Table,
+    record: _types.Record
+) -> _Select:
+    s = _sa.select(sa_table)
     for col, val in record.items():
         s = s.where(sa_table.c[col]==val)
     return s
 
 
-def build_delete_from_record(
-    sa_table: sa.Table,
+def _build_delete_from_record(
+    sa_table: _sa.Table,
     record
-) -> sa.sql.Delete:
-    d = sa.delete(sa_table)
+) -> _sa.sql.Delete:
+    d = _sa.delete(sa_table)
     for column, value in record.items():
         d = d.where(sa_table.c[column]==value)
     return d
 
 
 def delete_all_records_session(
-    table: sa.Table,
-    session: sa_session.Session
+    table: _sa.Table,
+    session: _sa_session.Session
 ) -> None:
     """
     Example
@@ -170,8 +170,8 @@ def delete_all_records_session(
 
 
 def delete_all_records(
-    sa_table: sa.Table,
-    engine: Optional[sa_engine.Engine] = None
+    sa_table: _sa.Table,
+    engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
     """
     Example
@@ -193,8 +193,8 @@ def delete_all_records(
     >>> select_all_records(table)
     []
     """
-    engine = ex.check_for_engine(sa_table, engine)
-    session = sa_session.Session(engine)
+    engine = _ex.check_for_engine(sa_table, engine)
+    session = _sa_session.Session(engine)
     try:
         delete_all_records_session(sa_table, session)
         session.commit()

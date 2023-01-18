@@ -1,68 +1,72 @@
-import decimal
-import datetime
-from typing import Any, Mapping, Sequence
+import decimal as _decimal
+import datetime as _datetime
+import typing as _t
 
-from sqlalchemy import sql
+from sqlalchemy import sql as _sql
 
 
 def sql_type(t):
     return _type_convert[t]
 
 
+def python_type(t):
+    return _sql_to_python[t]
+
+
 _type_convert = {
-    int: sql.sqltypes.Integer,
-    str: sql.sqltypes.Unicode,
-    float: sql.sqltypes.Float,
-    decimal.Decimal: sql.sqltypes.Numeric,
-    datetime.datetime: sql.sqltypes.DateTime,
-    bytes: sql.sqltypes.LargeBinary,
-    bool: sql.sqltypes.Boolean,
-    datetime.date: sql.sqltypes.Date,
-    datetime.time: sql.sqltypes.Time,
-    datetime.timedelta: sql.sqltypes.Interval,
-    list: sql.sqltypes.ARRAY,
-    dict: sql.sqltypes.JSON
+    int: _sql.sqltypes.Integer,
+    str: _sql.sqltypes.Unicode,
+    float: _sql.sqltypes.Float,
+    _decimal.Decimal: _sql.sqltypes.Numeric,
+    _datetime.datetime: _sql.sqltypes.DateTime,
+    bytes: _sql.sqltypes.LargeBinary,
+    bool: _sql.sqltypes.Boolean,
+    _datetime.date: _sql.sqltypes.Date,
+    _datetime.time: _sql.sqltypes.Time,
+    _datetime.timedelta: _sql.sqltypes.Interval,
+    list: _sql.sqltypes.ARRAY,
+    dict: _sql.sqltypes.JSON
 }
 
 _sql_to_python = {
-    sql.sqltypes.Integer: int,
-    sql.sqltypes.SmallInteger: int,
-    sql.sqltypes.SMALLINT: int,
-    sql.sqltypes.BigInteger: int,
-    sql.sqltypes.BIGINT: int,
-    sql.sqltypes.INTEGER: int,
-    sql.sqltypes.Unicode: str,
-    sql.sqltypes.NVARCHAR: str,
-    sql.sqltypes.NCHAR: str,
-    sql.sqltypes.Float: decimal.Decimal,
-    sql.sqltypes.REAL: decimal.Decimal,
-    sql.sqltypes.FLOAT: decimal.Decimal,
-    sql.sqltypes.Numeric: decimal.Decimal,
-    sql.sqltypes.NUMERIC: decimal.Decimal,
-    sql.sqltypes.DECIMAL: decimal.Decimal,
-    sql.sqltypes.DateTime: datetime.datetime,
-    sql.sqltypes.TIMESTAMP: datetime.datetime,
-    sql.sqltypes.DATETIME: datetime.datetime,
-    sql.sqltypes.LargeBinary: bytes,
-    sql.sqltypes.BLOB: bytes,
-    sql.sqltypes.Boolean: bool,
-    sql.sqltypes.BOOLEAN: bool,
-    sql.sqltypes.MatchType: bool,
-    sql.sqltypes.Date: datetime.date,
-    sql.sqltypes.DATE: datetime.date,
-    sql.sqltypes.Time: datetime.time,
-    sql.sqltypes.TIME: datetime.time,
-    sql.sqltypes.Interval: datetime.timedelta,
-    sql.sqltypes.ARRAY: list,
-    sql.sqltypes.JSON: dict
+    _sql.sqltypes.Integer: int,
+    _sql.sqltypes.SmallInteger: int,
+    _sql.sqltypes.SMALLINT: int,
+    _sql.sqltypes.BigInteger: int,
+    _sql.sqltypes.BIGINT: int,
+    _sql.sqltypes.INTEGER: int,
+    _sql.sqltypes.Unicode: str,
+    _sql.sqltypes.NVARCHAR: str,
+    _sql.sqltypes.NCHAR: str,
+    _sql.sqltypes.Float: _decimal.Decimal,
+    _sql.sqltypes.REAL: _decimal.Decimal,
+    _sql.sqltypes.FLOAT: _decimal.Decimal,
+    _sql.sqltypes.Numeric: _decimal.Decimal,
+    _sql.sqltypes.NUMERIC: _decimal.Decimal,
+    _sql.sqltypes.DECIMAL: _decimal.Decimal,
+    _sql.sqltypes.DateTime: _datetime.datetime,
+    _sql.sqltypes.TIMESTAMP: _datetime.datetime,
+    _sql.sqltypes.DATETIME: _datetime.datetime,
+    _sql.sqltypes.LargeBinary: bytes,
+    _sql.sqltypes.BLOB: bytes,
+    _sql.sqltypes.Boolean: bool,
+    _sql.sqltypes.BOOLEAN: bool,
+    _sql.sqltypes.MatchType: bool,
+    _sql.sqltypes.Date: _datetime.date,
+    _sql.sqltypes.DATE: _datetime.date,
+    _sql.sqltypes.Time: _datetime.time,
+    _sql.sqltypes.TIME: _datetime.time,
+    _sql.sqltypes.Interval: _datetime.timedelta,
+    _sql.sqltypes.ARRAY: list,
+    _sql.sqltypes.JSON: dict
 }
 
 
-def get_sql_types(data: Mapping[str, Sequence]) -> list:
+def get_sql_types(data: _t.Mapping[str, _t.Sequence]) -> list:
     return [get_sql_type(values) for values in data.values()]
 
 
-def get_sql_type(values: Sequence) -> Any:
+def get_sql_type(values: _t.Sequence) -> _t.Any:
     for python_type in _type_convert:
         if all(type(val) == python_type for val in values):
             return _type_convert[python_type]

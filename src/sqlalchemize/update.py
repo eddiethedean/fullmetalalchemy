@@ -1,113 +1,118 @@
-from typing import Iterable, Optional, Sequence
+import typing as _typing
 
-import sqlalchemy as sa
-import sqlalchemy.orm.session as sa_session
-import sqlalchemy.engine as sa_engine
-from sqlalchemy import update
+import sqlalchemy as _sa
+import sqlalchemy.orm.session as _sa_session
+import sqlalchemy.engine as _sa_engine
 
-import sqlalchemize.types as types
-import sqlalchemize.features as features
-import sqlalchemize.exceptions as ex
+import sqlalchemize.records as _records
+import sqlalchemize.types as _types
+import sqlalchemize.features as _features
+import sqlalchemize.exceptions as _ex
+
+
+def update_matching_records_session(
+    sa_table: _sa.Table,
+    records: _typing.Sequence[_types.Record],
+    match_column_names: _typing.Sequence[str],
+    session: _sa_session.Session
+) -> None:
+    match_values = [_records.filter_record(record, match_column_names) for record in records]
+    stmt = _make_update_statement(sa_table, match_values, records)
+    session.execute(stmt)
+
+
+def update_matching_records(
+    sa_table: _sa.Table,
+    records: _typing.Sequence[_types.Record],
+    match_column_names: _typing.Sequence[str],
+    engine: _sa_engine.Engine
+) -> None:
+    session = _sa_session.Session(engine)
+    try:
+        update_matching_records_session(sa_table, records, match_column_names, session)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
 
 
 def update_records_session(
-    sa_table: sa.Table,
-    records: Sequence[types.Record],
-    match_column_name: str,
-    session: sa_session.Session
+    sa_table: _sa.Table,
+    records: _typing.Sequence[_types.Record],
+    session: _sa_session.Session,
+    match_column_names: _typing.Optional[_typing.Sequence[str]] = None,
 ) -> None:
-    match_column = features.get_column(sa_table, match_column_name)
-    match_column.primary_key = True
-    table_name = sa_table.name
-    table_class = features.get_class(table_name, session, schema=sa_table.schema)
-    mapper = sa.inspect(table_class)
-    session.bulk_update_mappings(mapper, records)
+    if _features.missing_primary_key(sa_table):
+        if match_column_names is None:
+            raise ValueError('Must provide match_column_names is table has no primary key.')
+        update_matching_records_session(sa_table, records, match_column_names, session)
+    else:
+        update_records_fast_session(sa_table, records, session)
 
 
 def update_records_fast_session(
-    sa_table: sa.Table,
-    records: Sequence[types.Record],
-    session: sa_session.Session
+    sa_table: _sa.Table,
+    records: _typing.Sequence[_types.Record],
+    session: _sa_session.Session
 ) -> None:
     """Fast update needs primary key."""
     table_name = sa_table.name
-    table_class = features.get_class(table_name, session, schema=sa_table.schema)
-    mapper = sa.inspect(table_class)
+    table_class = _features.get_class(table_name, session, schema=sa_table.schema)
+    mapper = _sa.inspect(table_class)
     session.bulk_update_mappings(mapper, records)
 
 
-def make_update_statement(table, record_values, new_values):
-    up = update(table)
+def _make_update_statement(table, record_values, new_values):
+    up = _sa.update(table)
     for col, val in record_values.items():
         up = up.where(table.c[col]==val)
     return up.values(**new_values)
 
 
-def update_record_slow_session(
-    sa_table: sa.Table,
-    record: dict,
-    match_names: Sequence[str],
-    session: sa_session.Session
+def update_records(
+    sa_table: _sa.Table,
+    records: _typing.Sequence[_types.Record],
+    engine: _typing.Optional[_sa_engine.Engine] = None,
+    match_column_names: _typing.Optional[_typing.Sequence[str]] = None,
 ) -> None:
-    match_record = {col: val for col, val in record.items() if col in match_names}
-    stmt = make_update_statement(sa_table, match_record, record)
+    engine = _ex.check_for_engine(sa_table, engine)
+    session = _sa_session.Session(engine)
+    try:
+        update_records_session(sa_table, records, session, match_column_names)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+
+
+def _make_update_statement_column_value(
+    table: _sa.Table,
+    column_name: str,
+    value: _typing.Any
+):
+    new_value = {column_name: value}
+    return _sa.update(table).values(**new_value)
+
+
+def set_column_values_session(
+    table: _sa.Table,
+    column_name: str,
+    value: _typing.Any,
+    session: _sa_session.Session
+) -> None:
+    stmt = _make_update_statement_column_value(table, column_name, value)
     session.add(stmt)
 
 
-def update_records_slow_session(
-    sa_table: sa.Table,
-    records: Iterable[dict],
-    match_names: Sequence[str],
-    session: sa_session.Session
+def set_column_values(
+    table: _sa.Table,
+    column_name: str,
+    value: _typing.Any,
+    engine: _sa_engine.Engine
 ) -> None:
-    """Slow update does not need primary key.
-    """
-    for record in records:
-        update_record_slow_session(sa_table, record, match_names, session)
-    
-
-def update_records_slow(
-    sa_table: sa.Table,
-    records: Sequence[types.Record],
-    match_column_names: Sequence[str],
-    engine: Optional[sa_engine.Engine] = None
-) -> None:
-    engine = ex.check_for_engine(sa_table, engine)
-    session = sa_session.Session(engine)
+    session = _sa_session.Session(engine)
     try:
-        update_records_slow_session(sa_table, records, match_column_names, session)
-        session.commit()
-    except Exception as e:
-        session.rollback()
-        raise e
-
-
-def update_records(
-    sa_table: sa.Table,
-    records: Sequence[types.Record],
-    match_column_name: Optional[str] = None,
-    engine: Optional[sa_engine.Engine] = None
-) -> None:
-    engine = ex.check_for_engine(sa_table, engine)
-    session = sa_session.Session(engine)
-    # check for pk
-    try:
-        update_records_session(sa_table, records, match_column_names, session)
-        session.commit()
-    except Exception as e:
-        session.rollback()
-        raise e
-
-
-def update_records_fast(
-    sa_table: sa.Table,
-    records: list[dict],
-    engine
-) -> None:
-    """Only works with table with primary key"""
-    session = sa_session.Session(engine)
-    try:
-        update_records_fast_session(sa_table, records, session)
+        set_column_values_session(table, column_name, value, session)
         session.commit()
     except Exception as e:
         session.rollback()
