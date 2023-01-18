@@ -5,6 +5,8 @@ import datetime as _datetime
 import sqlalchemy as _sa
 import sqlalchemy.engine as _sa_engine
 import sqlalchemy.schema as _sa_schema
+import sqlalchemy.engine as _sa_engine
+from sqlalchemy import create_engine
 from tinytim.rows import row_dicts_to_data as _row_dicts_to_data
 from tinytim.data import column_names as _column_names
 
@@ -25,7 +27,30 @@ def create_table(
     autoincrement:  _t.Optional[bool] = False,
     if_exists:  _t.Optional[str] = 'error'
 ) -> _sa.Table:
+    """Create a sql table from specs.
+    Returns
+    -------
+    sqlalchemy.Table
     
+    Example
+    -------
+    >>> import sqlalchemize as sz
+    >>> engine = sz.create_engine('sqlite:///data/test.db')
+    >>> sz.features.get_table_names(engine)
+    []
+    >>> sz.create.create_table(
+    ...         table_name='xy',
+    ...         column_names=['id', 'x', 'y'],
+    ...         column_types=[int, int, int],
+    ...         primary_key=['id'],
+    ...         engine=engine)
+    Table('xy', MetaData(bind=Engine(sqlite:///data/test.db)),
+    ...         Column('id', INTEGER(), table=<xy>, primary_key=True, nullable=False),
+    ...         Column('x', INTEGER(), table=<xy>),
+    ...         Column('y', INTEGER(), table=<xy>), schema=None)
+     >>> sz.features.get_table_names(engine)
+     ['xy']
+    """
     cols = []
     
     for name, python_type in zip(column_names, column_types):
@@ -62,6 +87,35 @@ def create_table_from_records(
     columns:  _t.Optional[ _t.Sequence[str]] = None,
     missing_value:  _t.Optional[_t.Any] = None
 ) -> _sa.Table:
+    """Create a sql table from specs and insert records.
+    Returns
+    -------
+    sqlalchemy.Table
+    
+    Example
+    -------
+    >>> import sqlalchemize as sz
+    >>> engine = sz.create_engine('sqlite:///data/test.db')
+    >>> sz.features.get_table_names(engine)
+    []
+    >>> records = [
+    ...        {'id': 1, 'x': 1, 'y': 2},
+    ...        {'id': 2, 'x': 2, 'y': 4},
+    ...        {'id': 3, 'x': 4, 'y': 8},
+    ...        {'id': 4, 'x': 8, 'y': 11}]
+    >>> sz.create.create_table_from_records(
+    ...         table_name='xy',
+    ...         records=records,
+    ...         primary_key=['id'],
+    ...         engine=engine,
+    ...         if_exists='replace')
+    Table('xy', MetaData(bind=Engine(sqlite:///data/test.db)),
+    ...         Column('id', INTEGER(), table=<xy>, primary_key=True, nullable=False),
+    ...         Column('x', INTEGER(), table=<xy>),
+    ...         Column('y', INTEGER(), table=<xy>), schema=None)
+     >>> sz.features.get_table_names(engine)
+     ['xy']
+    """
     data = _row_dicts_to_data(records, columns, missing_value)
     if column_types is None:
         column_types = [_column_datatype(values) for values in data.values()]

@@ -1,5 +1,6 @@
 __version__ = '0.3.0'
 
+from sqlalchemize.create import create_engine
 import sqlalchemize.create as create
 import sqlalchemize.delete as delete
 import sqlalchemize.drop as drop
