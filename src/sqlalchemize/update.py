@@ -45,7 +45,7 @@ def update_records_session(
 ) -> None:
     if _features.missing_primary_key(sa_table):
         if match_column_names is None:
-            raise ValueError('Must provide match_column_names is table has no primary key.')
+            raise ValueError('Must provide match_column_names if table has no primary key.')
         update_matching_records_session(sa_table, records, match_column_names, session)
     else:
         update_records_fast_session(sa_table, records, session)

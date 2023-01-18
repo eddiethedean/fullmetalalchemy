@@ -19,10 +19,10 @@ def create_table(
     table_name: str,
     column_names:  _t.Sequence[str],
     column_types:  _t.Sequence,
-    primary_key: str,
+    primary_key: _t.Sequence[str],
     engine: _sa_engine.Engine,
     schema:  _t.Optional[str] = None,
-    autoincrement:  _t.Optional[bool] = True,
+    autoincrement:  _t.Optional[bool] = False,
     if_exists:  _t.Optional[str] = 'error'
 ) -> _sa.Table:
     
@@ -30,7 +30,9 @@ def create_table(
     
     for name, python_type in zip(column_names, column_types):
         sa_type = _type_convert._type_convert[python_type]
-        if name == primary_key:
+        if type(primary_key) is str:
+            primary_key = [primary_key]
+        if name in primary_key:
             col = _sa.Column(name, sa_type,
                             primary_key=True,
                             autoincrement=autoincrement)
@@ -51,11 +53,11 @@ def create_table(
 def create_table_from_records(
     table_name: str,
     records:  _t.Sequence[_Record],
-    primary_key: str,
+    primary_key: _t.Sequence[str],
     engine: _sa_engine.Engine,
     column_types:  _t.Optional[ _t.Sequence] = None,
     schema:  _t.Optional[str] = None,
-    autoincrement:  _t.Optional[bool] = True,
+    autoincrement:  _t.Optional[bool] = False,
     if_exists:  _t.Optional[str] = 'error',
     columns:  _t.Optional[ _t.Sequence[str]] = None,
     missing_value:  _t.Optional[_t.Any] = None

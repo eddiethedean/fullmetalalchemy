@@ -92,7 +92,7 @@ def missing_primary_key(
     sa_table: _sa.Table,
 ):
     pks = get_primary_key_constraints(sa_table)
-    return pks[0] is None
+    return pks[1] == []
 
 
 def get_column_types(sa_table: _sa.Table) -> dict:
