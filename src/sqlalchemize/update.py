@@ -17,8 +17,9 @@ def update_matching_records_session(
     session: _sa_session.Session
 ) -> None:
     match_values = [_records.filter_record(record, match_column_names) for record in records]
-    stmt = _make_update_statement(sa_table, match_values, records)
-    session.execute(stmt)
+    for values, record in zip(match_values, records):
+        stmt = _make_update_statement(sa_table, values, record)
+        session.execute(stmt)
 
 
 def update_matching_records(
