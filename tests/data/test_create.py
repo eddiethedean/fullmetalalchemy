@@ -1,19 +1,25 @@
 import unittest
+import os
 
 import sqlalchemy as sa
 import sqlalchemize as sz
 from sqlalchemize.create import create_table, create_engine, create_table_from_records
 
 
+path = os.getcwd() + '/tests/data'
+connection_string = f'sqlite:///{path}/test.db'
+
+
 class TestCreateTable(unittest.TestCase):
     def create_table_sqlite(self):
-        engine = create_engine('sqlite:///data/test.db')
+        engine = create_engine(connection_string)
         results = create_table(
             table_name='xy',
             column_names=['id', 'x', 'y'],
             column_types=[int, int, int],
             primary_key=['id'],
-            engine=engine)
+            engine=engine,
+            if_exists='replace')
         table = sz.features.get_table('xy', engine)
         expected = sa.Table('xy', sa.MetaData(bind=engine), 
             sa.Column('id', sa.sql.sqltypes.INTEGER(), table=table, primary_key=True, nullable=False),
@@ -24,7 +30,7 @@ class TestCreateTable(unittest.TestCase):
 
 class TestCreateTableFromRecords(unittest.TestCase):
     def create_table_from_records_sqlite(self):
-        engine = create_engine('sqlite:///data/test.db')
+        engine = create_engine(connection_string)
         records = [
             {'id': 1, 'x': 1, 'y': 2},
             {'id': 2, 'x': 2, 'y': 4},
@@ -34,7 +40,8 @@ class TestCreateTableFromRecords(unittest.TestCase):
             table_name='xy',
             records=records,
             primary_key=['id'],
-            engine=engine)
+            engine=engine,
+            if_exists='replace')
         table = sz.features.get_table('xy', engine)
         expected = sa.Table('xy', sa.MetaData(bind=engine), 
             sa.Column('id', sa.sql.sqltypes.INTEGER(), table=table, primary_key=True, nullable=False),
