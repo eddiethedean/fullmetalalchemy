@@ -3,7 +3,7 @@ import os
 
 import sqlalchemy as sa
 import sqlalchemize as sz
-from sqlalchemize.create import create_table, create_engine, create_table_from_records
+from sqlalchemize.create import create_table, create_table_from_records
 
 
 path = os.getcwd() + '/tests/data'
@@ -12,7 +12,7 @@ connection_string = f'sqlite:///{path}/test.db'
 
 class TestCreateTable(unittest.TestCase):
     def create_table_sqlite(self):
-        engine = create_engine(connection_string)
+        engine = sa.create_engine(connection_string)
         results = create_table(
             table_name='xy',
             column_names=['id', 'x', 'y'],
@@ -30,7 +30,7 @@ class TestCreateTable(unittest.TestCase):
 
 class TestCreateTableFromRecords(unittest.TestCase):
     def create_table_from_records_sqlite(self):
-        engine = create_engine(connection_string)
+        engine = sa.create_engine(connection_string)
         records = [
             {'id': 1, 'x': 1, 'y': 2},
             {'id': 2, 'x': 2, 'y': 4},
