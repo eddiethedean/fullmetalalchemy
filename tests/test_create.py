@@ -11,7 +11,7 @@ connection_string = f'sqlite:///{path}/test.db'
 
 
 class TestCreateTable(unittest.TestCase):
-    def create_table_sqlite(self):
+    def test_create_table_sqlite(self):
         engine = sa.create_engine(connection_string)
         results = create_table(
             table_name='xy',
@@ -22,14 +22,14 @@ class TestCreateTable(unittest.TestCase):
             if_exists='replace')
         table = sz.features.get_table('xy', engine)
         expected = sa.Table('xy', sa.MetaData(bind=engine), 
-            sa.Column('id', sa.sql.sqltypes.INTEGER(), table=table, primary_key=True, nullable=False),
-            sa.Column('x', sa.sql.sqltypes.INTEGER(), table=table),
-            sa.Column('y', sa.sql.sqltypes.INTEGER(), table=table), schema=None)
-        self.assertEqual(results, expected)
+            sa.Column('id', sa.sql.sqltypes.INTEGER(), primary_key=True, nullable=False),
+            sa.Column('x', sa.sql.sqltypes.INTEGER()),
+            sa.Column('y', sa.sql.sqltypes.INTEGER()), schema=None)
+        self.assertCountEqual(table.columns._data, expected.columns._data)
 
 
 class TestCreateTableFromRecords(unittest.TestCase):
-    def create_table_from_records_sqlite(self):
+    def test_create_table_from_records_sqlite(self):
         engine = sa.create_engine(connection_string)
         records = [
             {'id': 1, 'x': 1, 'y': 2},
@@ -50,3 +50,7 @@ class TestCreateTableFromRecords(unittest.TestCase):
         self.assertEqual(results, expected)
         selected = sz.select.select_records_all(table, engine)
         self.assertEqual(selected, records)
+
+
+if __name__ == '__main__':
+    unittest.main()
