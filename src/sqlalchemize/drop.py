@@ -9,7 +9,7 @@ import sqlalchemize.exceptions as _ex
 
 
 def drop_table(
-    table: _sa.Table | str,
+    table: _t.Union[_sa.Table, str],
     engine: _t.Optional[_sa_engine.Engine] = None,
     if_exists: bool = True,
     schema: _t.Optional[str] = None

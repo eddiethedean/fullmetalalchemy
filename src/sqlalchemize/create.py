@@ -14,7 +14,7 @@ import sqlalchemize.type_convert as _type_convert
 import sqlalchemize.features as _features
 import sqlalchemize.insert as _insert
 
-_Record = dict[str, _t.Any]
+_Record = _t.Dict[str, _t.Any]
 
 
 def create_table(
@@ -127,7 +127,7 @@ def create_table_from_records(
 
 def _column_datatype(values: _t.Iterable) -> type:
     dtypes = [
-        int, str, int | float, _decimal.Decimal, _datetime.datetime,
+        int, str, _t.Union[int, float], _decimal.Decimal, _datetime.datetime,
         bytes, bool, _datetime.date, _datetime.time, 
         _datetime.timedelta, list, dict
     ]
@@ -136,10 +136,10 @@ def _column_datatype(values: _t.Iterable) -> type:
             if not isinstance(value, dtype):
                 dtypes.pop(dtypes.index(dtype))
     if len(dtypes) == 2:
-        if set([int, float | int]) == {int, float | int}:
+        if set([int, _t.Union[float, int]]) == {int, _t.Union[float, int]}:
             return int
     if len(dtypes) == 1:
-        if dtypes[0] == float | int:
+        if dtypes[0] == _t.Union[float, int]:
             return float
         return dtypes[0]
     return str

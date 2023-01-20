@@ -86,7 +86,7 @@ def delete_records(
 def delete_records_by_values(
     sa_table: _sa.Table,
     engine: _sa.engine.Engine,
-    records: list[dict]
+    records: _t.List[dict]
 ) -> None:
     session = _sa_session.Session(engine)
     try:

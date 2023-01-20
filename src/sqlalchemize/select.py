@@ -14,7 +14,7 @@ def select_records_all(
     connection: _t.Optional[_types.SqlConnection],
     sorted: bool = False,
     include_columns: _t.Optional[_t.Sequence[str]] = None
-) -> list[_types.Record]:
+) ->  _t.List[_types.Record]:
     connection = _ex.check_for_engine(sa_table, connection)
     if include_columns is not None:
         columns = [_features.get_column(sa_table, column_name) for column_name in include_columns]
@@ -34,7 +34,7 @@ def select_records_chunks(
     chunksize: int = 2,
     sorted: bool = False,
     include_columns: _t.Optional[_t.Sequence[str]] = None
-) -> _t.Generator[list[_types.Record], None, None]:
+) -> _t.Generator[ _t.List[_types.Record], None, None]:
     connection = _ex.check_for_engine(sa_table, connection)
     if include_columns is not None:
         columns = [_features.get_column(sa_table, column_name) for column_name in include_columns]
@@ -88,7 +88,7 @@ def select_records_slice(
     stop: _t.Optional[int] = None,
     sorted: bool = False,
     include_columns: _t.Optional[_t.Sequence[str]] = None
-) -> list[_types.Record]:
+) ->  _t.List[_types.Record]:
     connection = _ex.check_for_engine(sa_table, connection)
     start, stop = _convert_slice_indexes(sa_table, connection, start, stop)
     if stop < start:
@@ -110,7 +110,7 @@ def _convert_slice_indexes(
     connection: _types.SqlConnection,
     start: _t.Optional[int] = None,
     stop: _t.Optional[int] = None
-) -> tuple[int, int]:
+) -> _t.Tuple[int, int]:
     # start index is 0 if None
     start = 0 if start is None else start
     row_count = _features.get_row_count(sa_table, connection)
@@ -190,7 +190,7 @@ def select_record_by_index(
     sa_table: _sa.Table,
     index: int,
     connection: _types.SqlConnection,
-) -> dict[str, _t.Any]:
+) -> _t.Dict[str, _t.Any]:
     if index < 0:
         row_count = _features.get_row_count(sa_table, connection)
         if index < -row_count:
@@ -206,7 +206,7 @@ def select_primary_key_records_by_slice(
     connection: _types.SqlConnection,
     _slice: slice,
     sorted: bool = False
-) -> list[_types.Record]:
+) ->  _t.List[_types.Record]:
     start = _slice.start
     stop = _slice.stop
     start, stop = _convert_slice_indexes(sa_table, connection, start, stop)
@@ -249,7 +249,7 @@ def select_records_by_primary_keys(
     primary_keys_values: _t.Sequence[_types.Record],
     schema: _t.Optional[str] = None,
     include_columns: _t.Optional[_t.Sequence[str]] = None
-) -> list[_types.Record]:
+) ->  _t.List[_types.Record]:
     # TODO: check if primary key values exist
     where_clauses = []
     for record in primary_keys_values:
