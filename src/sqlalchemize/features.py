@@ -7,6 +7,8 @@ import sqlalchemy.engine as _sa_engine
 
 import sqlalchemize.types as _types
 import sqlalchemize.exceptions as _ex
+import sqlalchemize.records as _records
+import sqlalchemize.select as _select
 
 
 def primary_key_columns(
@@ -131,3 +133,20 @@ def _get_where_clause(
     record: _types.Record
 ) ->  _t.List[bool]:
     return [sa_table.c[key_name]==key_value for key_name, key_value in record.items()]
+
+
+def tables_metadata_equal(
+    sa_table1: _sa.Table,
+    sa_table2: _sa.Table
+) -> bool:
+    if sa_table1.name != sa_table2.name: return False
+
+    column_types1 = get_column_types(sa_table1)
+    column_types2 = get_column_types(sa_table2)
+    if column_types1 != column_types2: return False
+
+    table1_keys = primary_key_names(sa_table1)
+    table2_keys = primary_key_names(sa_table2)
+    if set(table1_keys) != set(table2_keys): return False
+
+    return True
