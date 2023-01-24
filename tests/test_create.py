@@ -39,13 +39,12 @@ class TestCreateTableFromRecords(unittest.TestCase):
             {'id': 2, 'x': 2, 'y': 4},
             {'id': 3, 'x': 4, 'y': 8},
             {'id': 4, 'x': 8, 'y': 11}]
-        results = create_table_from_records(
+        table = create_table_from_records(
             table_name='xy',
             records=records,
             primary_key=['id'],
             engine=engine,
             if_exists='replace')
-        table = sz.features.get_table('xy', engine)
         expected = sa.Table('xy', sa.MetaData(bind=engine), 
             sa.Column('id', sa.sql.sqltypes.INTEGER(), table=table, primary_key=True, nullable=False),
             sa.Column('x', sa.sql.sqltypes.INTEGER(), table=table),

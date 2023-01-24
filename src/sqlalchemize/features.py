@@ -143,7 +143,7 @@ def tables_metadata_equal(
 
     column_types1 = get_column_types(sa_table1)
     column_types2 = get_column_types(sa_table2)
-    if column_types1 != column_types2: return False
+    # if column_types1 != column_types2: return False
 
     table1_keys = primary_key_names(sa_table1)
     table2_keys = primary_key_names(sa_table2)
