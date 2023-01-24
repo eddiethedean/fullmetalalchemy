@@ -4,6 +4,8 @@ import os
 import sqlalchemy as sa
 import sqlalchemize as sz
 from sqlalchemize.create import create_table, create_table_from_records
+from sqlalchemize.features import table_metadata_equal
+from sqlalchemize.records import records_equal
 
 
 path = os.getcwd() + '/tests/data'
@@ -25,7 +27,8 @@ class TestCreateTable(unittest.TestCase):
             sa.Column('id', sa.sql.sqltypes.INTEGER(), primary_key=True, nullable=False),
             sa.Column('x', sa.sql.sqltypes.INTEGER()),
             sa.Column('y', sa.sql.sqltypes.INTEGER()), schema=None)
-        self.assertCountEqual(table.columns._data, expected.columns._data)
+        metadata_same = table_metadata_equal(table, expected)
+        self.assertTrue(metadata_same)
 
 
 class TestCreateTableFromRecords(unittest.TestCase):
@@ -47,9 +50,11 @@ class TestCreateTableFromRecords(unittest.TestCase):
             sa.Column('id', sa.sql.sqltypes.INTEGER(), table=table, primary_key=True, nullable=False),
             sa.Column('x', sa.sql.sqltypes.INTEGER(), table=table),
             sa.Column('y', sa.sql.sqltypes.INTEGER(), table=table), schema=None)
-        self.assertEqual(results, expected)
+        metadata_same = table_metadata_equal(table, expected)
+        self.assertTrue(metadata_same)
         selected = sz.select.select_records_all(table, engine)
-        self.assertEqual(selected, records)
+        records_same = records_equal(selected, records)
+        self.assertTrue(records_same)
 
 
 if __name__ == '__main__':
