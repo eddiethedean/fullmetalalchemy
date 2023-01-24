@@ -4,7 +4,7 @@ import os
 import sqlalchemy as sa
 import sqlalchemize as sz
 from sqlalchemize.create import create_table, create_table_from_records
-from sqlalchemize.features import table_metadata_equal
+from sqlalchemize.features import tables_metadata_equal
 from sqlalchemize.records import records_equal
 
 
@@ -27,7 +27,7 @@ class TestCreateTable(unittest.TestCase):
             sa.Column('id', sa.sql.sqltypes.INTEGER(), primary_key=True, nullable=False),
             sa.Column('x', sa.sql.sqltypes.INTEGER()),
             sa.Column('y', sa.sql.sqltypes.INTEGER()), schema=None)
-        metadata_same = table_metadata_equal(table, expected)
+        metadata_same = tables_metadata_equal(table, expected)
         self.assertTrue(metadata_same)
 
 
@@ -50,7 +50,7 @@ class TestCreateTableFromRecords(unittest.TestCase):
             sa.Column('id', sa.sql.sqltypes.INTEGER(), table=table, primary_key=True, nullable=False),
             sa.Column('x', sa.sql.sqltypes.INTEGER(), table=table),
             sa.Column('y', sa.sql.sqltypes.INTEGER(), table=table), schema=None)
-        metadata_same = table_metadata_equal(table, expected)
+        metadata_same = tables_metadata_equal(table, expected)
         self.assertTrue(metadata_same)
         selected = sz.select.select_records_all(table, engine)
         records_same = records_equal(selected, records)
