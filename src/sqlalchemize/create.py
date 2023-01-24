@@ -127,7 +127,7 @@ def create_table_from_records(
 
 def _column_datatype(values: _t.Iterable) -> type:
     dtypes = [
-        int, str, _t.Union[int, float], _decimal.Decimal, _datetime.datetime,
+        int, str, (int, float), _decimal.Decimal, _datetime.datetime,
         bytes, bool, _datetime.date, _datetime.time, 
         _datetime.timedelta, list, dict
     ]
