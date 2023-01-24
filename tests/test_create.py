@@ -46,9 +46,9 @@ class TestCreateTableFromRecords(unittest.TestCase):
             engine=engine,
             if_exists='replace')
         expected = sa.Table('xy', sa.MetaData(bind=engine), 
-            sa.Column('id', sa.sql.sqltypes.INTEGER(), table=table, primary_key=True, nullable=False),
-            sa.Column('x', sa.sql.sqltypes.INTEGER(), table=table),
-            sa.Column('y', sa.sql.sqltypes.INTEGER(), table=table), schema=None)
+            sa.Column('id', sa.sql.sqltypes.INTEGER(), primary_key=True, nullable=False),
+            sa.Column('x', sa.sql.sqltypes.INTEGER()),
+            sa.Column('y', sa.sql.sqltypes.INTEGER()), schema=None)
         metadata_same = tables_metadata_equal(table, expected)
         self.assertTrue(metadata_same)
         selected = sz.select.select_records_all(table, engine)
