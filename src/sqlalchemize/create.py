@@ -71,7 +71,8 @@ def create_table(
         drop_table_sql = _sa_schema.DropTable(table, if_exists=True)
         engine.execute(drop_table_sql)
     table_creation_sql = _sa_schema.CreateTable(table)
-    engine.execute(table_creation_sql)
+    with engine.connect() as con:
+        con.execute(table_creation_sql)
     return _features.get_table(table_name, engine, schema=schema)
 
 

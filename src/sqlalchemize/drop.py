@@ -23,4 +23,5 @@ def drop_table(
         table = _features.get_table(table, engine, schema=schema)
     sql = _sa_schema.DropTable(table, if_exists=if_exists)
     engine = _ex.check_for_engine(table, engine)
-    engine.execute(sql)
+    with engine.connect() as con:
+        con.execute(sql)
