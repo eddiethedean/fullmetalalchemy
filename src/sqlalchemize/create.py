@@ -69,7 +69,8 @@ def create_table(
     table = _sa.Table(table_name, metadata, *cols, schema=schema)
     if if_exists == 'replace':
         drop_table_sql = _sa_schema.DropTable(table, if_exists=True)
-        engine.execute(drop_table_sql)
+        with engine.connect() as con:
+            con.execute(drop_table_sql)
     table_creation_sql = _sa_schema.CreateTable(table)
     with engine.connect() as con:
         con.execute(table_creation_sql)
