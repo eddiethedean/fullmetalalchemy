@@ -9,7 +9,8 @@ from sqlalchemize.records import records_equal
 
 
 path = os.getcwd() + '/tests/data'
-connection_string = f'sqlite:///{path}/test.db'
+#connection_string = f'sqlite:///{path}/test.db'
+connection_string = f'sqlite://'
 
 
 class TestCreateTable(unittest.TestCase):
