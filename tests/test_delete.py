@@ -7,13 +7,13 @@ import sqlalchemy.orm.session as sa_session
 import sqlalchemize as sz
 from sqlalchemize.records import records_equal
 from setup_db import create_table
-from sqlalchemize.delete import delete_all_records, delete_all_records_session
+from sqlalchemize.delete import delete_all_records, delete_all_records_session, delete_records_session
 from sqlalchemize.select import select_records_all
 
 
 path = os.getcwd() + '/tests/data'
 #connection_string = f'sqlite:///{path}/test.db'
-connection_string = f'sqlite://:memory:'
+connection_string = f'sqlite://'
 
 
 class TestDelete(unittest.TestCase):
@@ -44,18 +44,19 @@ class TestDelete(unittest.TestCase):
         self.assertTrue(equal)
 
     def test_delete_records_session(self):
-        """
-        >>> session = session.Session(engine)
-        >>> delete_records_session(table, 'id', [1], session)
+        engine, table = create_table(connection_string)
+        session = sa_session.Session(engine)
+        delete_records_session(table, 'id', [1], session)
+        results = select_records_all(table, engine)
+        expected = [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
+        equal = records_equal(results, expected)
+        self.assertTrue(equal)
+        session.commit()
+        results = select_records_all(table, engine)
+        expected = [{'id': 2, 'x': 2, 'y': 4}]
+        equal = records_equal(results, expected)
+        self.assertTrue(equal)
 
-        >>> select_all_records(table)
-        [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
-
-        >>> session.commit()
-
-        >>> select_all_records(table)
-        [{'id': 2, 'x': 2, 'y': 4}]
-        """
 
 
 
