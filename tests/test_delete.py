@@ -12,7 +12,8 @@ from sqlalchemize.select import select_records_all
 
 
 path = os.getcwd() + '/tests/data'
-connection_string = f'sqlite:///{path}/test.db'
+#connection_string = f'sqlite:///{path}/test.db'
+connection_string = f'sqlite://:memory:'
 
 
 class TestDelete(unittest.TestCase):
@@ -41,6 +42,20 @@ class TestDelete(unittest.TestCase):
         expected = []
         equal = records_equal(results, expected)
         self.assertTrue(equal)
+
+    def test_delete_records_session(self):
+        """
+        >>> session = session.Session(engine)
+        >>> delete_records_session(table, 'id', [1], session)
+
+        >>> select_all_records(table)
+        [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
+
+        >>> session.commit()
+
+        >>> select_all_records(table)
+        [{'id': 2, 'x': 2, 'y': 4}]
+        """
 
 
 
