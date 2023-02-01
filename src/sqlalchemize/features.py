@@ -65,7 +65,7 @@ def get_class(
     Base = _sa_automap.automap_base(metadata=metadata)
     Base.prepare()
     if name not in Base.classes:
-        raise _types.MissingPrimaryKey()
+        raise _ex.MissingPrimaryKey()
     return Base.classes[name]
 
 

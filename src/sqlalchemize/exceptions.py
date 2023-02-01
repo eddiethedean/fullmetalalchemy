@@ -2,12 +2,13 @@ class ForceFail(Exception):
     pass
 
 
-class MissingPrimaryKey(Exception):
-    pass
-
-
 class SliceError(IndexError):
     pass
+
+
+class MissingPrimaryKey(Exception):
+    def __init__(self, message='Table must have primary key. Use alterize.create_primary_key to add a primary key to your table.', errors=None):
+        super().__init__(message, errors)
 
 
 def rollback_on_exception(method):
@@ -26,3 +27,5 @@ def check_for_engine(sa_table, engine):
     if engine is None:
         raise ValueError('sa_table must be bound to engine or pass engine parameter.')
     return engine
+
+
