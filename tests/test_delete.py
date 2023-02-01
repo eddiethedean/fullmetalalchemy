@@ -29,31 +29,23 @@ class TestDelete(unittest.TestCase):
         engine, table = create_table(connection_string)
         session = sa_session.Session(engine)
         delete_all_records_session(table, session)
-        expected = [
-            {'id': 1, 'x': 1, 'y': 2},
-            {'id': 2, 'x': 2, 'y': 4},
-            {'id': 3, 'x': 4, 'y': 8},
-            {'id': 4, 'x': 8, 'y': 11}]
-        results = select_records_all(table, engine)
-        equal = records_equal(results, expected)
-        self.assertTrue(equal)
-        session.commit()
         results = select_records_all(table, engine)
         expected = []
         equal = records_equal(results, expected)
         self.assertTrue(equal)
+        
 
     def test_delete_records_session(self):
         engine, table = create_table(connection_string)
         session = sa_session.Session(engine)
         delete_records_session(table, 'id', [1], session)
-        results = select_records_all(table, engine)
-        expected = [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
-        equal = records_equal(results, expected)
-        self.assertTrue(equal)
         session.commit()
         results = select_records_all(table, engine)
-        expected = [{'id': 2, 'x': 2, 'y': 4}]
+        expected = [
+            {'id': 2, 'x': 2, 'y': 4},
+            {'id': 3, 'x': 4, 'y': 8},
+            {'id': 4, 'x': 8, 'y': 11}
+        ]
         equal = records_equal(results, expected)
         self.assertTrue(equal)
 

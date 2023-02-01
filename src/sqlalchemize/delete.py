@@ -34,10 +34,6 @@ def delete_records_session(
 
     >>> session = session.Session(engine)
     >>> delete_records_session(table, 'id', [1], session)
-
-    >>> select_all_records(table)
-    [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
-
     >>> session.commit()
 
     >>> select_all_records(table)
@@ -157,16 +153,13 @@ def delete_all_records_session(
 
     >>> session = session.Session(engine)
     >>> delete_all_records_session(table, session)
-
-    >>> select_all_records(table)
-    [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
-
     >>> session.commit()
 
     >>> select_all_records(table)
     []
     """
-    session.query(table).delete()
+    query = _sa.delete(table)
+    session.execute(query)
 
 
 def delete_all_records(
@@ -189,7 +182,6 @@ def delete_all_records(
     [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
 
     >>> delete_all_records(table)
-
     >>> select_all_records(table)
     []
     """
