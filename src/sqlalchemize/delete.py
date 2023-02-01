@@ -91,8 +91,8 @@ def delete_records(
 
 def delete_records_by_values(
     sa_table: _sa.Table,
-    engine: _sa.engine.Engine,
-    records: _t.List[dict]
+    records: _t.List[dict],
+    engine: _t.Optional[_sa.engine.Engine] = None
 ) -> None:
     """
     Example
@@ -112,11 +112,12 @@ def delete_records_by_values(
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
 
-    >>> delete_records_by_values(table, engine, [{'id': 3}, {'x': 2}])
+    >>> delete_records_by_values(table, [{'id': 3}, {'x': 2}], engine)
     >>> select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 4, 'x': 8, 'y': 11}]
     """
+    engine = _ex.check_for_engine(sa_table, engine)
     session = _sa_session.Session(engine)
     try:
         delete_records_by_values_session(sa_table, records, session)

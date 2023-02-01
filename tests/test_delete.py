@@ -58,7 +58,7 @@ class TestDelete(unittest.TestCase):
 
     def test_delete_records_by_values(self):
         engine, table = create_table(connection_string)
-        delete_records_by_values(table, engine, [{'id': 3}, {'x': 2}])
+        delete_records_by_values(table, [{'id': 3}, {'x': 2}], engine)
         results = select_records_all(table, engine)
         expected = [{'id': 1, 'x': 1, 'y': 2},
                     {'id': 4, 'x': 8, 'y': 11}]

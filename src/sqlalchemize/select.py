@@ -11,7 +11,7 @@ import sqlalchemize.exceptions as _ex
 
 def select_records_all(
     sa_table: _sa.Table,
-    connection: _t.Optional[_types.SqlConnection],
+    connection: _t.Optional[_types.SqlConnection] = None,
     sorted: bool = False,
     include_columns: _t.Optional[_t.Sequence[str]] = None
 ) ->  _t.List[_types.Record]:
@@ -30,7 +30,7 @@ def select_records_all(
 
 def select_records_chunks(
     sa_table: _sa.Table,
-    connection: _t.Optional[_types.SqlConnection],
+    connection: _t.Optional[_types.SqlConnection] = None,
     chunksize: int = 2,
     sorted: bool = False,
     include_columns: _t.Optional[_t.Sequence[str]] = None
@@ -51,21 +51,23 @@ def select_records_chunks(
 
 def select_existing_values(
     sa_table: _sa.Table,
-    connection: _types.SqlConnection,
     column_name: str,
     values: _t.Sequence,
+    connection: _t.Optional[_types.SqlConnection] = None
 ) -> list:
     column = _features.get_column(sa_table, column_name)
     query = _sa.select([column]).where(column.in_(values))
+    connection = _ex.check_for_engine(sa_table, connection)
     return connection.execute(query).scalars().fetchall()
 
 
 def select_column_values_all(
     sa_table: _sa.Table,
-    connection: _types.SqlConnection,
-    column_name: str
+    column_name: str,
+    connection: _t.Optional[_types.SqlConnection] = None
 ) -> list:
     query = _sa.select(_features.get_column(sa_table, column_name))
+    connection = _ex.check_for_engine(sa_table, connection)
     return connection.execute(query).scalars().all()
 
 

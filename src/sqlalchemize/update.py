@@ -26,8 +26,9 @@ def update_matching_records(
     sa_table: _sa.Table,
     records: _typing.Sequence[_types.Record],
     match_column_names: _typing.Sequence[str],
-    engine: _sa_engine.Engine
+    engine: _typing.Optional[_sa_engine.Engine] = None
 ) -> None:
+    engine = _ex.check_for_engine(sa_table, engine)
     session = _sa_session.Session(engine)
     try:
         update_matching_records_session(sa_table, records, match_column_names, session)
@@ -109,8 +110,9 @@ def set_column_values(
     table: _sa.Table,
     column_name: str,
     value: _typing.Any,
-    engine: _sa_engine.Engine
+    engine: _typing.Optional[_sa_engine.Engine] = None
 ) -> None:
+    engine = _ex.check_for_engine(table, engine)
     session = _sa_session.Session(engine)
     try:
         set_column_values_session(table, column_name, value, session)
