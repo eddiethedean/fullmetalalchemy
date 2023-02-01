@@ -140,6 +140,32 @@ def delete_records_by_values_session(
     records: _t.Sequence[_types.Record],
     session: _sa_session.Session
 ) -> None:
+    """
+    Example
+    -------
+    >>> import sqlalchemy as sa
+    >>> import sqlalchemy.orm.session as session
+    >>> from sqlalchemize.test_setup import create_test_table, insert_test_records
+    >>> from sqlalchmize.delete import delete_records_by_values_session
+    >>> from sqlalchmize.select import select_records_all
+
+    >>> engine = sa.create_engine('data/sqlite:///test.db')
+    >>> table = create_test_table(engine)
+    >>> insert_test_records(table)
+
+    >>> select_records_all(table)
+    [{'id': 1, 'x': 1, 'y': 2},
+     {'id': 2, 'x': 2, 'y': 4},
+     {'id': 3, 'x': 4, 'y': 8},
+     {'id': 4, 'x': 8, 'y': 11}]
+
+    >>> session = session.Session(engine)
+    >>> delete_records_by_values_session(table, [{'id': 3}, {'x': 2}], session)
+    >>> session.commit()
+    >>> select_records_all(table)
+    [{'id': 1, 'x': 1, 'y': 2},
+     {'id': 4, 'x': 8, 'y': 11}]
+    """
     for record in records:
         delete_record_by_values_session(sa_table, record, session)
 
@@ -174,21 +200,21 @@ def delete_all_records_session(
     >>> import sqlalchemy as sa
     >>> import sqlalchemy.orm.session as session
     >>> from sqlalchemize.test_setup import create_test_table, insert_test_records
-    >>> from sqlalchmize.select import select_all_records
+    >>> from sqlalchmize.select import select_records_all
     >>> from sqlalchmize.delete import delete_all_records_session
 
     >>> engine = sa.create_engine('data/sqlite:///test.db')
     >>> table = create_test_table(engine)
     >>> insert_test_records(table)
 
-    >>> select_all_records(table)
+    >>> select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
 
     >>> session = session.Session(engine)
     >>> delete_all_records_session(table, session)
     >>> session.commit()
 
-    >>> select_all_records(table)
+    >>> select_records_all(table)
     []
     """
     query = _sa.delete(table)
@@ -204,18 +230,18 @@ def delete_all_records(
     -------
     >>> import sqlalchemy as sa
     >>> from sqlalchemize.test_setup import create_test_table, insert_test_records
-    >>> from sqlalchmize.select import select_all_records
+    >>> from sqlalchmize.select import select_records_all
     >>> from sqlalchmize.delete import delete_all_records
 
     >>> engine = sa.create_engine('data/sqlite:///test.db')
     >>> table = create_test_table(engine)
     >>> insert_test_records(table)
 
-    >>> select_all_records(table)
+    >>> select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
 
     >>> delete_all_records(table)
-    >>> select_all_records(table)
+    >>> select_records_all(table)
     []
     """
     engine = _ex.check_for_engine(sa_table, engine)
