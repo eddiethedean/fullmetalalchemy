@@ -29,7 +29,7 @@ def update_matching_records(
     engine: _typing.Optional[_sa_engine.Engine] = None
 ) -> None:
     engine = _ex.check_for_engine(sa_table, engine)
-    session = _sa_session.Session(engine)
+    session = _features.get_session(engine)
     try:
         update_matching_records_session(sa_table, records, match_column_names, session)
         session.commit()
@@ -78,7 +78,7 @@ def update_records(
     match_column_names: _typing.Optional[_typing.Sequence[str]] = None,
 ) -> None:
     engine = _ex.check_for_engine(sa_table, engine)
-    session = _sa_session.Session(engine)
+    session = _features.get_session(engine)
     try:
         update_records_session(sa_table, records, session, match_column_names)
         session.commit()
@@ -113,7 +113,7 @@ def set_column_values(
     engine: _typing.Optional[_sa_engine.Engine] = None
 ) -> None:
     engine = _ex.check_for_engine(table, engine)
-    session = _sa_session.Session(engine)
+    session = _features.get_session(engine)
     try:
         set_column_values_session(table, column_name, value, session)
         session.commit()

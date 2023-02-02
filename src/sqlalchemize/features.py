@@ -14,6 +14,9 @@ import sqlalchemize.select as _select
 def primary_key_columns(
     sa_table: _sa.Table
 ) ->  _t.List[_sa.Column]:
+    """
+    
+    """
     return list(sa_table.primary_key.columns)
 
 
@@ -67,6 +70,12 @@ def get_class(
     if name not in Base.classes:
         raise _ex.MissingPrimaryKey()
     return Base.classes[name]
+
+
+def get_session(
+    engine: _sa_engine.Engine
+) -> _sa_session.Session:
+    return _sa_session.Session(engine)
 
 
 def get_column(

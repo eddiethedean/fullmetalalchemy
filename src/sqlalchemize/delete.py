@@ -19,23 +19,17 @@ def delete_records_session(
     """
     Example
     -------
-    >>> import sqlalchemy as sa
-    >>> import sqlalchemy.orm.session as session
-    >>> from sqlalchemize.test_setup import create_test_table, insert_test_records
-    >>> from sqlalchmize.select import select_records_all
-    >>> from sqlalchmize.delete import delete_records_session
+    >>> import sqlalchemy as sz
 
-    >>> engine = sa.create_engine('data/sqlite:///test.db')
-    >>> table = create_test_table(engine)
-    >>> insert_test_records(table)
-
-    >>> select_records_all(table)
+    >>> engine = sz.create.create_engine('data/sqlite:///test.db')
+    >>> table = sz.features.get_table('xy', engine)
+    >>> sz.select.select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
 
-    >>> session = session.Session(engine)
+    >>> session = sz.features.get_session(engine)
     >>> delete_records_session(table, 'id', [1], session)
     >>> session.commit()
 
@@ -80,7 +74,7 @@ def delete_records(
      {'id': 4, 'x': 8, 'y': 11}]
     """
     engine = _ex.check_for_engine(sa_table, engine)
-    session = _sa_session.Session(engine)
+    session = _features.get_session(engine)
     delete_records_session(sa_table, col_name, values, session)
     try:
         session.commit()
@@ -118,7 +112,7 @@ def delete_records_by_values(
      {'id': 4, 'x': 8, 'y': 11}]
     """
     engine = _ex.check_for_engine(sa_table, engine)
-    session = _sa_session.Session(engine)
+    session = _features.get_session(engine)
     try:
         delete_records_by_values_session(sa_table, records, session)
         session.commit()
@@ -246,7 +240,7 @@ def delete_all_records(
     []
     """
     engine = _ex.check_for_engine(sa_table, engine)
-    session = _sa_session.Session(engine)
+    session = _features.get_session(engine)
     try:
         delete_all_records_session(sa_table, session)
         session.commit()

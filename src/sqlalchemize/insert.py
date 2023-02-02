@@ -24,7 +24,7 @@ def insert_from_table(
 ) -> None:
     """neither table needs primary key"""
     engine = _ex.check_for_engine(sa_table1, engine)
-    session = sa_session.Session(engine)
+    session = _features.get_session(engine)
     try:
         insert_from_table_session(sa_table1, sa_table2, session)
         session.commit()
@@ -50,7 +50,7 @@ def insert_records(
     engine: _t.Optional[sa_engine.Engine] = None
 ) -> None:
     engine = _ex.check_for_engine(sa_table, engine)
-    session = sa_session.Session(engine)
+    session = _features.get_session(engine)
     try:
         insert_records_session(sa_table, records, session)
         session.commit()
@@ -68,7 +68,7 @@ def insert_records_fast(
     if _features.missing_primary_key(sa_table):
         raise _ex.MissingPrimaryKey()
     engine = _ex.check_for_engine(sa_table, engine)
-    session = sa_session.Session(engine)
+    session = _features.get_session(engine)
     try:
         insert_records_fast_session(sa_table, records, session)
         session.commit()
@@ -106,7 +106,7 @@ def insert_records_slow(
 ) -> None:
     """Slow insert does not need primary key."""
     engine = _ex.check_for_engine(sa_table, engine)
-    session = sa_session.Session(engine)
+    session = _features.get_session(engine)
     try:
         insert_records_slow_session(sa_table, records, session)
         session.commit()
