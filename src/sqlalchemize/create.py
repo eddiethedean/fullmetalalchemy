@@ -36,7 +36,7 @@ def create_table(
     -------
     >>> import sqlalchemize as sz
     >>> engine = sz.create_engine('sqlite:///data/test.db')
-    >>> sz.features.get_table_names(engine)
+    >>> sz.get_table_names(engine)
     []
     >>> sz.create.create_table(
     ...         table_name='xy',
@@ -48,7 +48,7 @@ def create_table(
     ...         Column('id', INTEGER(), table=<xy>, primary_key=True, nullable=False),
     ...         Column('x', INTEGER(), table=<xy>),
     ...         Column('y', INTEGER(), table=<xy>), schema=None)
-     >>> sz.features.get_table_names(engine)
+     >>> sz.get_table_names(engine)
      ['xy']
     """
     cols = []
@@ -98,7 +98,7 @@ def create_table_from_records(
     -------
     >>> import sqlalchemize as sz
     >>> engine = sz.create_engine('sqlite:///data/test.db')
-    >>> sz.features.get_table_names(engine)
+    >>> sz.get_table_names(engine)
     []
     >>> records = [
     ...        {'id': 1, 'x': 1, 'y': 2},
@@ -115,7 +115,7 @@ def create_table_from_records(
     ...         Column('id', INTEGER(), table=<xy>, primary_key=True, nullable=False),
     ...         Column('x', INTEGER(), table=<xy>),
     ...         Column('y', INTEGER(), table=<xy>), schema=None)
-     >>> sz.features.get_table_names(engine)
+     >>> sz.get_table_names(engine)
      ['xy']
     """
     data = _row_dicts_to_data(records, columns, missing_value)

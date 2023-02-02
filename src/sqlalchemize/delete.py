@@ -21,8 +21,8 @@ def delete_records_session(
     -------
     >>> import sqlalchemy as sz
 
-    >>> engine = sz.create.create_engine('data/sqlite:///test.db')
-    >>> table = sz.features.get_table('xy', engine)
+    >>> engine = sz.create_engine('data/sqlite:///test.db')
+    >>> table = sz.get_table('xy', engine)
     >>> sz.select.select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 2, 'x': 2, 'y': 4},
@@ -32,8 +32,7 @@ def delete_records_session(
     >>> session = sz.features.get_session(engine)
     >>> delete_records_session(table, 'id', [1], session)
     >>> session.commit()
-
-    >>> select_records_all(table)
+    >>> sz.select.select_records_all(table)
     [{'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
@@ -51,24 +50,18 @@ def delete_records(
     """
     Example
     -------
-    >>> import sqlalchemy as sa
-    >>> from sqlalchemize.test_setup import create_test_table, insert_test_records
-    >>> from sqlalchmize.delete import delete_records
-    >>> from sqlalchmize.select import select_records_all
+    >>> import sqlalchemy as sz
 
-    >>> engine = sa.create_engine('data/sqlite:///test.db')
-    >>> table = create_test_table(engine)
-    >>> insert_test_records(table)
-
-    >>> select_records_all(table)
+    >>> engine = sz.create_engine('data/sqlite:///test.db')
+    >>> table = sz.get_table('xy', engine)
+    >>> sz.select.select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
-
-    >>> delete_records(table, 'id', [1])
-
-    >>> select_records_all(table)
+     
+    >>> sz.delete.delete_records(table, 'id', [1])
+    >>> sz.select.select_records_all(table)
     [{'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
@@ -91,23 +84,18 @@ def delete_records_by_values(
     """
     Example
     -------
-    >>> import sqlalchemy as sa
-    >>> from sqlalchemize.test_setup import create_test_table, insert_test_records
-    >>> from sqlalchmize.delete import delete_records_by_values
-    >>> from sqlalchmize.select import select_records_all
+    >>> import sqlalchemy as sz
 
-    >>> engine = sa.create_engine('data/sqlite:///test.db')
-    >>> table = create_test_table(engine)
-    >>> insert_test_records(table)
-
-    >>> select_records_all(table)
+    >>> engine = sz.create_engine('data/sqlite:///test.db')
+    >>> table = sz.get_table('xy', engine)
+    >>> sz.select.select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
 
-    >>> delete_records_by_values(table, [{'id': 3}, {'x': 2}], engine)
-    >>> select_records_all(table)
+    >>> sz.delete.delete_records_by_values(table, [{'id': 3}, {'x': 2}], engine)
+    >>> sz.select.select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 4, 'x': 8, 'y': 11}]
     """
@@ -138,26 +126,20 @@ def delete_records_by_values_session(
     """
     Example
     -------
-    >>> import sqlalchemy as sa
-    >>> import sqlalchemy.orm.session as session
-    >>> from sqlalchemize.test_setup import create_test_table, insert_test_records
-    >>> from sqlalchmize.delete import delete_records_by_values_session
-    >>> from sqlalchmize.select import select_records_all
+    >>> import sqlalchemy as sz
 
     >>> engine = sa.create_engine('data/sqlite:///test.db')
-    >>> table = create_test_table(engine)
-    >>> insert_test_records(table)
-
+    >>> table = sz.get_table('xy', engine)
     >>> select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
 
-    >>> session = session.Session(engine)
-    >>> delete_records_by_values_session(table, [{'id': 3}, {'x': 2}], session)
+    >>> session = sz.features.get_session(engine)
+    >>> sz.delete.delete_records_by_values_session(table, [{'id': 3}, {'x': 2}], session)
     >>> session.commit()
-    >>> select_records_all(table)
+    >>> sz.select.select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 4, 'x': 8, 'y': 11}]
     """
@@ -192,24 +174,17 @@ def delete_all_records_session(
     """
     Example
     -------
-    >>> import sqlalchemy as sa
-    >>> import sqlalchemy.orm.session as session
-    >>> from sqlalchemize.test_setup import create_test_table, insert_test_records
-    >>> from sqlalchmize.select import select_records_all
-    >>> from sqlalchmize.delete import delete_all_records_session
+    >>> import sqlalchemy as sz
 
     >>> engine = sa.create_engine('data/sqlite:///test.db')
-    >>> table = create_test_table(engine)
-    >>> insert_test_records(table)
-
-    >>> select_records_all(table)
+    >>> table = sz.get_table('xy', engine)
+    >>> sz.select.select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
 
-    >>> session = session.Session(engine)
-    >>> delete_all_records_session(table, session)
+    >>> session = sz.features.get_session(engine)
+    >>> sz.delete.delete_all_records_session(table, session)
     >>> session.commit()
-
-    >>> select_records_all(table)
+    >>> sz.select.select_records_all(table)
     []
     """
     query = _sa.delete(table)
@@ -223,20 +198,15 @@ def delete_all_records(
     """
     Example
     -------
-    >>> import sqlalchemy as sa
-    >>> from sqlalchemize.test_setup import create_test_table, insert_test_records
-    >>> from sqlalchmize.select import select_records_all
-    >>> from sqlalchmize.delete import delete_all_records
+    >>> import sqlalchemy as sz
 
     >>> engine = sa.create_engine('data/sqlite:///test.db')
-    >>> table = create_test_table(engine)
-    >>> insert_test_records(table)
-
-    >>> select_records_all(table)
+    >>> table = sz.get_table('xy', engine)
+    >>> sz.select.select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
 
-    >>> delete_all_records(table)
-    >>> select_records_all(table)
+    >>> sz.delete.delete_all_records(table)
+    >>> sz.select.select_records_all(table)
     []
     """
     engine = _ex.check_for_engine(sa_table, engine)

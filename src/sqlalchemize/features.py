@@ -56,6 +56,16 @@ def get_table(
                  schema=schema)
 
 
+def get_engine_table(
+    connection_string: str,
+    table_name: str,
+    schema: _t.Optional[str] = None
+) -> _t.Tuple[_sa_engine.Engine, _sa.Table]:
+    engine = _sa.create_engine(connection_string)
+    table = get_table(table_name, engine, schema)
+    return engine, table
+
+
 def get_class(
     name: str,
     connection: _t.Union[_types.SqlConnection, _sa_session.Session],
