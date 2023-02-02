@@ -14,6 +14,23 @@ def drop_table(
     if_exists: bool = True,
     schema: _t.Optional[str] = None
 ) -> None:
+    """
+    Example
+    -------
+    >>> import sqlalchemy as sa
+    >>> from sqlalchemize.test_setup import create_test_table
+    >>> from sqlalchemize.features import get_table_names
+    >>> from sqlalchemize.drop import drop_table
+
+    >>> engine = sa.create_engine('data/sqlite:///test.db')
+    >>> table = create_test_table(engine)
+    >>> get_table_names(engine)
+    ['xy']
+
+    >>> drop_table(table, engine)
+    >>> get_table_names(engine)
+    []
+    """
     if isinstance(table, str):
         if table not in _sa.inspect(engine).get_table_names(schema=schema):
             if if_exists:
