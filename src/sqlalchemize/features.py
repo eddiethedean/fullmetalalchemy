@@ -8,8 +8,6 @@ from sqlalchemy.orm.decl_api import DeclarativeMeta as _DeclarativeMeta
 
 import sqlalchemize.types as _types
 import sqlalchemize.exceptions as _ex
-import sqlalchemize.records as _records
-import sqlalchemize.select as _select
 
 
 def primary_key_columns(
@@ -337,6 +335,14 @@ def tables_metadata_equal(
 ) -> bool:
     """
     Check if two sql tables have the same metadata.
+
+    Example
+    -------
+    >>> import sqlalchemize as sz
+
+    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> sz.features.tables_metadata_equal(table, table)
+    True
     """
     if sa_table1.name != sa_table2.name: return False
 
