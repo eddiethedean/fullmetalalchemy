@@ -17,18 +17,14 @@ def drop_table(
     """
     Example
     -------
-    >>> import sqlalchemy as sa
-    >>> from sqlalchemize.test_setup import create_test_table
-    >>> from sqlalchemize.features import get_table_names
-    >>> from sqlalchemize.drop import drop_table
+    >>> import sqlalchemize as sz
 
-    >>> engine = sa.create_engine('data/sqlite:///test.db')
-    >>> table = create_test_table(engine)
-    >>> get_table_names(engine)
+    >>> engine, table = sz.get_engine_table('sqlite:///test.db', 'xy')
+    >>> sz.get_table_names(engine)
     ['xy']
 
-    >>> drop_table(table, engine)
-    >>> get_table_names(engine)
+    >>> sz.drop.drop_table(table, engine)
+    >>> sz.get_table_names(engine)
     []
     """
     if isinstance(table, str):
