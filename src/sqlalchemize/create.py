@@ -13,6 +13,9 @@ from tinytim.data import column_names as _column_names
 import sqlalchemize.type_convert as _type_convert
 import sqlalchemize.features as _features
 import sqlalchemize.insert as _insert
+from sqlalchemize.features import get_session
+
+create_session = get_session
 
 _Record = _t.Dict[str, _t.Any]
 
@@ -35,6 +38,7 @@ def create_table(
     Example
     -------
     >>> import sqlalchemize as sz
+
     >>> engine = sz.create_engine('sqlite:///data/test.db')
     >>> sz.get_table_names(engine)
     []
@@ -97,6 +101,7 @@ def create_table_from_records(
     Example
     -------
     >>> import sqlalchemize as sz
+
     >>> engine = sz.create_engine('sqlite:///data/test.db')
     >>> sz.get_table_names(engine)
     []

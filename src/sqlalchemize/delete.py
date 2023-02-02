@@ -19,9 +19,9 @@ def delete_records_session(
     """
     Example
     -------
-    >>> import sqlalchemy as sz
+    >>> import sqlalchemize as sz
 
-    >>> engine, table = sz.get_engine_table('sqlite:///test.db', 'xy')
+    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
     >>> sz.select.select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 2, 'x': 2, 'y': 4},
@@ -49,9 +49,9 @@ def delete_records(
     """
     Example
     -------
-    >>> import sqlalchemy as sz
+    >>> import sqlalchemize as sz
 
-    >>> engine, table = sz.get_engine_table('sqlite:///test.db', 'xy')
+    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
     >>> sz.select.select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 2, 'x': 2, 'y': 4},
@@ -82,9 +82,9 @@ def delete_records_by_values(
     """
     Example
     -------
-    >>> import sqlalchemy as sz
+    >>> import sqlalchemize as sz
 
-    >>> engine, table = sz.get_engine_table('sqlite:///test.db', 'xy')
+    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
     >>> sz.select.select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 2, 'x': 2, 'y': 4},
@@ -123,9 +123,9 @@ def delete_records_by_values_session(
     """
     Example
     -------
-    >>> import sqlalchemy as sz
+    >>> import sqlalchemize as sz
 
-    >>> engine, table = sz.get_engine_table('sqlite:///test.db', 'xy')
+    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
     >>> select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 2, 'x': 2, 'y': 4},
@@ -170,9 +170,9 @@ def delete_all_records_session(
     """
     Example
     -------
-    >>> import sqlalchemy as sz
+    >>> import sqlalchemize as sz
 
-    >>> engine, table = sz.get_engine_table('sqlite:///test.db', 'xy')
+    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
     >>> sz.select.select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
 
@@ -193,9 +193,9 @@ def delete_all_records(
     """
     Example
     -------
-    >>> import sqlalchemy as sz
+    >>> import sqlalchemize as sz
 
-    >>> engine, table = sz.get_engine_table('sqlite:///test.db', 'xy')
+    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
     >>> sz.select.select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2}, {'id': 2, 'x': 2, 'y': 4}]
 
