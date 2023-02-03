@@ -1,4 +1,4 @@
-import typing as _typing
+import typing as _t
 
 import sqlalchemy as _sa
 import sqlalchemy.orm.session as _sa_session
@@ -12,8 +12,8 @@ import sqlalchemize.exceptions as _ex
 
 def update_matching_records_session(
     sa_table: _sa.Table,
-    records: _typing.Sequence[_types.Record],
-    match_column_names: _typing.Sequence[str],
+    records: _t.Sequence[_types.Record],
+    match_column_names: _t.Sequence[str],
     session: _sa_session.Session
 ) -> None:
     match_values = [_records.filter_record(record, match_column_names) for record in records]
@@ -24,9 +24,9 @@ def update_matching_records_session(
 
 def update_matching_records(
     sa_table: _sa.Table,
-    records: _typing.Sequence[_types.Record],
-    match_column_names: _typing.Sequence[str],
-    engine: _typing.Optional[_sa_engine.Engine] = None
+    records: _t.Sequence[_types.Record],
+    match_column_names: _t.Sequence[str],
+    engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
     engine = _ex.check_for_engine(sa_table, engine)
     session = _features.get_session(engine)
@@ -40,9 +40,9 @@ def update_matching_records(
 
 def update_records_session(
     sa_table: _sa.Table,
-    records: _typing.Sequence[_types.Record],
+    records: _t.Sequence[_types.Record],
     session: _sa_session.Session,
-    match_column_names: _typing.Optional[_typing.Sequence[str]] = None,
+    match_column_names: _t.Optional[_t.Sequence[str]] = None,
 ) -> None:
     if _features.missing_primary_key(sa_table):
         if match_column_names is None:
@@ -54,7 +54,7 @@ def update_records_session(
 
 def update_records_fast_session(
     sa_table: _sa.Table,
-    records: _typing.Sequence[_types.Record],
+    records: _t.Sequence[_types.Record],
     session: _sa_session.Session
 ) -> None:
     """Fast update needs primary key."""
@@ -73,9 +73,9 @@ def _make_update_statement(table, record_values, new_values):
 
 def update_records(
     sa_table: _sa.Table,
-    records: _typing.Sequence[_types.Record],
-    engine: _typing.Optional[_sa_engine.Engine] = None,
-    match_column_names: _typing.Optional[_typing.Sequence[str]] = None,
+    records: _t.Sequence[_types.Record],
+    engine: _t.Optional[_sa_engine.Engine] = None,
+    match_column_names: _t.Optional[_t.Sequence[str]] = None,
 ) -> None:
     engine = _ex.check_for_engine(sa_table, engine)
     session = _features.get_session(engine)
@@ -90,7 +90,7 @@ def update_records(
 def _make_update_statement_column_value(
     table: _sa.Table,
     column_name: str,
-    value: _typing.Any
+    value: _t.Any
 ):
     new_value = {column_name: value}
     return _sa.update(table).values(**new_value)
@@ -99,7 +99,7 @@ def _make_update_statement_column_value(
 def set_column_values_session(
     table: _sa.Table,
     column_name: str,
-    value: _typing.Any,
+    value: _t.Any,
     session: _sa_session.Session
 ) -> None:
     stmt = _make_update_statement_column_value(table, column_name, value)
@@ -109,8 +109,8 @@ def set_column_values_session(
 def set_column_values(
     table: _sa.Table,
     column_name: str,
-    value: _typing.Any,
-    engine: _typing.Optional[_sa_engine.Engine] = None
+    value: _t.Any,
+    engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
     engine = _ex.check_for_engine(table, engine)
     session = _features.get_session(engine)

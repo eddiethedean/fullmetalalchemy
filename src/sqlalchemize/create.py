@@ -151,3 +151,43 @@ def _column_datatype(values: _t.Iterable) -> type:
         return dtypes[0]
     return str
     
+def copy_table(
+    new_name: str,
+    sa_table: _sa.Table,
+    engine: _sa_engine.Engine,
+    if_exists: str = 'replace'
+) -> _sa.Table:
+    """
+    Create a copy of an existing table with new name.
+    """
+    src_engine = engine
+    dest_engine = engine
+    schema = sa_table.schema
+    src_name = sa_table.name
+    dest_schema = schema
+    dest_name = new_name
+
+    # reflect existing columns, and create table object for oldTable
+    src_engine._metadata = _sa.MetaData(bind=src_engine, schema=schema)  # type: ignore
+    src_engine._metadata.reflect(src_engine)  # type: ignore
+    
+    # get columns from existing table 
+    srcTable = _sa.Table(src_name, src_engine._metadata, schema=schema)  # type: ignore
+
+    # create engine and table object for newTable
+    dest_engine._metadata = _sa.MetaData(bind=dest_engine, schema=dest_schema)  # type: ignore
+    destTable = _sa.Table(dest_name, dest_engine._metadata, schema=dest_schema)  # type: ignore
+
+    if if_exists == 'replace':
+        drop_table_sql = _sa_schema.DropTable(destTable, if_exists=True)
+        with engine.connect() as con:
+            con.execute(drop_table_sql)
+
+    # copy schema and create newTable from oldTable
+    for column in srcTable.columns:
+        destTable.append_column(column.copy())
+    destTable.create()
+
+    # insert records from oldTable
+    _insert.insert_from_table(srcTable, destTable, engine)
+    return destTable
