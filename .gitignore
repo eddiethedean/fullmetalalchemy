@@ -1,7 +1,7 @@
 creds.py
 notebooks/
-src/sqlalchemize.egg-info/
-src/sqlalchemize/__pycache__/
+src/fullmetalalchemy.egg-info/
+src/fullmetalalchemy/__pycache__/
 dist/
 build/
 .vscode/

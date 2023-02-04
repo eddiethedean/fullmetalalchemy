@@ -4,9 +4,9 @@ import sqlalchemy as _sa
 import sqlalchemy.orm.session as _sa_session
 import sqlalchemy.engine as _sa_engine
 
-import sqlalchemize.types as _types
-import sqlalchemize.features as _features
-import sqlalchemize.exceptions as _ex
+import fullmetalalchemy.types as _types
+import fullmetalalchemy.features as _features
+import fullmetalalchemy.exceptions as _ex
 
 
 def insert_from_table_session(

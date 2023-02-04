@@ -3,10 +3,10 @@ import typing as _t
 import sqlalchemy as _sa
 import sqlalchemy.sql.elements as sa_elements
 
-import sqlalchemize.types as _types
-import sqlalchemize.features as _features
-import sqlalchemize.exceptions as exceptions
-import sqlalchemize.exceptions as _ex
+import fullmetalalchemy.types as _types
+import fullmetalalchemy.features as _features
+import fullmetalalchemy.exceptions as exceptions
+import fullmetalalchemy.exceptions as _ex
 
 
 def select_records_all(

@@ -10,10 +10,10 @@ from sqlalchemy import create_engine
 from tinytim.rows import row_dicts_to_data as _row_dicts_to_data
 from tinytim.data import column_names as _column_names
 
-import sqlalchemize.type_convert as _type_convert
-import sqlalchemize.features as _features
-import sqlalchemize.insert as _insert
-from sqlalchemize.features import get_session
+import fullmetalalchemy.type_convert as _type_convert
+import fullmetalalchemy.features as _features
+import fullmetalalchemy.insert as _insert
+from fullmetalalchemy.features import get_session
 
 create_session = get_session
 

@@ -4,8 +4,8 @@ import sqlalchemy as _sa
 import sqlalchemy.engine as _sa_engine
 import sqlalchemy.schema as _sa_schema
 
-import sqlalchemize.features as _features
-import sqlalchemize.exceptions as _ex
+import fullmetalalchemy.features as _features
+import fullmetalalchemy.exceptions as _ex
 
 
 def drop_table(

@@ -5,9 +5,9 @@ import sqlalchemy.engine as _sa_engine
 import sqlalchemy as _sa
 from hasattrs import has_iterable_attrs
 
-import sqlalchemize.features as _features
-import sqlalchemize.types as _types
-import sqlalchemize.select as _select
+import fullmetalalchemy.features as _features
+import fullmetalalchemy.types as _types
+import fullmetalalchemy.select as _select
 
 
 class BaseTable:

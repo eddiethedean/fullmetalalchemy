@@ -6,8 +6,8 @@ import sqlalchemy.ext.automap as _sa_automap
 import sqlalchemy.engine as _sa_engine
 from sqlalchemy.orm.decl_api import DeclarativeMeta as _DeclarativeMeta
 
-import sqlalchemize.types as _types
-import sqlalchemize.exceptions as _ex
+import fullmetalalchemy.types as _types
+import fullmetalalchemy.exceptions as _ex
 
 
 def primary_key_columns(

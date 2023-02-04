@@ -5,9 +5,9 @@ import sqlalchemy.engine as _sa_engine
 import sqlalchemy.orm.session as _sa_session
 from sqlalchemy.sql.expression import Select as _Select
 
-import sqlalchemize.features as _features
-import sqlalchemize.types as _types
-import sqlalchemize.exceptions as _ex
+import fullmetalalchemy.features as _features
+import fullmetalalchemy.types as _types
+import fullmetalalchemy.exceptions as _ex
 
 
 def delete_records_session(

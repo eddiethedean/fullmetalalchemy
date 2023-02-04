@@ -2,7 +2,7 @@ from typing import Tuple
 
 import sqlalchemy as sa
 
-from sqlalchemize.test_setup import create_test_table, insert_test_records
+from fullmetalalchemy.test_setup import create_test_table, insert_test_records
 
 Engine = sa.engine.Engine
 Table = sa.Table

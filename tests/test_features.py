@@ -6,9 +6,9 @@ from sqlalchemy.engine.base import Connection
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm.session import Session
 
-from sqlalchemize.features import get_class, get_table, primary_key_columns, primary_key_names
-from sqlalchemize.features import get_connection, get_session, get_metadata
-from sqlalchemize.features import get_engine_table
+from fullmetalalchemy.features import get_class, get_table, primary_key_columns, primary_key_names
+from fullmetalalchemy.features import get_connection, get_session, get_metadata
+from fullmetalalchemy.features import get_engine_table
 from tests.setup_db import create_table
 
 

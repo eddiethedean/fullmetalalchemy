@@ -1,9 +1,9 @@
 import unittest
 
-from sqlalchemize.records import records_equal
+from fullmetalalchemy.records import records_equal
 from setup_db import create_table
-from sqlalchemize.features import get_table_names
-from sqlalchemize.drop import drop_table
+from fullmetalalchemy.features import get_table_names
+from fullmetalalchemy.drop import drop_table
 
 
 connection_string = 'sqlite://'

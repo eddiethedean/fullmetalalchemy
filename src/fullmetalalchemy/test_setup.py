@@ -1,5 +1,5 @@
-from sqlalchemize.create import create_table
-from sqlalchemize.insert import insert_records
+from fullmetalalchemy.create import create_table
+from fullmetalalchemy.insert import insert_records
 
 
 def setup(engine):

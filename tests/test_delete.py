@@ -2,11 +2,11 @@ import unittest
 
 import sqlalchemy.orm.session as sa_session
 
-from sqlalchemize.records import records_equal
+from fullmetalalchemy.records import records_equal
 from setup_db import create_table
-from sqlalchemize.delete import delete_all_records, delete_all_records_session, delete_records
-from sqlalchemize.delete import delete_records_by_values_session, delete_records_by_values, delete_records_session
-from sqlalchemize.select import select_records_all
+from fullmetalalchemy.delete import delete_all_records, delete_all_records_session, delete_records
+from fullmetalalchemy.delete import delete_records_by_values_session, delete_records_by_values, delete_records_session
+from fullmetalalchemy.select import select_records_all
 
 
 connection_string = 'sqlite://'

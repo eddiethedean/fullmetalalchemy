@@ -3,13 +3,13 @@ import typing as _t
 
 import sqlalchemy.engine as _sa_engine
 import sqlalchemy as _sa
-from sqlalchemize.basetable import BaseTable
+from fullmetalalchemy.basetable import BaseTable
 
-import sqlalchemize.delete as _delete
-import sqlalchemize.features as _features
-import sqlalchemize.insert as _insert
-import sqlalchemize.update as _update
-import sqlalchemize.types as _types
+import fullmetalalchemy.delete as _delete
+import fullmetalalchemy.features as _features
+import fullmetalalchemy.insert as _insert
+import fullmetalalchemy.update as _update
+import fullmetalalchemy.types as _types
 
 
 class SessionTable(BaseTable):

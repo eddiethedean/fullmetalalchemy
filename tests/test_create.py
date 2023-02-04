@@ -2,10 +2,10 @@ import unittest
 import os
 
 import sqlalchemy as sa
-import sqlalchemize as sz
-from sqlalchemize.create import create_table, create_table_from_records
-from sqlalchemize.features import tables_metadata_equal
-from sqlalchemize.records import records_equal
+import fullmetalalchemy as sz
+from fullmetalalchemy.create import create_table, create_table_from_records
+from fullmetalalchemy.features import tables_metadata_equal
+from fullmetalalchemy.records import records_equal
 
 
 path = os.getcwd() + '/tests/data'

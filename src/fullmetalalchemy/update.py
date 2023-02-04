@@ -4,10 +4,10 @@ import sqlalchemy as _sa
 import sqlalchemy.orm.session as _sa_session
 import sqlalchemy.engine as _sa_engine
 
-import sqlalchemize.records as _records
-import sqlalchemize.types as _types
-import sqlalchemize.features as _features
-import sqlalchemize.exceptions as _ex
+import fullmetalalchemy.records as _records
+import fullmetalalchemy.types as _types
+import fullmetalalchemy.features as _features
+import fullmetalalchemy.exceptions as _ex
 
 
 def update_matching_records_session(

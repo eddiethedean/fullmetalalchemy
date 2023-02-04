@@ -2,13 +2,13 @@ from __future__ import annotations
 import typing as _t
 
 import sqlalchemy as _sa
-from sqlalchemize.basetable import BaseTable
+from fullmetalalchemy.basetable import BaseTable
 
-import sqlalchemize.delete as _delete
-import sqlalchemize.insert as _insert
-import sqlalchemize.update as _update
-import sqlalchemize.types as _types
-import sqlalchemize.drop as _drop
+import fullmetalalchemy.delete as _delete
+import fullmetalalchemy.insert as _insert
+import fullmetalalchemy.update as _update
+import fullmetalalchemy.types as _types
+import fullmetalalchemy.drop as _drop
 
 
 class Table(BaseTable):
