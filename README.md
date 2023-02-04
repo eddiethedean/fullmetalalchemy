@@ -1,13 +1,13 @@
-![FullMetalAlchemy Logo](https://raw.githubusercontent.com/eddiethedean/sqlalchemize/main/docs/sqllogo.png)
+![FullmetalAlchemy Logo](https://raw.githubusercontent.com/eddiethedean/sqlalchemize/main/docs/sqllogo.png)
 -----------------
 
-# FullMetalAlchemy: Easy to use functions for sql table changes
+# FullmetalAlchemy: Easy to use functions for sql table changes
 [![PyPI Latest Release](https://img.shields.io/pypi/v/fullmetalalchemy.svg)](https://pypi.org/project/fullmetalalchemy/)
 ![Tests](https://github.com/eddiethedean/fullmetalalchemy/actions/workflows/tests.yml/badge.svg)
 
 ## What is it?
 
-**FullMetalAlchemy** is a Python package with easy to use functions for inserting, deleting, updating, selecting sql tables.
+**FullmetalAlchemy** is a Python package with easy to use functions for inserting, deleting, updating, selecting sql tables.
 
 ## Where to get it
 The source code is currently hosted on GitHub at:
