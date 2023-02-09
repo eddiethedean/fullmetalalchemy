@@ -1,4 +1,4 @@
-![FullmetalAlchemy Logo](https://raw.githubusercontent.com/eddiethedean/sqlalchemize/main/docs/sqllogo.png)
+![FullmetalAlchemy Logo](https://raw.githubusercontent.com/eddiethedean/fullmetalalchemy/main/docs/sqllogo.png)
 -----------------
 
 # FullmetalAlchemy: Easy to use functions for sql table changes
@@ -29,7 +29,7 @@ import fullmetalalchemy as fa
 # Create SqlAlchemy engine to connect to database.
 engine = fa.create_engine('sqlite:///foo.db')
 
-# Get a sqlalchemy table to pass to sqlalchemize functions
+# Get a sqlalchemy table to pass to FullmetalAlchemy functions
 table = fa.features.get_table('xy', engine)
 
 # Select records
