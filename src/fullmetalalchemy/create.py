@@ -37,12 +37,12 @@ def create_table(
     
     Example
     -------
-    >>> import sqlalchemize as sz
+    >>> import fullmetalalchemy as fa
 
-    >>> engine = sz.create_engine('sqlite:///data/test.db')
-    >>> sz.get_table_names(engine)
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> fa.get_table_names(engine)
     []
-    >>> sz.create.create_table(
+    >>> fa.create.create_table(
     ...         table_name='xy',
     ...         column_names=['id', 'x', 'y'],
     ...         column_types=[int, int, int],
@@ -52,7 +52,7 @@ def create_table(
     ...         Column('id', INTEGER(), table=<xy>, primary_key=True, nullable=False),
     ...         Column('x', INTEGER(), table=<xy>),
     ...         Column('y', INTEGER(), table=<xy>), schema=None)
-     >>> sz.get_table_names(engine)
+     >>> fa.get_table_names(engine)
      ['xy']
     """
     cols = []
@@ -100,17 +100,17 @@ def create_table_from_records(
     
     Example
     -------
-    >>> import sqlalchemize as sz
+    >>> import fullmetalalchemy as fa
 
-    >>> engine = sz.create_engine('sqlite:///data/test.db')
-    >>> sz.get_table_names(engine)
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> fa.get_table_names(engine)
     []
     >>> records = [
     ...        {'id': 1, 'x': 1, 'y': 2},
     ...        {'id': 2, 'x': 2, 'y': 4},
     ...        {'id': 3, 'x': 4, 'y': 8},
     ...        {'id': 4, 'x': 8, 'y': 11}]
-    >>> sz.create.create_table_from_records(
+    >>> fa.create.create_table_from_records(
     ...         table_name='xy',
     ...         records=records,
     ...         primary_key=['id'],
@@ -120,7 +120,7 @@ def create_table_from_records(
     ...         Column('id', INTEGER(), table=<xy>, primary_key=True, nullable=False),
     ...         Column('x', INTEGER(), table=<xy>),
     ...         Column('y', INTEGER(), table=<xy>), schema=None)
-     >>> sz.get_table_names(engine)
+     >>> fa.get_table_names(engine)
      ['xy']
     """
     data = _row_dicts_to_data(records, columns, missing_value)

@@ -17,6 +17,15 @@ def create_test_table(engine):
                         if_exists='replace')
 
 
+def create_second_test_table(engine):
+    return create_table(table_name='xyz',
+                        column_names=['id', 'x', 'y', 'z'],
+                        column_types=[int, int, int, int],
+                        primary_key='id',
+                        engine=engine,
+                        if_exists='replace')
+
+
 def insert_test_records(table, engine):
     records = [
             {'id': 1, 'x': 1, 'y': 2},

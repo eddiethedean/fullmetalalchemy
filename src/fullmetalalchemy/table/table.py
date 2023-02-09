@@ -2,7 +2,7 @@ from __future__ import annotations
 import typing as _t
 
 import sqlalchemy as _sa
-from fullmetalalchemy.basetable import BaseTable
+from fullmetalalchemy.table.basetable import BaseTable
 
 import fullmetalalchemy.delete as _delete
 import fullmetalalchemy.insert as _insert
