@@ -19,7 +19,7 @@ def insert_from_table_session(
 
     Example
     -------
-    >>> import fulmetalalchemy as fa
+    >>> import fullmetalalchemy as fa
 
     >>> engine = fa.create_engine('sqlite:///data/test.db')
     >>> table1 = fa.features.get_table('xy', engine)

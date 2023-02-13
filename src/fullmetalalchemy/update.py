@@ -16,6 +16,23 @@ def update_matching_records_session(
     match_column_names: _t.Sequence[str],
     session: _sa_session.Session
 ) -> None:
+    """
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> table = fa.features.get_table('xy', engine)
+    >>> updated_records = [{'id': 1, 'x': 11}, {'id': 4, 'y': 111}]
+    >>> session = fa.features.get_session(engine)
+    >>> fa.update.update_matching_records_session(table, updated_records, ['id'], session)
+    >>> session.commit()
+    >>> fa.select.select_records_all(table)
+    [{'id': 1, 'x': 11, 'y': 2},
+    ... {'id': 2, 'x': 2, 'y': 4},
+    ... {'id': 3, 'x': 4, 'y': 8},
+    ... {'id': 4, 'x': 8, 'y': 111}]
+    """
     match_values = [_records.filter_record(record, match_column_names) for record in records]
     for values, record in zip(match_values, records):
         stmt = _make_update_statement(sa_table, values, record)
@@ -28,6 +45,21 @@ def update_matching_records(
     match_column_names: _t.Sequence[str],
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
+    """
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> table = fa.features.get_table('xy', engine)
+    >>> updated_records = [{'id': 1, 'x': 11}, {'id': 4, 'y': 111}]
+    >>> fa.update.update_matching_records(table, updated_records, ['id'], engine)
+    >>> fa.select.select_records_all(table)
+    [{'id': 1, 'x': 11, 'y': 2},
+    ... {'id': 2, 'x': 2, 'y': 4},
+    ... {'id': 3, 'x': 4, 'y': 8},
+    ... {'id': 4, 'x': 8, 'y': 111}]
+    """
     engine = _ex.check_for_engine(sa_table, engine)
     session = _features.get_session(engine)
     try:
@@ -44,6 +76,23 @@ def update_records_session(
     session: _sa_session.Session,
     match_column_names: _t.Optional[_t.Sequence[str]] = None,
 ) -> None:
+    """
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> table = fa.features.get_table('xy', engine)
+    >>> updated_records = [{'id': 1, 'x': 11}, {'id': 4, 'y': 111}]
+    >>> session = fa.features.get_session(engine)
+    >>> fa.update.update_records_session(table, updated_records, session)
+    >>> session.commit()
+    >>> fa.select.select_records_all(table)
+    [{'id': 1, 'x': 11, 'y': 2},
+    ... {'id': 2, 'x': 2, 'y': 4},
+    ... {'id': 3, 'x': 4, 'y': 8},
+    ... {'id': 4, 'x': 8, 'y': 111}]
+    """
     if _features.missing_primary_key(sa_table):
         if match_column_names is None:
             raise ValueError('Must provide match_column_names if table has no primary key.')
@@ -58,6 +107,21 @@ def update_records(
     engine: _t.Optional[_sa_engine.Engine] = None,
     match_column_names: _t.Optional[_t.Sequence[str]] = None,
 ) -> None:
+    """
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> table = fa.features.get_table('xy', engine)
+    >>> updated_records = [{'id': 1, 'x': 11}, {'id': 4, 'y': 111}]
+    >>> fa.update.update_records(table, updated_records, engine)
+    >>> fa.select.select_records_all(table)
+    [{'id': 1, 'x': 11, 'y': 2},
+    ... {'id': 2, 'x': 2, 'y': 4},
+    ... {'id': 3, 'x': 4, 'y': 8},
+    ... {'id': 4, 'x': 8, 'y': 111}]
+    """
     engine = _ex.check_for_engine(sa_table, engine)
     session = _features.get_session(engine)
     try:
@@ -102,8 +166,25 @@ def set_column_values_session(
     value: _t.Any,
     session: _sa_session.Session
 ) -> None:
+    """
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> table = fa.features.get_table('xy', engine)
+    >>> new_value = 1
+    >>> session = fa.features.get_session(engine)
+    >>> fa.update.set_column_values_session(table, 'x', new_value, session)
+    >>> session.commit()
+    >>> fa.select.select_records_all(table)
+    [{'id': 1, 'x': 1, 'y': 2},
+     {'id': 2, 'x': 1, 'y': 4},
+     {'id': 3, 'x': 1, 'y': 8},
+     {'id': 4, 'x': 1, 'y': 11}]
+    """
     stmt = _make_update_statement_column_value(table, column_name, value)
-    session.add(stmt)
+    session.execute(stmt)
 
 
 def set_column_values(
@@ -112,6 +193,21 @@ def set_column_values(
     value: _t.Any,
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
+    """
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> table = fa.features.get_table('xy', engine)
+    >>> new_value = 1
+    >>> fa.update.set_column_values(table, 'x', new_value, engine)
+    >>> fa.select.select_records_all(table)
+    [{'id': 1, 'x': 1, 'y': 2},
+     {'id': 2, 'x': 1, 'y': 4},
+     {'id': 3, 'x': 1, 'y': 8},
+     {'id': 4, 'x': 1, 'y': 11}]
+    """
     engine = _ex.check_for_engine(table, engine)
     session = _features.get_session(engine)
     try:
