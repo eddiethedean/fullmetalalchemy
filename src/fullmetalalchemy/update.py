@@ -49,26 +49,7 @@ def update_records_session(
             raise ValueError('Must provide match_column_names if table has no primary key.')
         update_matching_records_session(sa_table, records, match_column_names, session)
     else:
-        update_records_fast_session(sa_table, records, session)
-
-
-def update_records_fast_session(
-    sa_table: _sa.Table,
-    records: _t.Sequence[_types.Record],
-    session: _sa_session.Session
-) -> None:
-    """Fast update needs primary key."""
-    table_name = sa_table.name
-    table_class = _features.get_class(table_name, session, schema=sa_table.schema)
-    mapper = _sa.inspect(table_class)
-    session.bulk_update_mappings(mapper, records)
-
-
-def _make_update_statement(table, record_values, new_values):
-    up = _sa.update(table)
-    for col, val in record_values.items():
-        up = up.where(table.c[col]==val)
-    return up.values(**new_values)
+        _update_records_fast_session(sa_table, records, session)
 
 
 def update_records(
@@ -85,6 +66,25 @@ def update_records(
     except Exception as e:
         session.rollback()
         raise e
+
+
+def _update_records_fast_session(
+    sa_table: _sa.Table,
+    records: _t.Sequence[_types.Record],
+    session: _sa_session.Session
+) -> None:
+    """Fast update needs primary key."""
+    table_name = sa_table.name
+    table_class = _features.get_class(table_name, session, schema=sa_table.schema)
+    mapper = _sa.inspect(table_class)
+    session.bulk_update_mappings(mapper, records)
+
+
+def _make_update_statement(table, record_values, new_values):
+    up = _sa.update(table)
+    for col, val in record_values.items():
+        up = up.where(table.c[col]==val)
+    return up.values(**new_values)
 
 
 def _make_update_statement_column_value(
