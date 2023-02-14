@@ -187,6 +187,238 @@ def select_records_slice(
     return [dict(r) for r in results]
 
 
+def select_column_values_by_slice(
+    sa_table: _sa.Table,
+    connection: _types.SqlConnection,
+    column_name: str,
+    start: _t.Optional[int] = None,
+    stop: _t.Optional[int] = None
+) -> list:
+    """
+    Select a slice of column values from table.
+
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_column_values_by_slice(table, engine, 'y', start=1, stop=3)
+    [4, 8]
+    """
+    start, stop = _convert_slice_indexes(sa_table, connection, start, stop)
+    if stop < start:
+        raise exceptions.SliceError('stop cannot be less than start.')
+    query = _sa.select(_features.get_column(sa_table, column_name)).slice(start, stop)
+    return connection.execute(query).scalars().all()
+
+
+def select_column_value_by_index(
+    sa_table: _sa.Table,
+    connection: _types.SqlConnection,
+    column_name: str,
+    index: int
+) -> _t.Any:
+    """
+    Select a column value from table by index number.
+
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_column_value_by_index(table, engine, 'y', 2)
+    8
+    """
+    if index < 0:
+        row_count = _features.get_row_count(sa_table, connection)
+        if index < -row_count:
+            raise IndexError('Index out of range.') 
+        index = _calc_positive_index(index, row_count)
+    query = _sa.select(_features.get_column(sa_table, column_name)).slice(index, index+1)
+    return connection.execute(query).scalars().all()[0]
+
+
+def select_record_by_index(
+    sa_table: _sa.Table,
+    index: int,
+    connection: _types.SqlConnection,
+) -> _t.Dict[str, _t.Any]:
+    """
+    Select a record from table by index number.
+
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_record_by_index(table, 2, engine)
+    {'id': 3, 'x': 4, 'y': 8}
+    """
+    if index < 0:
+        row_count = _features.get_row_count(sa_table, connection)
+        if index < -row_count:
+            raise IndexError('Index out of range.') 
+        index = _calc_positive_index(index, row_count)
+    query = _sa.select(sa_table).slice(index, index+1)
+    results = connection.execute(query)
+    return [dict(x) for x in results][0]
+
+
+def select_primary_key_records_by_slice(
+    sa_table: _sa.Table,
+    connection: _types.SqlConnection,
+    _slice: slice,
+    sorted: bool = False
+) ->  _t.List[_types.Record]:
+    """
+    Select a slice of primary key records from table.
+    Records only have primary key values.
+
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_primary_key_records_by_slice(table, engine, slice(1, 3))
+    [{'id': 2}, {'id': 3}]
+    """
+    start = _slice.start
+    stop = _slice.stop
+    start, stop = _convert_slice_indexes(sa_table, connection, start, stop)
+    if stop < start:
+        raise exceptions.SliceError('stop cannot be less than start.')
+    primary_key_values = _features.primary_key_columns(sa_table)
+    if sorted:
+        query = _sa.select(primary_key_values).order_by(*primary_key_values).slice(start, stop)
+    else:
+        query = _sa.select(primary_key_values).slice(start, stop)
+    results = connection.execute(query)
+    return [dict(r) for r in results]
+
+
+def select_record_by_primary_key(
+    sa_table: _sa.Table,
+    connection: _types.SqlConnection,
+    primary_key_value: _types.Record,
+    include_columns: _t.Optional[_t.Sequence[str]] = None
+) -> _types.Record:
+    """
+    Select the first record that matches passed primary key values.
+
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_record_by_primary_key(table, engine, {'id': 3})
+    {'id': 3, 'x': 4, 'y': 8}
+    """
+    # TODO: check if primary key values exist
+    where_clause = _features._get_where_clause(sa_table, primary_key_value)
+    if len(where_clause) == 0:
+        raise exceptions.MissingPrimaryKey('Primary key values missing in table.')
+    if include_columns is not None:
+        columns = [_features.get_column(sa_table, column_name) for column_name in include_columns]
+        query = _sa.select(*columns).where((sa_elements.and_(*where_clause)))
+    else:
+        query = _sa.select(sa_table).where((sa_elements.and_(*where_clause)))
+    results = connection.execute(query)
+    results = [dict(x) for x in results]
+    if len(results) == 0:
+        raise exceptions.MissingPrimaryKey('Primary key values missing in table.')
+    return results[0]
+
+
+def select_records_by_primary_keys(
+    sa_table: _sa.Table,
+    connection: _types.SqlConnection,
+    primary_keys_values: _t.Sequence[_types.Record],
+    schema: _t.Optional[str] = None,
+    include_columns: _t.Optional[_t.Sequence[str]] = None
+) ->  _t.List[_types.Record]:
+    """
+    Select all the records that matches passed primary key values.
+
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_records_by_primary_keys(table, engine, [{'id': 3}, {'id': 1}])
+    [{'id': 1, 'x': 1, 'y': 2}, {'id': 3, 'x': 4, 'y': 8}]
+    """
+    # TODO: check if primary key values exist
+    where_clauses = []
+    for record in primary_keys_values:
+        where_clause = _features._get_where_clause(sa_table, record)
+        where_clauses.append(sa_elements.and_(*where_clause))
+    if len(where_clauses) == 0:
+        return []
+    if include_columns is not None:
+        columns = [_features.get_column(sa_table, column_name) for column_name in include_columns]
+        query = _sa.select(*columns).where((sa_elements.or_(*where_clauses)))
+    else:
+        query = _sa.select(sa_table).where((sa_elements.or_(*where_clauses)))
+    results = connection.execute(query)
+    return [dict(r) for r in results]
+
+
+def select_column_values_by_primary_keys(
+    sa_table: _sa.Table,
+    connection: _types.SqlConnection,
+    column_name: str,
+    primary_keys_values: _t.Sequence[_types.Record]
+) -> list:
+    """
+    Select all the column value that matches passed primary key values.
+
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_column_values_by_primary_keys(table, engine, 'y', [{'id': 3}, {'id': 1}])
+    [2, 8]
+    """
+    # TODO: check if primary key values exist
+    where_clauses = []
+    for record in primary_keys_values:
+        where_clause = _features._get_where_clause(sa_table, record)
+        where_clauses.append(sa_elements.and_(*where_clause))
+
+    if len(where_clauses) == 0:
+        return []
+    query = _sa.select(_features.get_column(sa_table, column_name)).where((sa_elements.or_(*where_clauses)))
+    results = connection.execute(query)
+    return results.scalars().fetchall()
+
+
+def select_value_by_primary_keys(
+    sa_table: _sa.Table,
+    connection: _types.SqlConnection,
+    column_name: str,
+    primary_key_value: _types.Record,
+    schema: _t.Optional[str] = None
+) -> _t.Any:
+    """
+    Select the first column value that matches passed primary key values.
+
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_value_by_primary_keys(table, engine, 'y', {'id': 3})
+    8
+    """
+    # TODO: check if primary key values exist
+    where_clause = _features._get_where_clause(sa_table, primary_key_value)
+    if len(where_clause) == 0:
+        raise KeyError('No such primary key values exist in table.')
+    query = _sa.select(_features.get_column(sa_table, column_name)).where((sa_elements.and_(*where_clause)))
+    return connection.execute(query).scalars().all()[0]
+
+
 def _convert_slice_indexes(
     sa_table: _sa.Table,
     connection: _types.SqlConnection,
@@ -237,146 +469,3 @@ def _stop_underflow_index(
     if index < 0 and index < -row_count:
         return 0
     return index
-
-
-def select_column_values_by_slice(
-    sa_table: _sa.Table,
-    connection: _types.SqlConnection,
-    column_name: str,
-    start: _t.Optional[int] = None,
-    stop: _t.Optional[int] = None
-) -> list:
-    start, stop = _convert_slice_indexes(sa_table, connection, start, stop)
-    if stop < start:
-        raise exceptions.SliceError('stop cannot be less than start.')
-    query = _sa.select(_features.get_column(sa_table, column_name)).slice(start, stop)
-    return connection.execute(query).scalars().all()
-
-
-def select_column_value_by_index(
-    sa_table: _sa.Table,
-    connection: _types.SqlConnection,
-    column_name: str,
-    index: int
-) -> _t.Any:
-    if index < 0:
-        row_count = _features.get_row_count(sa_table, connection)
-        if index < -row_count:
-            raise IndexError('Index out of range.') 
-        index = _calc_positive_index(index, row_count)
-    query = _sa.select(_features.get_column(sa_table, column_name)).slice(index, index+1)
-    return connection.execute(query).scalars().all()[0]
-
-
-def select_record_by_index(
-    sa_table: _sa.Table,
-    index: int,
-    connection: _types.SqlConnection,
-) -> _t.Dict[str, _t.Any]:
-    if index < 0:
-        row_count = _features.get_row_count(sa_table, connection)
-        if index < -row_count:
-            raise IndexError('Index out of range.') 
-        index = _calc_positive_index(index, row_count)
-    query = _sa.select(sa_table).slice(index, index+1)
-    results = connection.execute(query)
-    return [dict(x) for x in results][0]
-
-
-def select_primary_key_records_by_slice(
-    sa_table: _sa.Table,
-    connection: _types.SqlConnection,
-    _slice: slice,
-    sorted: bool = False
-) ->  _t.List[_types.Record]:
-    start = _slice.start
-    stop = _slice.stop
-    start, stop = _convert_slice_indexes(sa_table, connection, start, stop)
-    if stop < start:
-        raise exceptions.SliceError('stop cannot be less than start.')
-    primary_key_values = _features.primary_key_columns(sa_table)
-    if sorted:
-        query = _sa.select(primary_key_values).order_by(*primary_key_values).slice(start, stop)
-    else:
-        query = _sa.select(primary_key_values).slice(start, stop)
-    results = connection.execute(query)
-    return [dict(r) for r in results]
-
-
-def select_record_by_primary_key(
-    sa_table: _sa.Table,
-    connection: _types.SqlConnection,
-    primary_key_value: _types.Record,
-    include_columns: _t.Optional[_t.Sequence[str]] = None
-) -> _types.Record:
-    # TODO: check if primary key values exist
-    where_clause = _features._get_where_clause(sa_table, primary_key_value)
-    if len(where_clause) == 0:
-        raise exceptions.MissingPrimaryKey('Primary key values missing in table.')
-    if include_columns is not None:
-        columns = [_features.get_column(sa_table, column_name) for column_name in include_columns]
-        query = _sa.select(*columns).where((sa_elements.and_(*where_clause)))
-    else:
-        query = _sa.select(sa_table).where((sa_elements.and_(*where_clause)))
-    results = connection.execute(query)
-    results = [dict(x) for x in results]
-    if len(results) == 0:
-        raise exceptions.MissingPrimaryKey('Primary key values missing in table.')
-    return results[0]
-
-
-def select_records_by_primary_keys(
-    sa_table: _sa.Table,
-    connection: _types.SqlConnection,
-    primary_keys_values: _t.Sequence[_types.Record],
-    schema: _t.Optional[str] = None,
-    include_columns: _t.Optional[_t.Sequence[str]] = None
-) ->  _t.List[_types.Record]:
-    # TODO: check if primary key values exist
-    where_clauses = []
-    for record in primary_keys_values:
-        where_clause = _features._get_where_clause(sa_table, record)
-        where_clauses.append(sa_elements.and_(*where_clause))
-    if len(where_clauses) == 0:
-        return []
-    if include_columns is not None:
-        columns = [_features.get_column(sa_table, column_name) for column_name in include_columns]
-        query = _sa.select(*columns).where((sa_elements.or_(*where_clauses)))
-    else:
-        query = _sa.select(sa_table).where((sa_elements.or_(*where_clauses)))
-    results = connection.execute(query)
-    return [dict(r) for r in results]
-
-
-def select_column_values_by_primary_keys(
-    sa_table: _sa.Table,
-    connection: _types.SqlConnection,
-    column_name: str,
-    primary_keys_values: _t.Sequence[_types.Record]
-) -> list:
-    # TODO: check if primary key values exist
-    where_clauses = []
-    for record in primary_keys_values:
-        where_clause = _features._get_where_clause(sa_table, record)
-        where_clauses.append(sa_elements.and_(*where_clause))
-
-    if len(where_clauses) == 0:
-        return []
-    query = _sa.select(_features.get_column(sa_table, column_name)).where((sa_elements.or_(*where_clauses)))
-    results = connection.execute(query)
-    return results.scalars().fetchall()
-
-
-def select_value_by_primary_keys(
-    sa_table: _sa.Table,
-    connection: _types.SqlConnection,
-    column_name: str,
-    primary_key_value: _types.Record,
-    schema: _t.Optional[str] = None
-) -> _t.Any:
-    # TODO: check if primary key values exist
-    where_clause = _features._get_where_clause(sa_table, primary_key_value)
-    if len(where_clause) == 0:
-        raise KeyError('No such primary key values exist in table.')
-    query = _sa.select(_features.get_column(sa_table, column_name)).where((sa_elements.and_(*where_clause)))
-    return connection.execute(query).scalars().all()[0]
