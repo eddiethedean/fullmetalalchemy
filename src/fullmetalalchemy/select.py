@@ -15,6 +15,20 @@ def select_records_all(
     sorted: bool = False,
     include_columns: _t.Optional[_t.Sequence[str]] = None
 ) ->  _t.List[_types.Record]:
+    """
+    Select all records from table.
+
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_records_all(table, engine)
+    [{'id': 1, 'x': 1, 'y': 2},
+     {'id': 2, 'x': 2, 'y': 4},
+     {'id': 3, 'x': 4, 'y': 8},
+     {'id': 4, 'x': 8, 'y': 11}]
+    """
     connection = _ex.check_for_engine(sa_table, connection)
     if include_columns is not None:
         columns = [_features.get_column(sa_table, column_name) for column_name in include_columns]
@@ -35,6 +49,22 @@ def select_records_chunks(
     sorted: bool = False,
     include_columns: _t.Optional[_t.Sequence[str]] = None
 ) -> _t.Generator[ _t.List[_types.Record], None, None]:
+    """
+    Select chunks of records from table.
+
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> records_chunks = fa.select.select_records_chunks(table, engine)
+    >>> next(records_chunks)
+    [{'id': 1, 'x': 1, 'y': 2},
+     {'id': 2, 'x': 2, 'y': 4}]
+    >>> next(records_chunks)
+    [{'id': 3, 'x': 4, 'y': 8},
+     {'id': 4, 'x': 8, 'y': 11}]
+    """
     connection = _ex.check_for_engine(sa_table, connection)
     if include_columns is not None:
         columns = [_features.get_column(sa_table, column_name) for column_name in include_columns]
@@ -55,6 +85,19 @@ def select_existing_values(
     values: _t.Sequence,
     connection: _t.Optional[_types.SqlConnection] = None
 ) -> list:
+    """
+    Select values that exist in named column that are
+    also in passed values.
+
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> values = [1, 2, 3, 4, 5]
+    >>> fa.select.select_existing_values(table, 'x', values, engine)
+    [1, 2, 4]
+    """
     column = _features.get_column(sa_table, column_name)
     query = _sa.select([column]).where(column.in_(values))
     connection = _ex.check_for_engine(sa_table, connection)
@@ -66,6 +109,17 @@ def select_column_values_all(
     column_name: str,
     connection: _t.Optional[_types.SqlConnection] = None
 ) -> list:
+    """
+    Select all values in named column.
+
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_column_values_all(table, 'x', engine)
+    [1, 2, 4, 8]
+    """
     query = _sa.select(_features.get_column(sa_table, column_name))
     connection = _ex.check_for_engine(sa_table, connection)
     return connection.execute(query).scalars().all()
@@ -77,6 +131,20 @@ def select_column_values_chunks(
     column_name: str,
     chunksize: int
 ) -> _t.Generator[list, None, None]:
+    """
+    Select chunks of values in named column.
+
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> col_chunks = fa.select.select_column_values_chunks(table, engine, 'x', 2)
+    >>> next(col_chunks)
+    [1, 2]
+    >>> next(col_chunks)
+    [4, 8]
+    """
     query = _sa.select(_features.get_column(sa_table, column_name))
     stream = connection.execute(query, execution_options={'stream_results': True})
     for results in stream.scalars().partitions(chunksize):  # type: ignore
@@ -91,6 +159,18 @@ def select_records_slice(
     sorted: bool = False,
     include_columns: _t.Optional[_t.Sequence[str]] = None
 ) ->  _t.List[_types.Record]:
+    """
+    Select a slice of records from table.
+
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_records_slice(table, engine, start=1, stop=3)
+    [{'id': 2, 'x': 2, 'y': 4},
+     {'id': 3, 'x': 4, 'y': 8}]
+    """
     connection = _ex.check_for_engine(sa_table, connection)
     start, stop = _convert_slice_indexes(sa_table, connection, start, stop)
     if stop < start:
