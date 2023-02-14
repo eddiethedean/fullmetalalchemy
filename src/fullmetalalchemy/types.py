@@ -1,3 +1,7 @@
+"""
+Module of custom data types.
+"""
+
 import typing as _t
 
 import sqlalchemy.engine as sa_engine

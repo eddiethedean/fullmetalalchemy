@@ -1,3 +1,7 @@
+"""
+Functions for deleting records from SQL tables.
+"""
+
 import typing as _t
 
 import sqlalchemy as _sa

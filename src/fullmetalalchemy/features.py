@@ -1,3 +1,7 @@
+"""
+Functions for getting SQL table features and SqlAlchemy ORM objects.
+"""
+
 import typing as _t
 
 import sqlalchemy as _sa

@@ -1,3 +1,7 @@
+"""
+Module for custom Exceptions and exception handling.
+"""
+
 class ForceFail(Exception):
     pass
 

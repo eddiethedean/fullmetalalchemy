@@ -1,3 +1,7 @@
+"""
+Functions for manipulating and comparing records.
+"""
+
 import typing as _t
 from frozendict import frozendict
 

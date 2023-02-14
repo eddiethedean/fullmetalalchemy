@@ -1,3 +1,7 @@
+"""
+Functions for inserting records into SQL tables.
+"""
+
 import typing as _t
 
 import sqlalchemy as _sa

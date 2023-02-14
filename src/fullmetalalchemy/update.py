@@ -1,3 +1,7 @@
+"""
+Functions for updating records in SQL tables.
+"""
+
 import typing as _t
 
 import sqlalchemy as _sa

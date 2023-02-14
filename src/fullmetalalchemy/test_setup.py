@@ -1,3 +1,7 @@
+"""
+Functions for setting up testing SQL tables.
+"""
+
 from fullmetalalchemy.create import create_table
 from fullmetalalchemy.insert import insert_records
 

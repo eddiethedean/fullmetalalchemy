@@ -1,3 +1,7 @@
+"""
+Functions for creating SQL tables.
+"""
+
 import typing as _t
 import decimal as _decimal
 import datetime as _datetime
@@ -30,7 +34,20 @@ def create_table(
     autoincrement:  _t.Optional[bool] = False,
     if_exists:  _t.Optional[str] = 'error'
 ) -> _sa.Table:
-    """Create a sql table from specs.
+    """
+    Create a sql table from specifications.
+
+    Parameters
+    ----------
+    table_name : str
+    column_names : Sequence[str]
+    column_types : Sequence
+    primary_key : Sequence[str]
+    engine : SqlAlchemy Engine
+    schema : Optional[str]
+    autoincrement : Optional[bool] default, None
+    if_exists : Optional[str] default, 'error
+
     Returns
     -------
     sqlalchemy.Table

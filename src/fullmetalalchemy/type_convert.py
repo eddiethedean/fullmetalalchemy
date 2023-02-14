@@ -1,3 +1,7 @@
+"""
+Functions for converting between Python and SQL data types.
+"""
+
 import decimal as _decimal
 import datetime as _datetime
 import typing as _t
