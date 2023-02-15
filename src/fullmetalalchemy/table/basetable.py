@@ -9,6 +9,8 @@ import fullmetalalchemy.features as _features
 import fullmetalalchemy.types as _types
 import fullmetalalchemy.select as _select
 
+Record = _t.Dict[str, _t.Any]
+
 
 class BaseTable:
     def __init__(
@@ -20,6 +22,9 @@ class BaseTable:
         self.name = name
         self.engine = engine
         self.schema = schema
+
+    def __len__(self) -> int:
+        return _features.get_row_count(self.sa_table, self.engine)
 
     def __eq__(self, other) -> bool:
         return _features.tables_metadata_equal(self.sa_table, other)
@@ -66,6 +71,14 @@ class BaseTable:
         elif type(key) is slice:
             records = self.select_records_slice(key.start, key.stop)
             self.delete_records_by_values(records)
+
+    @property
+    def records(self) -> _t.List[Record]:
+        return self.select_records_all()
+    
+    @property
+    def columns(self) -> _t.List[str]:
+        return self.column_names
 
     def insert_records(self, records):
         raise NotImplemented
@@ -131,7 +144,7 @@ class BaseTable:
         chunksize: int
     ) -> _t.Generator[list, None, None]:
         return _select.select_column_values_chunks(
-            self.sa_table, self.engine, column_name, chunksize)
+            self.sa_table, column_name, chunksize, self.engine)
 
     def select_records_slice(
         self,
@@ -141,7 +154,7 @@ class BaseTable:
         include_columns: _t.Optional[_t.Sequence[str]] = None
     ) ->  _t.List[_types.Record]:
         return _select.select_records_slice(
-            self.sa_table, self.engine, start, stop, sorted, include_columns)
+            self.sa_table, start, stop, self.engine, sorted, include_columns)
 
     def select_column_values_by_slice(
         self,
@@ -150,7 +163,7 @@ class BaseTable:
         stop: _t.Optional[int] = None
     ) -> list:
         return _select.select_column_values_by_slice(
-            self.sa_table, self.engine, column_name, start, stop)
+            self.sa_table, column_name, start, stop, self.engine)
 
     def select_column_value_by_index(
         self,
@@ -158,7 +171,7 @@ class BaseTable:
         index: int
     ) -> _t.Any:
         return _select.select_column_value_by_index(
-            self.sa_table, self.engine, column_name, index)
+            self.sa_table, column_name, index, self.engine)
 
     def select_record_by_index(
         self,
@@ -173,7 +186,7 @@ class BaseTable:
         sorted: bool = False
     ) ->  _t.List[_types.Record]:
         return _select.select_primary_key_records_by_slice(
-            self.sa_table, self.engine, _slice, sorted)
+            self.sa_table, _slice, self.engine, sorted)
     
     def select_record_by_primary_key(
         self,
@@ -181,7 +194,7 @@ class BaseTable:
         include_columns: _t.Optional[_t.Sequence[str]] = None
     ) -> _types.Record:
         return _select.select_record_by_primary_key(
-            self.sa_table, self.engine, primary_key_value, include_columns)
+            self.sa_table, primary_key_value, self.engine, include_columns)
     
     def select_records_by_primary_keys(
         self,
@@ -190,7 +203,7 @@ class BaseTable:
         include_columns: _t.Optional[_t.Sequence[str]] = None
     ) ->  _t.List[_types.Record]:
         return _select.select_records_by_primary_keys(
-            self.sa_table, self.engine, primary_keys_values, schema, include_columns)
+            self.sa_table, primary_keys_values, self.engine, schema, include_columns)
 
     def select_column_values_by_primary_keys(
         self,
@@ -198,7 +211,7 @@ class BaseTable:
         primary_keys_values: _t.Sequence[_types.Record]
     ) -> list:
         return _select.select_column_values_by_primary_keys(
-            self.sa_table, self.engine, column_name, primary_keys_values)
+            self.sa_table, column_name, primary_keys_values, self.engine)
 
     def select_value_by_primary_keys(
         self,
@@ -207,4 +220,4 @@ class BaseTable:
         schema: _t.Optional[str] = None
     ) -> _t.Any:
         return _select.select_value_by_primary_keys(
-            self.sa_table, self.engine, column_name, primary_key_value, schema)
+            self.sa_table, column_name, primary_key_value, self.engine, schema)

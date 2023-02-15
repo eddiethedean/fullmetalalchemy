@@ -133,9 +133,9 @@ def select_column_values_all(
 
 def select_column_values_chunks(
     sa_table: _t.Union[_sa.Table, str],
-    connection: _types.SqlConnection,
     column_name: str,
-    chunksize: int
+    chunksize: int,
+    connection: _t.Optional[_types.SqlConnection] = None,
 ) -> _t.Generator[list, None, None]:
     """
     Select chunks of values in named column.
@@ -160,9 +160,9 @@ def select_column_values_chunks(
 
 def select_records_slice(
     sa_table: _t.Union[_sa.Table, str],
-    connection: _t.Optional[_types.SqlConnection] = None,
     start: _t.Optional[int] = None,
     stop: _t.Optional[int] = None,
+    connection: _t.Optional[_types.SqlConnection] = None,
     sorted: bool = False,
     include_columns: _t.Optional[_t.Sequence[str]] = None
 ) ->  _t.List[_types.Record]:
@@ -196,10 +196,10 @@ def select_records_slice(
 
 def select_column_values_by_slice(
     sa_table: _t.Union[_sa.Table, str],
-    connection: _types.SqlConnection,
     column_name: str,
     start: _t.Optional[int] = None,
-    stop: _t.Optional[int] = None
+    stop: _t.Optional[int] = None,
+    connection: _t.Optional[_types.SqlConnection] = None,
 ) -> list:
     """
     Select a slice of column values from table.
@@ -222,9 +222,9 @@ def select_column_values_by_slice(
 
 def select_column_value_by_index(
     sa_table: _t.Union[_sa.Table, str],
-    connection: _types.SqlConnection,
     column_name: str,
-    index: int
+    index: int,
+    connection: _t.Optional[_types.SqlConnection] = None
 ) -> _t.Any:
     """
     Select a column value from table by index number.
@@ -250,7 +250,7 @@ def select_column_value_by_index(
 def select_record_by_index(
     sa_table: _t.Union[_sa.Table, str],
     index: int,
-    connection: _types.SqlConnection,
+    connection: _t.Optional[_types.SqlConnection] = None,
 ) -> _t.Dict[str, _t.Any]:
     """
     Select a record from table by index number.
@@ -276,8 +276,8 @@ def select_record_by_index(
 
 def select_primary_key_records_by_slice(
     sa_table: _t.Union[_sa.Table, str],
-    connection: _types.SqlConnection,
     _slice: slice,
+    connection: _t.Optional[_types.SqlConnection] = None,
     sorted: bool = False
 ) ->  _t.List[_types.Record]:
     """
@@ -309,8 +309,8 @@ def select_primary_key_records_by_slice(
 
 def select_record_by_primary_key(
     sa_table: _t.Union[_sa.Table, str],
-    connection: _types.SqlConnection,
     primary_key_value: _types.Record,
+    connection: _t.Optional[_types.SqlConnection] = None,
     include_columns: _t.Optional[_t.Sequence[str]] = None
 ) -> _types.Record:
     """
@@ -343,8 +343,8 @@ def select_record_by_primary_key(
 
 def select_records_by_primary_keys(
     sa_table: _t.Union[_sa.Table, str],
-    connection: _types.SqlConnection,
     primary_keys_values: _t.Sequence[_types.Record],
+    connection: _t.Optional[_types.SqlConnection] = None,
     schema: _t.Optional[str] = None,
     include_columns: _t.Optional[_t.Sequence[str]] = None
 ) ->  _t.List[_types.Record]:
@@ -378,9 +378,9 @@ def select_records_by_primary_keys(
 
 def select_column_values_by_primary_keys(
     sa_table: _t.Union[_sa.Table, str],
-    connection: _types.SqlConnection,
     column_name: str,
-    primary_keys_values: _t.Sequence[_types.Record]
+    primary_keys_values: _t.Sequence[_types.Record],
+    connection: _t.Optional[_types.SqlConnection] = None
 ) -> list:
     """
     Select all the column value that matches passed primary key values.
@@ -409,9 +409,9 @@ def select_column_values_by_primary_keys(
 
 def select_value_by_primary_keys(
     sa_table: _t.Union[_sa.Table, str],
-    connection: _types.SqlConnection,
     column_name: str,
     primary_key_value: _types.Record,
+    connection: _t.Optional[_types.SqlConnection] = None,
     schema: _t.Optional[str] = None
 ) -> _t.Any:
     """
