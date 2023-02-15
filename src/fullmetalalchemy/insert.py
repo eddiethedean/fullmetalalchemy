@@ -81,7 +81,7 @@ def insert_from_table(
     
 
 def insert_records_session(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
     session: _sa_session.Session
 ) -> None:
@@ -113,6 +113,7 @@ def insert_records_session(
      {'id': 5, 'x': 11, 'y': 5},
      {'id': 6, 'x': 9, 'y': 9}]
     """
+    sa_table = _features.str_to_table(sa_table, session)
     if _features.missing_primary_key(sa_table):
         _insert_records_slow_session(sa_table, records, session)
     else:
@@ -120,7 +121,7 @@ def insert_records_session(
 
 
 def insert_records(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
@@ -150,7 +151,7 @@ def insert_records(
      {'id': 5, 'x': 11, 'y': 5},
      {'id': 6, 'x': 9, 'y': 9}]
     """
-    engine = _ex.check_for_engine(sa_table, engine)
+    sa_table, engine = _ex.convert_table_engine(sa_table, engine)
     session = _features.get_session(engine)
     try:
         insert_records_session(sa_table, records, session)
