@@ -14,8 +14,8 @@ import fullmetalalchemy.exceptions as _ex
 
 
 def insert_from_table_session(
-    sa_table1: _sa.Table,
-    sa_table2: _sa.Table,
+    sa_table1: _t.Union[_sa.Table, str],
+    sa_table2: _t.Union[_sa.Table, str],
     session: _sa_session.Session
 ) -> None:
     """
@@ -40,12 +40,14 @@ def insert_from_table_session(
      {'id': 3, 'x': 4, 'y': 8, 'z': None},
      {'id': 4, 'x': 8, 'y': 11, 'z': None}]
     """
+    sa_table1 = _features.str_to_table(sa_table1, session)
+    sa_table2 = _features.str_to_table(sa_table2, session)
     session.execute(sa_table2.insert().from_select(sa_table1.columns.keys(), sa_table1))
 
 
 def insert_from_table(
-    sa_table1: _sa.Table,
-    sa_table2: _sa.Table,
+    sa_table1: _t.Union[_sa.Table, str],
+    sa_table2: _t.Union[_sa.Table, str],
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
     """
