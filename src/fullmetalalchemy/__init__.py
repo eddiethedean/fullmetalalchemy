@@ -1,4 +1,4 @@
-__version__ = '0.7.2'
+__version__ = '1.0.0'
 
 import fullmetalalchemy.create as create
 import fullmetalalchemy.delete as delete
