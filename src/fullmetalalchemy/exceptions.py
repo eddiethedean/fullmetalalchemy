@@ -68,7 +68,7 @@ def convert_table_connection(
     sa_table = _features.str_to_table(sa_table, connection)
     if type(connection) is _sa_session.Session:
         return sa_table, connection
-    engine = check_for_engine(sa_table, connection)
-    return sa_table, engine
+    connection = check_for_engine(sa_table, connection)
+    return sa_table, connection
 
 

@@ -47,7 +47,7 @@ def select_records_all(
 
 
 def select_records_chunks(
-    sa_table: _sa.Table,
+    sa_table:_t.Union[_sa.Table, str],
     connection: _t.Optional[_types.SqlConnection] = None,
     chunksize: int = 2,
     sorted: bool = False,
@@ -69,7 +69,7 @@ def select_records_chunks(
     [{'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
     """
-    connection = _ex.check_for_engine(sa_table, connection)
+    sa_table, connection = _ex.convert_table_connection(sa_table, connection)
     if include_columns is not None:
         columns = [_features.get_column(sa_table, column_name) for column_name in include_columns]
         query = _sa.select(*columns)
@@ -84,7 +84,7 @@ def select_records_chunks(
 
 
 def select_existing_values(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     column_name: str,
     values: _t.Sequence,
     connection: _t.Optional[_types.SqlConnection] = None
@@ -102,6 +102,7 @@ def select_existing_values(
     >>> fa.select.select_existing_values(table, 'x', values, engine)
     [1, 2, 4]
     """
+    sa_table, connection = _ex.convert_table_connection(sa_table, connection)
     column = _features.get_column(sa_table, column_name)
     query = _sa.select([column]).where(column.in_(values))
     connection = _ex.check_for_engine(sa_table, connection)
@@ -109,7 +110,7 @@ def select_existing_values(
 
 
 def select_column_values_all(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     column_name: str,
     connection: _t.Optional[_types.SqlConnection] = None
 ) -> list:
@@ -124,13 +125,14 @@ def select_column_values_all(
     >>> fa.select.select_column_values_all(table, 'x', engine)
     [1, 2, 4, 8]
     """
+    sa_table, connection = _ex.convert_table_connection(sa_table, connection)
     query = _sa.select(_features.get_column(sa_table, column_name))
     connection = _ex.check_for_engine(sa_table, connection)
     return connection.execute(query).scalars().all()
 
 
 def select_column_values_chunks(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     connection: _types.SqlConnection,
     column_name: str,
     chunksize: int
@@ -149,6 +151,7 @@ def select_column_values_chunks(
     >>> next(col_chunks)
     [4, 8]
     """
+    sa_table, connection = _ex.convert_table_connection(sa_table, connection)
     query = _sa.select(_features.get_column(sa_table, column_name))
     stream = connection.execute(query, execution_options={'stream_results': True})
     for results in stream.scalars().partitions(chunksize):  # type: ignore
@@ -156,7 +159,7 @@ def select_column_values_chunks(
 
 
 def select_records_slice(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     connection: _t.Optional[_types.SqlConnection] = None,
     start: _t.Optional[int] = None,
     stop: _t.Optional[int] = None,
@@ -175,7 +178,7 @@ def select_records_slice(
     [{'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8}]
     """
-    connection = _ex.check_for_engine(sa_table, connection)
+    sa_table, connection = _ex.convert_table_connection(sa_table, connection)
     start, stop = _convert_slice_indexes(sa_table, connection, start, stop)
     if stop < start:
         raise exceptions.SliceError('stop cannot be less than start.')
@@ -192,7 +195,7 @@ def select_records_slice(
 
 
 def select_column_values_by_slice(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     connection: _types.SqlConnection,
     column_name: str,
     start: _t.Optional[int] = None,
@@ -209,6 +212,7 @@ def select_column_values_by_slice(
     >>> fa.select.select_column_values_by_slice(table, engine, 'y', start=1, stop=3)
     [4, 8]
     """
+    sa_table, connection = _ex.convert_table_connection(sa_table, connection)
     start, stop = _convert_slice_indexes(sa_table, connection, start, stop)
     if stop < start:
         raise exceptions.SliceError('stop cannot be less than start.')
@@ -217,7 +221,7 @@ def select_column_values_by_slice(
 
 
 def select_column_value_by_index(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     connection: _types.SqlConnection,
     column_name: str,
     index: int
@@ -233,6 +237,7 @@ def select_column_value_by_index(
     >>> fa.select.select_column_value_by_index(table, engine, 'y', 2)
     8
     """
+    sa_table, connection = _ex.convert_table_connection(sa_table, connection)
     if index < 0:
         row_count = _features.get_row_count(sa_table, connection)
         if index < -row_count:
@@ -243,7 +248,7 @@ def select_column_value_by_index(
 
 
 def select_record_by_index(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     index: int,
     connection: _types.SqlConnection,
 ) -> _t.Dict[str, _t.Any]:
@@ -258,6 +263,7 @@ def select_record_by_index(
     >>> fa.select.select_record_by_index(table, 2, engine)
     {'id': 3, 'x': 4, 'y': 8}
     """
+    sa_table, connection = _ex.convert_table_connection(sa_table, connection)
     if index < 0:
         row_count = _features.get_row_count(sa_table, connection)
         if index < -row_count:
@@ -269,7 +275,7 @@ def select_record_by_index(
 
 
 def select_primary_key_records_by_slice(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     connection: _types.SqlConnection,
     _slice: slice,
     sorted: bool = False
@@ -286,6 +292,7 @@ def select_primary_key_records_by_slice(
     >>> fa.select.select_primary_key_records_by_slice(table, engine, slice(1, 3))
     [{'id': 2}, {'id': 3}]
     """
+    sa_table, connection = _ex.convert_table_connection(sa_table, connection)
     start = _slice.start
     stop = _slice.stop
     start, stop = _convert_slice_indexes(sa_table, connection, start, stop)
@@ -301,7 +308,7 @@ def select_primary_key_records_by_slice(
 
 
 def select_record_by_primary_key(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     connection: _types.SqlConnection,
     primary_key_value: _types.Record,
     include_columns: _t.Optional[_t.Sequence[str]] = None
@@ -317,6 +324,7 @@ def select_record_by_primary_key(
     >>> fa.select.select_record_by_primary_key(table, engine, {'id': 3})
     {'id': 3, 'x': 4, 'y': 8}
     """
+    sa_table, connection = _ex.convert_table_connection(sa_table, connection)
     # TODO: check if primary key values exist
     where_clause = _features._get_where_clause(sa_table, primary_key_value)
     if len(where_clause) == 0:
@@ -334,7 +342,7 @@ def select_record_by_primary_key(
 
 
 def select_records_by_primary_keys(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     connection: _types.SqlConnection,
     primary_keys_values: _t.Sequence[_types.Record],
     schema: _t.Optional[str] = None,
@@ -351,6 +359,7 @@ def select_records_by_primary_keys(
     >>> fa.select.select_records_by_primary_keys(table, engine, [{'id': 3}, {'id': 1}])
     [{'id': 1, 'x': 1, 'y': 2}, {'id': 3, 'x': 4, 'y': 8}]
     """
+    sa_table, connection = _ex.convert_table_connection(sa_table, connection)
     # TODO: check if primary key values exist
     where_clauses = []
     for record in primary_keys_values:
@@ -368,7 +377,7 @@ def select_records_by_primary_keys(
 
 
 def select_column_values_by_primary_keys(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     connection: _types.SqlConnection,
     column_name: str,
     primary_keys_values: _t.Sequence[_types.Record]
@@ -384,6 +393,7 @@ def select_column_values_by_primary_keys(
     >>> fa.select.select_column_values_by_primary_keys(table, engine, 'y', [{'id': 3}, {'id': 1}])
     [2, 8]
     """
+    sa_table, connection = _ex.convert_table_connection(sa_table, connection)
     # TODO: check if primary key values exist
     where_clauses = []
     for record in primary_keys_values:
@@ -398,7 +408,7 @@ def select_column_values_by_primary_keys(
 
 
 def select_value_by_primary_keys(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     connection: _types.SqlConnection,
     column_name: str,
     primary_key_value: _types.Record,
@@ -415,6 +425,7 @@ def select_value_by_primary_keys(
     >>> fa.select.select_value_by_primary_keys(table, engine, 'y', {'id': 3})
     8
     """
+    sa_table, connection = _ex.convert_table_connection(sa_table, connection)
     # TODO: check if primary key values exist
     where_clause = _features._get_where_clause(sa_table, primary_key_value)
     if len(where_clause) == 0:
@@ -424,11 +435,12 @@ def select_value_by_primary_keys(
 
 
 def _convert_slice_indexes(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     connection: _types.SqlConnection,
     start: _t.Optional[int] = None,
     stop: _t.Optional[int] = None
 ) -> _t.Tuple[int, int]:
+    sa_table, connection = _ex.convert_table_connection(sa_table, connection)
     # start index is 0 if None
     start = 0 if start is None else start
     row_count = _features.get_row_count(sa_table, connection)
