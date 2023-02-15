@@ -15,7 +15,7 @@ import fullmetalalchemy.exceptions as _ex
 
 
 def delete_records_session(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     col_name: str,
     values: _t.Sequence,
     session: _sa_session.Session
@@ -40,12 +40,13 @@ def delete_records_session(
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
     """
+    sa_table = _features.str_to_table(sa_table, session)
     col = _features.get_column(sa_table, col_name)
     session.query(sa_table).filter(col.in_(values)).delete(synchronize_session=False)
 
-
+ 
 def delete_records(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     col_name: str,
     values: _t.Sequence,
     engine: _t.Optional[_sa_engine.Engine] = None
@@ -68,7 +69,7 @@ def delete_records(
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
     """
-    engine = _ex.check_for_engine(sa_table, engine)
+    sa_table, engine = _ex.convert_table_engine(sa_table, engine)
     session = _features.get_session(engine)
     delete_records_session(sa_table, col_name, values, session)
     try:
@@ -79,7 +80,7 @@ def delete_records(
 
 
 def delete_records_by_values(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     records: _t.List[dict],
     engine: _t.Optional[_sa.engine.Engine] = None
 ) -> None:
@@ -100,7 +101,7 @@ def delete_records_by_values(
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 4, 'x': 8, 'y': 11}]
     """
-    engine = _ex.check_for_engine(sa_table, engine)
+    sa_table, engine = _ex.convert_table_engine(sa_table, engine)
     session = _features.get_session(engine)
     try:
         delete_records_by_values_session(sa_table, records, session)
@@ -111,16 +112,17 @@ def delete_records_by_values(
 
 
 def delete_record_by_values_session(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     record: _types.Record,
     session: _sa_session.Session
 ) -> None:
+    sa_table = _features.str_to_table(sa_table, session)
     delete = _build_delete_from_record(sa_table, record)
     session.execute(delete)
 
 
 def delete_records_by_values_session(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
     session: _sa_session.Session
 ) -> None:
@@ -143,6 +145,7 @@ def delete_records_by_values_session(
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 4, 'x': 8, 'y': 11}]
     """
+    sa_table = _features.str_to_table(sa_table, session)
     for record in records:
         delete_record_by_values_session(sa_table, record, session)
 
@@ -168,7 +171,7 @@ def _build_delete_from_record(
 
 
 def delete_all_records_session(
-    table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     session: _sa_session.Session
 ) -> None:
     """
@@ -186,12 +189,13 @@ def delete_all_records_session(
     >>> sz.select.select_records_all(table)
     []
     """
-    query = _sa.delete(table)
+    sa_table = _features.str_to_table(sa_table, session)
+    query = _sa.delete(sa_table)
     session.execute(query)
 
 
 def delete_all_records(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
     """
@@ -207,7 +211,7 @@ def delete_all_records(
     >>> sz.select.select_records_all(table)
     []
     """
-    engine = _ex.check_for_engine(sa_table, engine)
+    sa_table, engine = _ex.convert_table_engine(sa_table, engine)
     session = _features.get_session(engine)
     try:
         delete_all_records_session(sa_table, session)

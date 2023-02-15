@@ -7,7 +7,7 @@
 
 ## What is it?
 
-**FullmetalAlchemy** is a Python package with easy to use functions for inserting, deleting, updating, selecting sql tables.
+**FullmetalAlchemy** is a Python package with easy to use functions for inserting, deleting, updating, selecting records in SQL tables.
 
 ## Where to get it
 The source code is currently hosted on GitHub at:
@@ -29,11 +29,11 @@ import fullmetalalchemy as fa
 # Create SqlAlchemy engine to connect to database.
 engine = fa.create_engine('sqlite:///foo.db')
 
-# Get a sqlalchemy table to pass to FullmetalAlchemy functions
+# Get a SqlAlchemy table to pass to FullmetalAlchemy functions
 table = fa.features.get_table('xy', engine)
 
 # Select records
-fa.select.select_all_records(table)
+fa.select.select_records_all(table)
 [{'id': 1, 'x': 1, 'y': 2}, {'id': 1, 'x': 2, 'y': 3}]
 
 # Insert records

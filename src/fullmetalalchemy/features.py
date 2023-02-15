@@ -359,3 +359,17 @@ def tables_metadata_equal(
     if set(table1_keys) != set(table2_keys): return False
 
     return True
+
+
+def str_to_table(
+    table_name: _t.Union[str, _sa.Table],
+    connection: _t.Optional[_types.SqlConnection]
+) -> _sa.Table:
+    if type(table_name) is str:
+        if connection is None:
+            raise ValueError('table_name cannot be str while connection is None')
+        return get_table(table_name, connection)
+    elif type(table_name) is _sa.Table:
+        return table_name
+    else:
+        raise TypeError('table_name can only be str or sa.Table')

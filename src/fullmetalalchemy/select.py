@@ -14,7 +14,7 @@ import fullmetalalchemy.exceptions as _ex
 
 
 def select_records_all(
-    sa_table: _sa.Table,
+    sa_table: _t.Union[_sa.Table, str],
     connection: _t.Optional[_types.SqlConnection] = None,
     sorted: bool = False,
     include_columns: _t.Optional[_t.Sequence[str]] = None
@@ -33,7 +33,7 @@ def select_records_all(
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
     """
-    connection = _ex.check_for_engine(sa_table, connection)
+    sa_table, connection = _ex.convert_table_connection(sa_table, connection)
     if include_columns is not None:
         columns = [_features.get_column(sa_table, column_name) for column_name in include_columns]
         query = _sa.select(*columns)
