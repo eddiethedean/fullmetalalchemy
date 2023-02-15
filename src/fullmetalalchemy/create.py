@@ -10,7 +10,7 @@ import sqlalchemy as _sa
 import sqlalchemy.engine as _sa_engine
 import sqlalchemy.schema as _sa_schema
 import sqlalchemy.engine as _sa_engine
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine as _create_engine
 from tinytim.rows import row_dicts_to_data as _row_dicts_to_data
 from tinytim.data import column_names as _column_names
 
@@ -22,6 +22,10 @@ from fullmetalalchemy.features import get_session
 create_session = get_session
 
 _Record = _t.Dict[str, _t.Any]
+
+
+def create_engine(url, *args, **kwargs) -> _sa_engine.Engine:
+    return _create_engine(url, future=True, *args, **kwargs) # type: ignore
 
 
 def create_table(

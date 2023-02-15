@@ -179,7 +179,7 @@ def get_session(
     >>> sz.features.get_session(engine)
     <sqlalchemy.orm.session.Session at 0x7f95999e1eb0>
     """
-    return _sa_session.Session(engine)
+    return _sa_session.Session(engine, future=True)
 
 
 def get_column(
