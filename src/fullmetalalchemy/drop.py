@@ -1,5 +1,5 @@
 """
-Functions for droping SQL tables.
+Functions for dropping SQL tables.
 """
 
 import typing as _t
@@ -19,6 +19,21 @@ def drop_table(
     schema: _t.Optional[str] = None
 ) -> None:
     """
+    Parameters
+    ----------
+    table : sa.Table | str
+        SqlAlchemy Table or table name
+    engine : SqlAlchemy Engine
+        SqlAlchemy connection engine
+    if_exists : bool, default=True
+        Only drop table if SQL table exists
+    schema : str, optional
+        SQL database schema name
+
+    Returns
+    -------
+    None
+
     Example
     -------
     >>> import sqlalchemize as sz

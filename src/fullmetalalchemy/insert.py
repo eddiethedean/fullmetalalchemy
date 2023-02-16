@@ -14,8 +14,8 @@ import fullmetalalchemy.exceptions as _ex
 
 
 def insert_from_table_session(
-    sa_table1: _t.Union[_sa.Table, str],
-    sa_table2: _t.Union[_sa.Table, str],
+    table1: _t.Union[_sa.Table, str],
+    table2: _t.Union[_sa.Table, str],
     session: _sa_session.Session
 ) -> None:
     """
@@ -40,14 +40,14 @@ def insert_from_table_session(
      {'id': 3, 'x': 4, 'y': 8, 'z': None},
      {'id': 4, 'x': 8, 'y': 11, 'z': None}]
     """
-    sa_table1 = _features.str_to_table(sa_table1, session)
-    sa_table2 = _features.str_to_table(sa_table2, session)
-    session.execute(sa_table2.insert().from_select(sa_table1.columns.keys(), sa_table1))
+    table1 = _features.str_to_table(table1, session)
+    table2 = _features.str_to_table(table2, session)
+    session.execute(table2.insert().from_select(table1.columns.keys(), table1))
 
 
 def insert_from_table(
-    sa_table1: _t.Union[_sa.Table, str],
-    sa_table2: _t.Union[_sa.Table, str],
+    table1: _t.Union[_sa.Table, str],
+    table2: _t.Union[_sa.Table, str],
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
     """
@@ -70,10 +70,10 @@ def insert_from_table(
      {'id': 3, 'x': 4, 'y': 8, 'z': None},
      {'id': 4, 'x': 8, 'y': 11, 'z': None}]
     """
-    engine = _ex.check_for_engine(sa_table1, engine)
+    engine = _ex.check_for_engine(table1, engine)
     session = _features.get_session(engine)
     try:
-        insert_from_table_session(sa_table1, sa_table2, session)
+        insert_from_table_session(table1, table2, session)
         session.commit()
     except Exception as e:
         session.rollback()
@@ -81,7 +81,7 @@ def insert_from_table(
     
 
 def insert_records_session(
-    sa_table: _t.Union[_sa.Table, str],
+    table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
     session: _sa_session.Session
 ) -> None:
@@ -113,15 +113,15 @@ def insert_records_session(
      {'id': 5, 'x': 11, 'y': 5},
      {'id': 6, 'x': 9, 'y': 9}]
     """
-    sa_table = _features.str_to_table(sa_table, session)
-    if _features.missing_primary_key(sa_table):
-        _insert_records_slow_session(sa_table, records, session)
+    table = _features.str_to_table(table, session)
+    if _features.missing_primary_key(table):
+        _insert_records_slow_session(table, records, session)
     else:
-        _insert_records_fast_session(sa_table, records, session)
+        _insert_records_fast_session(table, records, session)
 
 
 def insert_records(
-    sa_table: _t.Union[_sa.Table, str],
+    table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
@@ -151,10 +151,10 @@ def insert_records(
      {'id': 5, 'x': 11, 'y': 5},
      {'id': 6, 'x': 9, 'y': 9}]
     """
-    sa_table, engine = _ex.convert_table_engine(sa_table, engine)
+    table, engine = _ex.convert_table_engine(table, engine)
     session = _features.get_session(engine)
     try:
-        insert_records_session(sa_table, records, session)
+        insert_records_session(table, records, session)
         session.commit()
     except Exception as e:
         session.rollback()
@@ -162,17 +162,17 @@ def insert_records(
 
 
 def _insert_records_fast(
-    sa_table: _sa.Table,
+    table: _sa.Table,
     records: _t.Sequence[_types.Record],
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
     """Fast insert needs primary key."""
-    if _features.missing_primary_key(sa_table):
+    if _features.missing_primary_key(table):
         raise _ex.MissingPrimaryKey()
-    engine = _ex.check_for_engine(sa_table, engine)
+    engine = _ex.check_for_engine(table, engine)
     session = _features.get_session(engine)
     try:
-        _insert_records_fast_session(sa_table, records, session)
+        _insert_records_fast_session(table, records, session)
         session.commit()
     except Exception as e:
         session.rollback()
@@ -180,37 +180,37 @@ def _insert_records_fast(
 
 
 def _insert_records_fast_session(
-    sa_table: _sa.Table,
+    table: _sa.Table,
     records: _t.Sequence[_types.Record],
     session: _sa_session.Session
 ) -> None:
     """Fast insert needs primary key."""
-    if _features.missing_primary_key(sa_table):
+    if _features.missing_primary_key(table):
         raise _ex.MissingPrimaryKey()
-    table_class = _features.get_class(sa_table.name, session, schema=sa_table.schema)
+    table_class = _features.get_class(table.name, session, schema=table.schema)
     mapper = _sa.inspect(table_class)
     session.bulk_insert_mappings(mapper, records)
 
 
 def _insert_records_slow_session(
-    sa_table: _sa.Table,
+    table: _sa.Table,
     records: _t.Sequence[_types.Record],
     session: _sa_session.Session
 ) -> None:
     """Slow insert does not need primary key."""
-    session.execute(sa_table.insert(), records)
+    session.execute(table.insert(), records)
 
 
 def _insert_records_slow(
-    sa_table: _sa.Table,
+    table: _sa.Table,
     records: _t.Sequence[_types.Record],
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
     """Slow insert does not need primary key."""
-    engine = _ex.check_for_engine(sa_table, engine)
+    engine = _ex.check_for_engine(table, engine)
     session = _features.get_session(engine)
     try:
-        _insert_records_slow_session(sa_table, records, session)
+        _insert_records_slow_session(table, records, session)
         session.commit()
     except Exception as e:
         session.rollback()

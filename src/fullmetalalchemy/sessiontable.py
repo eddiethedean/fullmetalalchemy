@@ -3,8 +3,9 @@ import typing as _t
 
 import sqlalchemy.engine as _sa_engine
 import sqlalchemy as _sa
-from fullmetalalchemy.table.basetable import BaseTable
+import sqlalchemy.orm.session as _sa_session
 
+from fullmetalalchemy.basetable import BaseTable
 import fullmetalalchemy.delete as _delete
 import fullmetalalchemy.features as _features
 import fullmetalalchemy.insert as _insert
@@ -13,14 +14,44 @@ import fullmetalalchemy.types as _types
 
 
 class SessionTable(BaseTable):
+    """
+    Class that combines all session FullmetalAlchemy table functions.
+    Methods add changes to session.
+    Call commit method to commit all changes added to session.
+    Call rollback method to reverse all changes added to session.
+    Use context manager to rollback all changes on error.
+
+    Examples
+    --------
+    >>> from fullmetalalchemy.sessiontable import SessionTable
+
+    >>> table = SessionTable('xy', engine)
+    >>> table.insert_records([{'id': 5, 'x': 5, 'y': 9}])
+    >>> table.update_records([{'id': 2, 'x': 33, 'y': 8}])
+    >>> table.commit()
+
+    Same but using context manager
+    >>> with SessionTable('xy', engine) as table:
+    >>>    table.insert_records([{'id': 5, 'x': 5, 'y': 9}])
+    >>>    table.update_records([{'id': 2, 'x': 33, 'y': 8}])
+    
+    See Also
+    --------
+    fullmetalalchemy.table.Table
+    """
     def __init__(
         self,
         name: str,
-        engine: _sa_engine.Engine,
+        engine: _t.Union[_sa_engine.Engine, _sa_session.Session],
         schema: _t.Optional[str] = None
     ) -> None:
         super().__init__(name, engine, schema)
-        self.session = _features.get_session(engine)
+        if type(engine) is _sa_session.Session:
+            self.session = engine
+        elif type(engine) is _sa_engine.Engine:
+            self.session = _features.get_session(engine)
+        else:
+            raise TypeError('engine must be SqlAlchemy Engine or Session')
 
     def __enter__(self) -> SessionTable:
         return self
@@ -38,12 +69,11 @@ class SessionTable(BaseTable):
     def commit(self) -> SessionTable:
         """Commit session, return new SessionTable"""
         self.session.commit()
-        return SessionTable(self.name, self.engine, self.schema)
-    
+        return SessionTable(self.name, self.engine, self.schema) # type: ignore    
     def rollback(self) -> SessionTable:
         """Rollback session, return new SessionTable"""
         self.session.rollback()
-        return SessionTable(self.name, self.engine, self.schema)
+        return SessionTable(self.name, self.engine, self.schema) # type: ignore   
 
     def delete_records(
         self,

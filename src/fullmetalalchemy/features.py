@@ -15,7 +15,7 @@ import fullmetalalchemy.exceptions as _ex
 
 
 def primary_key_columns(
-    sa_table: _sa.Table
+    table: _sa.Table
 ) ->  _t.List[_sa.Column]:
     """
     Example
@@ -26,11 +26,11 @@ def primary_key_columns(
     >>> sz.features.primary_key_columns(table)
     [Column('id', INTEGER(), table=<xy>, primary_key=True, nullable=False)]
     """
-    return list(sa_table.primary_key.columns)
+    return list(table.primary_key.columns)
 
 
 def primary_key_names(
-    sa_table: _sa.Table
+    table: _sa.Table
 ) ->  _t.List[str]:
     """
     Example
@@ -41,7 +41,7 @@ def primary_key_names(
     >>> sz.features.primary_key_names(table)
     ['id']
     """
-    return [c.name for c in primary_key_columns(sa_table)]
+    return [c.name for c in primary_key_columns(table)]
 
 
 def get_connection(
@@ -84,7 +84,7 @@ def get_metadata(
 
 
 def get_table(
-    name: str,
+    table_name: str,
     connection: _types.SqlConnection,
     schema: _t.Optional[str] = None
 ) -> _sa.Table:
@@ -104,7 +104,7 @@ def get_table(
     """
     metadata = get_metadata(connection, schema)
     autoload_with = get_connection(connection)
-    return _sa.Table(name,
+    return _sa.Table(table_name,
                  metadata,
                  autoload=True,
                  autoload_with=autoload_with,
@@ -139,7 +139,7 @@ def get_engine_table(
 
 
 def get_class(
-    name: str,
+    table_name: str,
     connection: _t.Union[_types.SqlConnection, _sa_session.Session],
     schema: _t.Optional[str] = None
 ) -> _DeclarativeMeta:
@@ -157,12 +157,12 @@ def get_class(
     metadata = get_metadata(connection, schema)
     connection = get_connection(connection)
 
-    metadata.reflect(connection, only=[name], schema=schema)
+    metadata.reflect(connection, only=[table_name], schema=schema)
     Base = _sa_automap.automap_base(metadata=metadata)
     Base.prepare()
-    if name not in Base.classes:
+    if table_name not in Base.classes:
         raise _ex.MissingPrimaryKey()
-    return Base.classes[name]
+    return Base.classes[table_name]
 
 
 def get_session(
@@ -183,7 +183,7 @@ def get_session(
 
 
 def get_column(
-    sa_table: _sa.Table,
+    table: _sa.Table,
     column_name: str
 ) -> _sa.Column:
     """
@@ -197,10 +197,12 @@ def get_column(
     >>> sz.features.get_column(table, 'x')
     Column('x', INTEGER(), table=<xy>)
     """
-    return sa_table.c[column_name]
+    return table.c[column_name]
 
 
-def get_table_constraints(sa_table: _sa.Table) -> set:
+def get_table_constraints(
+    table: _sa.Table
+) -> set:
     """
     Get sql table constraints.
 
@@ -212,11 +214,11 @@ def get_table_constraints(sa_table: _sa.Table) -> set:
     >>> sz.features.get_table_constraints(table)
     {PrimaryKeyConstraint(Column('id', INTEGER(), table=<xy>, primary_key=True, nullable=False))}
     """
-    return sa_table.constraints
+    return table.constraints
 
 
 def get_primary_key_constraints(
-    sa_table: _sa.Table
+    table: _sa.Table
 ) -> _t.Tuple[str,  _t.List[str]]:
     """
     Example
@@ -227,7 +229,7 @@ def get_primary_key_constraints(
     >>> sz.features.get_primary_key_constraints(table)
     (None, ['id'])
     """
-    cons = get_table_constraints(sa_table)
+    cons = get_table_constraints(table)
     for con in cons:
         if isinstance(con, _sa.PrimaryKeyConstraint):
             return con.name, [col.name for col in con.columns]
@@ -235,7 +237,7 @@ def get_primary_key_constraints(
 
 
 def missing_primary_key(
-    sa_table: _sa.Table,
+    table: _sa.Table,
 ) -> bool:
     """
     Example
@@ -246,11 +248,13 @@ def missing_primary_key(
     >>> sz.features.missing_primary_key(table)
     False
     """
-    pks = get_primary_key_constraints(sa_table)
+    pks = get_primary_key_constraints(table)
     return pks[1] == []
 
 
-def get_column_types(sa_table: _sa.Table) -> dict:
+def get_column_types(
+    table: _sa.Table
+) -> dict:
     """
     Example
     -------
@@ -260,10 +264,12 @@ def get_column_types(sa_table: _sa.Table) -> dict:
     >>> sz.features.get_column_types(table)
     {'id': INTEGER(), 'x': INTEGER(), 'y': INTEGER()}
     """
-    return {c.name: c.type for c in sa_table.c}
+    return {c.name: c.type for c in table.c}
 
 
-def get_column_names(sa_table: _sa.Table) ->  _t.List[str]:
+def get_column_names(
+    table: _sa.Table
+) ->  _t.List[str]:
     """
     Example
     -------
@@ -273,7 +279,7 @@ def get_column_names(sa_table: _sa.Table) ->  _t.List[str]:
     >>> sz.features.get_column_names(table)
     ['id', 'x', 'y']
     """
-    return [c.name for c in sa_table.columns]
+    return [c.name for c in table.columns]
 
 
 def get_table_names(
@@ -293,7 +299,7 @@ def get_table_names(
 
 
 def get_row_count(
-    sa_table: _sa.Table,
+    table: _sa.Table,
     session: _t.Optional[_types.SqlConnection] = None
 ) -> int:
     """
@@ -305,14 +311,16 @@ def get_row_count(
     >>> sz.features.get_row_count(table)
     0
     """
-    session = _ex.check_for_engine(sa_table, session)
-    col_name = get_column_names(sa_table)[0]
-    col = get_column(sa_table, col_name)
+    session = _ex.check_for_engine(table, session)
+    col_name = get_column_names(table)[0]
+    col = get_column(table, col_name)
     result = session.execute(_sa.func.count(col)).scalar()
     return result if result is not None else 0
 
 
-def get_schemas(engine: _sa_engine.Engine) ->  _t.List[str]:
+def get_schemas(
+    engine: _sa_engine.Engine
+) ->  _t.List[str]:
     """
     Example
     -------
@@ -334,8 +342,8 @@ def _get_where_clause(
 
 
 def tables_metadata_equal(
-    sa_table1: _sa.Table,
-    sa_table2: _sa.Table
+    table1: _sa.Table,
+    table2: _sa.Table
 ) -> bool:
     """
     Check if two sql tables have the same metadata.
@@ -348,14 +356,14 @@ def tables_metadata_equal(
     >>> sz.features.tables_metadata_equal(table, table)
     True
     """
-    if sa_table1.name != sa_table2.name: return False
+    if table1.name != table2.name: return False
 
-    column_types1 = get_column_types(sa_table1)
-    column_types2 = get_column_types(sa_table2)
+    column_types1 = get_column_types(table1)
+    column_types2 = get_column_types(table2)
     # if column_types1 != column_types2: return False
 
-    table1_keys = primary_key_names(sa_table1)
-    table2_keys = primary_key_names(sa_table2)
+    table1_keys = primary_key_names(table1)
+    table2_keys = primary_key_names(table2)
     if set(table1_keys) != set(table2_keys): return False
 
     return True

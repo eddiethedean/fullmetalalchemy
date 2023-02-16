@@ -15,7 +15,7 @@ import fullmetalalchemy.exceptions as _ex
 
 
 def update_matching_records_session(
-    sa_table: _t.Union[_sa.Table, str],
+    table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
     match_column_names: _t.Sequence[str],
     session: _sa_session.Session
@@ -37,15 +37,15 @@ def update_matching_records_session(
     ... {'id': 3, 'x': 4, 'y': 8},
     ... {'id': 4, 'x': 8, 'y': 111}]
     """
-    sa_table = _features.str_to_table(sa_table, session)
+    table = _features.str_to_table(table, session)
     match_values = [_records.filter_record(record, match_column_names) for record in records]
     for values, record in zip(match_values, records):
-        stmt = _make_update_statement(sa_table, values, record)
+        stmt = _make_update_statement(table, values, record)
         session.execute(stmt)
 
 
 def update_matching_records(
-    sa_table:_t.Union[_sa.Table, str],
+    table:_t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
     match_column_names: _t.Sequence[str],
     engine: _t.Optional[_sa_engine.Engine] = None
@@ -65,10 +65,10 @@ def update_matching_records(
     ... {'id': 3, 'x': 4, 'y': 8},
     ... {'id': 4, 'x': 8, 'y': 111}]
     """
-    sa_table, engine = _ex.convert_table_engine(sa_table, engine)
+    table, engine = _ex.convert_table_engine(table, engine)
     session = _features.get_session(engine)
     try:
-        update_matching_records_session(sa_table, records, match_column_names, session)
+        update_matching_records_session(table, records, match_column_names, session)
         session.commit()
     except Exception as e:
         session.rollback()
@@ -76,7 +76,7 @@ def update_matching_records(
 
 
 def update_records_session(
-    sa_table: _t.Union[_sa.Table, str],
+    table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
     session: _sa_session.Session,
     match_column_names: _t.Optional[_t.Sequence[str]] = None,
@@ -98,17 +98,17 @@ def update_records_session(
     ... {'id': 3, 'x': 4, 'y': 8},
     ... {'id': 4, 'x': 8, 'y': 111}]
     """
-    sa_table = _features.str_to_table(sa_table, session)
-    if _features.missing_primary_key(sa_table):
+    table = _features.str_to_table(table, session)
+    if _features.missing_primary_key(table):
         if match_column_names is None:
             raise ValueError('Must provide match_column_names if table has no primary key.')
-        update_matching_records_session(sa_table, records, match_column_names, session)
+        update_matching_records_session(table, records, match_column_names, session)
     else:
-        _update_records_fast_session(sa_table, records, session)
+        _update_records_fast_session(table, records, session)
 
 
 def update_records(
-    sa_table: _t.Union[_sa.Table, str],
+    table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
     engine: _t.Optional[_sa_engine.Engine] = None,
     match_column_names: _t.Optional[_t.Sequence[str]] = None,
@@ -128,10 +128,10 @@ def update_records(
     ... {'id': 3, 'x': 4, 'y': 8},
     ... {'id': 4, 'x': 8, 'y': 111}]
     """
-    sa_table, engine = _ex.convert_table_engine(sa_table, engine)
+    table, engine = _ex.convert_table_engine(table, engine)
     session = _features.get_session(engine)
     try:
-        update_records_session(sa_table, records, session, match_column_names)
+        update_records_session(table, records, session, match_column_names)
         session.commit()
     except Exception as e:
         session.rollback()
@@ -139,19 +139,23 @@ def update_records(
 
 
 def _update_records_fast_session(
-    sa_table: _t.Union[_sa.Table, str],
+    table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
     session: _sa_session.Session
 ) -> None:
     """Fast update needs primary key."""
-    sa_table = _features.str_to_table(sa_table, session)
-    table_name = sa_table.name
-    table_class = _features.get_class(table_name, session, schema=sa_table.schema)
+    table = _features.str_to_table(table, session)
+    table_name = table.name
+    table_class = _features.get_class(table_name, session, schema=table.schema)
     mapper = _sa.inspect(table_class)
     session.bulk_update_mappings(mapper, records)
 
 
-def _make_update_statement(table, record_values, new_values):
+def _make_update_statement(
+    table,
+    record_values,
+    new_values
+):
     up = _sa.update(table)
     for col, val in record_values.items():
         up = up.where(table.c[col]==val)
@@ -168,7 +172,7 @@ def _make_update_statement_column_value(
 
 
 def set_column_values_session(
-    sa_table: _t.Union[_sa.Table, str],
+    table: _t.Union[_sa.Table, str],
     column_name: str,
     value: _t.Any,
     session: _sa_session.Session
@@ -190,13 +194,13 @@ def set_column_values_session(
      {'id': 3, 'x': 1, 'y': 8},
      {'id': 4, 'x': 1, 'y': 11}]
     """
-    sa_table = _features.str_to_table(sa_table, session)
-    stmt = _make_update_statement_column_value(sa_table, column_name, value)
+    table = _features.str_to_table(table, session)
+    stmt = _make_update_statement_column_value(table, column_name, value)
     session.execute(stmt)
 
 
 def set_column_values(
-    sa_table: _t.Union[_sa.Table, str],
+    table: _t.Union[_sa.Table, str],
     column_name: str,
     value: _t.Any,
     engine: _t.Optional[_sa_engine.Engine] = None
@@ -216,10 +220,10 @@ def set_column_values(
      {'id': 3, 'x': 1, 'y': 8},
      {'id': 4, 'x': 1, 'y': 11}]
     """
-    sa_table, engine = _ex.convert_table_engine(sa_table, engine)
+    table, engine = _ex.convert_table_engine(table, engine)
     session = _features.get_session(engine)
     try:
-        set_column_values_session(sa_table, column_name, value, session)
+        set_column_values_session(table, column_name, value, session)
         session.commit()
     except Exception as e:
         session.rollback()

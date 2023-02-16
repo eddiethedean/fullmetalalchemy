@@ -11,3 +11,5 @@ import fullmetalalchemy.type_convert as type_convert
 import fullmetalalchemy.records as records
 from fullmetalalchemy.create import create_engine
 from fullmetalalchemy.features import get_table, get_table_names, get_engine_table
+from fullmetalalchemy.table import Table
+from fullmetalalchemy.sessiontable import SessionTable

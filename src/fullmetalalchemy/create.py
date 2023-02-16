@@ -75,6 +75,10 @@ def create_table(
     ...         Column('y', INTEGER(), table=<xy>), schema=None)
      >>> fa.get_table_names(engine)
      ['xy']
+
+    See Also
+    --------
+    fullmetalalchemy.create.create_table_from_records
     """
     cols = []
     
@@ -143,6 +147,10 @@ def create_table_from_records(
     ...         Column('y', INTEGER(), table=<xy>), schema=None)
      >>> fa.get_table_names(engine)
      ['xy']
+
+    See Also
+    --------
+    fullmetalalchemy.create.create_table_from_records
     """
     data = _row_dicts_to_data(records, columns, missing_value)
     if column_types is None:
@@ -174,7 +182,7 @@ def _column_datatype(values: _t.Iterable) -> type:
     
 def copy_table(
     new_name: str,
-    sa_table: _sa.Table,
+    table: _sa.Table,
     engine: _sa_engine.Engine,
     if_exists: str = 'replace'
 ) -> _sa.Table:
@@ -183,8 +191,8 @@ def copy_table(
     """
     src_engine = engine
     dest_engine = engine
-    schema = sa_table.schema
-    src_name = sa_table.name
+    schema = table.schema
+    src_name = table.name
     dest_schema = schema
     dest_name = new_name
 

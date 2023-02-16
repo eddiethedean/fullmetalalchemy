@@ -3,6 +3,7 @@ import typing as _t
 
 import sqlalchemy.engine as _sa_engine
 import sqlalchemy as _sa
+import sqlalchemy.orm.session as _sa_session
 from hasattrs import has_iterable_attrs
 
 import fullmetalalchemy.features as _features
@@ -13,13 +14,19 @@ Record = _t.Dict[str, _t.Any]
 
 
 class BaseTable:
+    """
+    Base table class for fullmetalalchemy.table.Table 
+    and fullmetalalchemy.sessiontable.SessionTable to inherit
+    """
     def __init__(
         self,
         name: str,
-        engine: _sa_engine.Engine,
+        engine: _t.Union[_sa_engine.Engine, _sa_session.Session],
         schema: _t.Optional[str] = None
     ) -> None:
         self.name = name
+        if type(engine) is _sa_session.Session:
+            self.engine = engine.connection()
         self.engine = engine
         self.schema = schema
 

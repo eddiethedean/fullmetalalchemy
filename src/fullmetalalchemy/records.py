@@ -4,20 +4,19 @@ Functions for manipulating and comparing records.
 
 import typing as _t
 from frozendict import frozendict
-
-Record = _t.Mapping[str, _t.Any]
+import fullmetalalchemy.types as _types
 
 
 def filter_record(
-    record: Record,
+    record: _types.Record,
     column_names: _t.Sequence[str]
 ) -> _t.Dict[str, _t.Any]:
     return {column_name: record[column_name] for column_name in column_names}
 
 
 def records_equal(
-    records1: _t.Sequence[Record],
-    records2: _t.Sequence[Record],
+    records1: _t.Sequence[_types.Record],
+    records2: _t.Sequence[_types.Record],
 ) -> bool:
     """
     Check if two sets of records contain the same records.

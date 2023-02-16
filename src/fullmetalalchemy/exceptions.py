@@ -1,5 +1,5 @@
 """
-Module for custom Exceptions and exception handling.
+Module for custom exceptions and exception handling.
 """
 import typing as _t
 
