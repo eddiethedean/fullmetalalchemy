@@ -15,6 +15,36 @@ import fullmetalalchemy.exceptions as _ex
 
 
 def get_engine(connection) -> _sa_engine.Engine:
+    """
+    Returns a SQLAlchemy engine object for a given connection.
+
+    Parameters
+    ----------
+    connection : Session or Engine
+        A SQLAlchemy Session or Engine object.
+
+    Returns
+    -------
+    Engine
+        A SQLAlchemy Engine object that can be used to communicate with a database.
+
+    Raises
+    ------
+    TypeError
+        If `connection` is not an instance of either Session or Engine.
+
+    Examples
+    --------
+    To get a SQLAlchemy Engine object for a given connection:
+
+    >>> from sqlalchemy import create_engine
+    >>> from sqlalchemy.orm import sessionmaker
+    >>> engine = create_engine('postgresql://user:password@localhost/mydatabase')
+    >>> Session = sessionmaker(bind=engine)
+    >>> session = Session()
+    >>> engine = get_engine(session)
+
+    """
     if isinstance(connection, _sa_session.Session):
         return connection.connection()# type: ignore
     else:
@@ -339,13 +369,6 @@ def get_schemas(
     """
     insp = _sa.inspect(engine)
     return insp.get_schema_names()
-
-
-def _get_where_clause(
-    sa_table: _sa.Table,
-    record: _types.Record
-) ->  _t.List[bool]:
-    return [sa_table.c[key_name]==key_value for key_name, key_value in record.items()]
 
 
 def tables_metadata_equal(
