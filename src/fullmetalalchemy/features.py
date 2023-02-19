@@ -14,6 +14,13 @@ import fullmetalalchemy.types as _types
 import fullmetalalchemy.exceptions as _ex
 
 
+def get_engine(connection) -> _sa_engine.Engine:
+    if isinstance(connection, _sa_session.Session):
+        return connection.connection()# type: ignore
+    else:
+        return connection
+
+
 def primary_key_columns(
     table: _sa.Table
 ) ->  _t.List[_sa.Column]:

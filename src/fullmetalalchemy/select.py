@@ -42,7 +42,9 @@ def select_records_all(
 
     if sorted:
         query = query.order_by(*_features.primary_key_columns(table))
-    results = connection.execute(query)
+    engine = _features.get_engine(connection)
+    with engine.connect() as con:
+        results = con.execute(query)
     return [dict(r) for r in results]
 
 
@@ -78,7 +80,9 @@ def select_records_chunks(
 
     if sorted:
         query = query.order_by(*_features.primary_key_columns(table))
-    stream = connection.execute(query, execution_options={'stream_results': True})
+    engine = _features.get_engine(connection)
+    with engine.connect() as con:
+        stream = con.execute(query, execution_options={'stream_results': True})
     for results in stream.partitions(chunksize):
         yield [dict(r) for r in results]
 
@@ -106,7 +110,9 @@ def select_existing_values(
     column = _features.get_column(table, column_name)
     query = _sa.select([column]).where(column.in_(values))
     connection = _ex.check_for_engine(table, connection)
-    return connection.execute(query).scalars().fetchall()
+    engine = _features.get_engine(connection)
+    with engine.connect() as con:
+        return list(con.execute(query).scalars().fetchall())
 
 
 def select_column_values_all(
@@ -128,7 +134,9 @@ def select_column_values_all(
     table, connection = _ex.convert_table_connection(table, connection)
     query = _sa.select(_features.get_column(table, column_name))
     connection = _ex.check_for_engine(table, connection)
-    return connection.execute(query).scalars().all()
+    engine = _features.get_engine(connection)
+    with engine.connect() as con:
+        return list(con.execute(query).scalars().all())
 
 
 def select_column_values_chunks(
