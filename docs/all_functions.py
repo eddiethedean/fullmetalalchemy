@@ -1,11 +1,25 @@
+"""
+I am going to provide you with python functions for you to add numpy-style docstrings for.
+add the following sections: Parameters, Returns, Examples. Only respond to my functions with the docstring for them.
+"""
+
 import typing as _t
+import decimal as _decimal
+import datetime as _datetime
 
 import sqlalchemy as _sa
 import sqlalchemy.orm.session as _sa_session
 import sqlalchemy.ext.automap as _sa_automap
 import sqlalchemy.engine as _sa_engine
+import sqlalchemy.schema as _sa_schema
 from sqlalchemy.orm.decl_api import DeclarativeMeta as _DeclarativeMeta
+from sqlalchemy import create_engine as _create_engine
+from tinytim.rows import row_dicts_to_data as _row_dicts_to_data
+from tinytim.data import column_names as _column_names
 
+import fullmetalalchemy.type_convert as _type_convert
+import fullmetalalchemy.features as _features
+import fullmetalalchemy.insert as _insert
 import fullmetalalchemy.types as _types
 import fullmetalalchemy.exceptions as _ex
 
@@ -674,3 +688,277 @@ def str_to_table(table_name: _t.Union[str, _sa.Table], connection: _t.Optional[_
         return table_name
     else:
         raise TypeError('table_name can only be str or sa.Table')
+    
+
+_Record = _t.Dict[str, _t.Any]
+
+
+def create_engine(url, *args, **kwargs) -> _sa_engine.Engine:
+    """
+    Create a SQLAlchemy engine using the specified URL.
+
+    Parameters
+    ----------
+    url : str
+        The URL to connect to the database.
+    *args
+        Additional positional arguments to pass to `sqlalchemy.create_engine`.
+    **kwargs
+        Additional keyword arguments to pass to `sqlalchemy.create_engine`.
+
+    Returns
+    -------
+    sqlalchemy.engine.Engine
+        A SQLAlchemy engine instance.
+
+    Examples
+    --------
+    >>> engine = create_engine("sqlite:///example.db")
+    >>> session = _sa_session.Session(bind=engine)
+    """
+    return _create_engine(url, future=True, *args, **kwargs)
+
+
+def create_table(table_name: str, column_names:  _t.Sequence[str], column_types:  _t.Sequence, primary_key: _t.Sequence[str],
+    engine: _sa_engine.Engine,
+    schema:  _t.Optional[str] = None,
+    autoincrement:  _t.Optional[bool] = False,
+    if_exists:  _t.Optional[str] = 'error'
+) -> _sa.Table:
+    """
+    Create a new database table with the specified column names and types.
+
+    Parameters
+    ----------
+    table_name : str
+        The name of the table to create.
+    column_names : Sequence[str]
+        The names of the columns in the table.
+    column_types : Sequence
+        The types of the columns in the table. The types should be specified using the Python data types defined in `fullmetalalchemy.types`.
+    primary_key : Union[str, Sequence[str]]
+        The name(s) of the column(s) that make up the primary key. If a single column is the primary key, this should be a string.
+        If multiple columns make up the primary key, this should be a sequence of strings.
+    engine : sqlalchemy.engine.Engine
+        The database engine to use for creating the table.
+    schema : Optional[str], default=None
+        The name of the schema to create the table in.
+    autoincrement : bool, default=False
+        Whether to automatically increment the primary key.
+    if_exists : str, default='error'
+        What to do if the table already exists. Valid options are 'error', 'replace', and 'append'.
+
+    Returns
+    -------
+    sqlalchemy.schema.Table
+        A SQLAlchemy `Table` object representing the new table.
+
+    Examples
+    --------
+    >>> from fullmetalalchemy.types import TEXT, INTEGER
+    >>> engine = create_engine('sqlite:///example.db')
+    >>> create_table('my_table', ['id', 'name', 'age'], [INTEGER, TEXT, INTEGER], 'id', engine)
+    Table('my_table',
+        MetaData(bind=None),
+        Column('id', INTEGER(), table=<my_table>, primary_key=True, nullable=False),
+        Column('name', TEXT(), table=<my_table>),
+        Column('age', INTEGER(), table=<my_table>), schema=None)
+    """
+    cols = []
+    for name, python_type in zip(column_names, column_types):
+        sa_type = _type_convert._type_convert[python_type]
+        if type(primary_key) is str:
+            primary_key = [primary_key]
+        if name in primary_key:
+            col = _sa.Column(name, sa_type,
+                            primary_key=True,
+                            autoincrement=autoincrement)
+        else:
+            col = _sa.Column(name, sa_type)
+        cols.append(col)
+    metadata = _sa.MetaData(engine)
+    table = _sa.Table(table_name, metadata, *cols, schema=schema)
+    if if_exists == 'replace':
+        drop_table_sql = _sa_schema.DropTable(table, if_exists=True)
+        with engine.connect() as con:
+            con.execute(drop_table_sql)
+    table_creation_sql = _sa_schema.CreateTable(table)
+    with engine.connect() as con:
+        con.execute(table_creation_sql)
+    return _features.get_table(table_name, engine, schema=schema)
+
+def create_table_from_records(
+    table_name: str,
+    records:  _t.Sequence[_Record],
+    primary_key: _t.Sequence[str],
+    engine: _sa_engine.Engine,
+    column_types:  _t.Optional[ _t.Sequence] = None,
+    schema:  _t.Optional[str] = None,
+    autoincrement:  _t.Optional[bool] = False,
+    if_exists:  _t.Optional[str] = 'error',
+    columns:  _t.Optional[ _t.Sequence[str]] = None,
+    missing_value:  _t.Optional[_t.Any] = None
+) -> _sa.Table:
+    """
+    Creates a table in the database and populates it with the data from the provided sequence of records.
+
+    Parameters
+    ----------
+    table_name : str
+        The name of the table to be created.
+    records : Sequence[Dict[str, Any]]
+        A sequence of dictionaries, where each dictionary represents a row of data to be inserted into the table.
+    primary_key : Sequence[str]
+        A sequence of strings, where each string represents a column name that should be used as a primary key.
+    engine : sqlalchemy.engine.Engine
+        A SQLAlchemy engine object used to create the table.
+    column_types : Optional[Sequence]
+        A sequence of SQLAlchemy column types corresponding to the columns in the data.
+        If not provided, the column types will be inferred based on the data.
+    schema : Optional[str]
+        The schema of the table. If not provided, the default schema will be used.
+    autoincrement : Optional[bool]
+        Whether or not to automatically increment the primary key column. Defaults to False.
+    if_exists : Optional[str]
+        What to do if the table already exists. Valid options are 'error', 'replace', and 'append'. Defaults to 'error'.
+    columns : Optional[Sequence[str]]
+        A sequence of column names to include in the table. If not provided, all columns will be included.
+    missing_value : Optional[Any]
+        A value that represents missing or null values in the data.
+
+    Returns
+    -------
+    sqlalchemy.schema.Table
+        The SQLAlchemy Table object representing the newly created table.
+
+    Examples
+    --------
+    >>> from sqlalchemy import create_engine
+    >>> engine = create_engine('sqlite:///example.db')
+    >>> records = [{'name': 'John', 'age': 25, 'gender': 'Male'},
+                {'name': 'Mary', 'age': 30, 'gender': 'Female'},
+                {'name': 'Bob', 'age': 40, 'gender': 'Male'}]
+    >>> create_table_from_records('people', records, ['name'], engine, columns=['name', 'age', 'gender'])
+
+    """
+    data = _row_dicts_to_data(records, columns, missing_value)
+    if column_types is None:
+        column_types = [_column_datatype(values) for values in data.values()]
+    col_names = _column_names(data)
+    table = create_table(table_name, col_names, column_types, primary_key, engine, schema, autoincrement, if_exists)
+    _insert.insert_records(table, records, engine)
+    return table
+
+def _column_datatype(values: _t.Iterable) -> type:
+    """
+    Infer the appropriate SQLAlchemy datatype for a column from a sample of values.
+
+    Parameters
+    ----------
+    values : Iterable
+        An iterable containing sample values of the column for which to infer a datatype.
+
+    Returns
+    -------
+    type
+        The inferred SQLAlchemy datatype for the column.
+
+    Examples
+    --------
+    >>> values = [1, 2, 3, 4]
+    >>> _column_datatype(values)
+    <class 'int'>
+
+    >>> values = [1.0, 2.0, 3.0, 4.0]
+    >>> _column_datatype(values)
+    <class 'float'>
+
+    >>> values = ["foo", "bar", "baz"]
+    >>> _column_datatype(values)
+    <class 'str'>
+    """
+    dtypes = [
+        int, str, (int, float), _decimal.Decimal, _datetime.datetime,
+        bytes, bool, _datetime.date, _datetime.time, 
+        _datetime.timedelta, list, dict
+    ]
+    for value in values:
+        for dtype in list(dtypes):
+            if not isinstance(value, dtype):
+                dtypes.pop(dtypes.index(dtype))
+    if len(dtypes) == 2:
+        if set([int, _t.Union[float, int]]) == {int, _t.Union[float, int]}:
+            return int
+    if len(dtypes) == 1:
+        if dtypes[0] == _t.Union[float, int]:
+            return float
+        return dtypes[0]
+    return str
+    
+def copy_table(
+    new_name: str,
+    table: _sa.Table,
+    engine: _sa_engine.Engine,
+    if_exists: str = 'replace'
+) -> _sa.Table:
+    """
+    Copy a table to a new table with a new name.
+
+    Parameters
+    ----------
+    new_name : str
+        The name of the new table.
+    table : sqlalchemy.Table
+        The table to copy.
+    engine : sqlalchemy.engine.Engine
+        The engine to use for the copying process.
+    if_exists : str, optional
+        What to do if the new table already exists, by default 'replace'.
+
+    Returns
+    -------
+    sqlalchemy.Table
+        The new table created.
+
+    Examples
+    --------
+    # create a connection to a database and a table object
+    engine = create_engine('sqlite:///mydatabase.db')
+    metadata = MetaData()
+    mytable = Table('mytable', metadata, Column('id', Integer, primary_key=True), Column('value', String))
+
+    # create a copy of the table with a new name
+    mynewtable = copy_table('mynewtable', mytable, engine, if_exists='replace')
+
+    """
+    src_engine = engine
+    dest_engine = engine
+    schema = table.schema
+    src_name = table.name
+    dest_schema = schema
+    dest_name = new_name
+
+    # reflect existing columns, and create table object for oldTable
+    src_engine._metadata = _sa.MetaData(bind=src_engine, schema=schema)  # type: ignore
+    src_engine._metadata.reflect(src_engine)  # type: ignore
+    
+    # get columns from existing table 
+    srcTable = _sa.Table(src_name, src_engine._metadata, schema=schema)  # type: ignore
+
+    # create engine and table object for newTable
+    dest_engine._metadata = _sa.MetaData(bind=dest_engine, schema=dest_schema)  # type: ignore
+    destTable = _sa.Table(dest_name, dest_engine._metadata, schema=dest_schema)  # type: ignore
+
+    if if_exists == 'replace':
+        drop_table_sql = _sa_schema.DropTable(destTable, if_exists=True)
+        with engine.connect() as con:
+            con.execute(drop_table_sql)
+
+    # copy schema and create newTable from oldTable
+    for column in srcTable.columns:
+        destTable.append_column(column.copy())
+    destTable.create()
+
+    # insert records from oldTable
+    _insert.insert_from_table(srcTable, destTable, engine)
+    return destTable
