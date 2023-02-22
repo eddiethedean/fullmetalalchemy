@@ -661,3 +661,10 @@ def str_to_table(
         return table_name
     else:
         raise TypeError('table_name can only be str or sa.Table')
+
+
+def _get_where_clause(
+    sa_table: _sa.Table,
+    record: _types.Record
+) ->  _t.List[bool]:
+    return [sa_table.c[key_name]==key_value for key_name, key_value in record.items()]
