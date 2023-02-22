@@ -55,12 +55,23 @@ def primary_key_columns(
     table: _sa.Table
 ) ->  _t.List[_sa.Column]:
     """
-    Example
-    -------
-    >>> import sqlalchemize as sz
+    Return the primary key columns of a SQLAlchemy Table.
 
-    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> sz.features.primary_key_columns(table)
+    Parameters
+    ----------
+    table : sqlalchemy.Table
+        The table whose primary key columns will be returned.
+
+    Returns
+    -------
+    List of sqlalchemy.Column
+        The list of primary key columns for the input table.
+
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.features.primary_key_columns(table)
     [Column('id', INTEGER(), table=<xy>, primary_key=True, nullable=False)]
     """
     return list(table.primary_key.columns)
@@ -70,12 +81,23 @@ def primary_key_names(
     table: _sa.Table
 ) ->  _t.List[str]:
     """
-    Example
-    -------
-    >>> import sqlalchemize as sz
+    Return the names of the primary key columns of a SQLAlchemy Table.
 
-    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> sz.features.primary_key_names(table)
+    Parameters
+    ----------
+    table : sqlalchemy.Table
+        The table whose primary key column names will be returned.
+
+    Returns
+    -------
+    List of str
+        The list of primary key column names for the input table.
+
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.features.primary_key_names(table)
     ['id']
     """
     return [c.name for c in primary_key_columns(table)]
@@ -85,16 +107,24 @@ def get_connection(
     connection: _t.Union[_types.SqlConnection, _sa_session.Session]
 ) -> _types.SqlConnection:
     """
-    If session connection is passed, return engine connection
-    else, return connection
+    Get the engine connection from a SQLAlchemy Session object or return the input connection.
 
-    Example
+    Parameters
+    ----------
+    connection : Union[sqlalchemy.engine.Connection, sqlalchemy.orm.Session]
+        The connection or session to get the engine connection from.
+
+    Returns
     -------
-    >>> import sqlalchemize as sz
+    sqlalchemy.engine.Connection
+        The engine connection associated with the input session, or the input connection if it is already an engine connection.
 
-    >>> engine = sz.create_engine('sqlite:///data/test.db')
-    >>> session = sz.features.get_session(engine)
-    >>> sz.features.get_connection(session)
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> session = fa.features.get_session(engine)
+    >>> fa.features.get_connection(session)
     <sqlalchemy.engine.base.Connection at 0x7f9568064550>
     """
     if isinstance(connection, _sa_session.Session):
@@ -107,14 +137,25 @@ def get_metadata(
     schema: _t.Optional[str] = None
 ) -> _sa.MetaData:
     """
-    Get metadata object from sql connection.
+    Get a SQLAlchemy MetaData object associated with a given database connection and schema.
 
-    Example
+    Parameters
+    ----------
+    connection : fullmetalalchemy.types.SqlConnection
+        The database connection to associate with the MetaData object.
+    schema : Optional[str], default None
+        The name of the schema to use with the MetaData object. If None, the default schema is used.
+
+    Returns
     -------
-    >>> import sqlalchemize as sz
+    sqlalchemy.MetaData
+        The MetaData object associated with the input connection and schema.
 
-    >>> engine = sz.create_engine('sqlite:///data/test.db')
-    >>> sz.features.get_metadata(engine)
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> fa.features.get_metadata(engine)
     MetaData(bind=Engine(sqlite:///data/test.db))
     """
     return _sa.MetaData(bind=connection, schema=schema)
@@ -126,14 +167,27 @@ def get_table(
     schema: _t.Optional[str] = None
 ) -> _sa.Table:
     """
-    Get sqlalchemy Table object.
+    Get a SQLAlchemy Table object associated with a given table name, database connection, and schema.
 
-    Example
+    Parameters
+    ----------
+    table_name : str
+        The name of the table to retrieve.
+    connection : fullmetalalchemy.types.SqlConnection
+        The database connection to use to retrieve the table.
+    schema : Optional[str], default None
+        The name of the schema to use when retrieving the table. If None, the default schema is used.
+
+    Returns
     -------
-    >>> import sqlalchemize as sz
+    sqlalchemy.Table
+        The Table object associated with the input table name, database connection, and schema.
 
-    >>> engine = sz.create_engine('sqlite:///data/test.db')
-    >>> sz.get_table('xy', engine)
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> fa.features.get_table('xy', engine)
     Table('xy', MetaData(bind=Engine(sqlite:///data/test.db)),
         Column('id', INTEGER(), table=<xy>, primary_key=True, nullable=False),
         Column('x', INTEGER(), table=<xy>),
@@ -155,20 +209,29 @@ def get_engine_table(
     schema: _t.Optional[str] = None
 ) -> _t.Tuple[_sa_engine.Engine, _sa.Table]:
     """
-    Get both the engine and sql table with one function.
+    Get the engine and table objects from a given connection string, table name, and optional schema.
 
-    Example
+    Parameters
+    ----------
+    connection_string : str
+        The connection string to the database.
+    table_name : str
+        The name of the table to get.
+    schema : str, optional
+        The name of the schema the table belongs to.
+
+    Returns
     -------
-    >>> import sqlalchemize as sz
+    Tuple[Engine, Table]
+        The SQLAlchemy engine and table objects.
 
-    >>> sz.get_engine_table('sqlite:///data/test.db', 'xy')
-    (
-     Engine(sqlite:///data/test.db),
-     Table('xy', MetaData(bind=Engine(sqlite:///data/test.db)),
-        Column('id', INTEGER(), table=<xy>, primary_key=True, nullable=False),
-        Column('x', INTEGER(), table=<xy>),
-        Column('y', INTEGER(), table=<xy>), schema=None)
-    )
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> assert isinstance(engine, _sa_engine.Engine)
+    >>> assert isinstance(table, _sa.Table)
     """
     engine = _sa.create_engine(connection_string)
     table = get_table(table_name, engine, schema)
@@ -181,14 +244,34 @@ def get_class(
     schema: _t.Optional[str] = None
 ) -> _DeclarativeMeta:
     """
-    Get sqlalchemy table class object.
+    Reflects the specified table and returns a declarative class that corresponds to it.
+
+    Parameters
+    ----------
+    table_name : str
+        The name of the table to reflect.
+    connection : Union[SqlConnection, Session]
+        The connection to use to reflect the table. This can be either an `SqlConnection`
+        or an active `Session` object.
+    schema : Optional[str], optional
+        The name of the schema to which the table belongs, by default None.
+
+    Returns
+    -------
+    DeclarativeMeta
+        The declarative class that corresponds to the specified table.
+
+    Raises
+    ------
+    MissingPrimaryKey
+        If the specified table does not have a primary key.
 
     Example
     -------
-    >>> import sqlalchemize as sz
+    >>> import fullmetalalchemy as fa
 
-    >>> engine = sz.create_engine('sqlite:///data/test.db')
-    >>> sz.features.get_class('xy', engine)
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> fa.features.get_class('xy', engine)
     sqlalchemy.ext.automap.xy
     """
     metadata = get_metadata(connection, schema)
@@ -206,14 +289,24 @@ def get_session(
     engine: _sa_engine.Engine
 ) -> _sa_session.Session:
     """
-    Start a session from engine then return session.
+    Creates and returns a new SQLAlchemy session object using the provided SQLAlchemy engine object.
+
+    Parameters
+    ----------
+    engine : _sa_engine.Engine
+        SQLAlchemy engine object to create a new session from.
+
+    Returns
+    -------
+    _sa_session.Session
+        New SQLAlchemy session object.
 
     Example
     -------
-    >>> import sqlalchemize as sz
+    >>> import fullmetalalchemy as fa
 
-    >>> engine = sz.create_engine('sqlite:///data/test.db')
-    >>> sz.features.get_session(engine)
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> fa.features.get_session(engine)
     <sqlalchemy.orm.session.Session at 0x7f95999e1eb0>
     """
     return _sa_session.Session(engine, future=True)
@@ -224,14 +317,26 @@ def get_column(
     column_name: str
 ) -> _sa.Column:
     """
-    Get a sqlalchemy column object from a sqlalchemy table.
+    Retrieve a SQLAlchemy column object from a SQLAlchemy table.
+
+    Parameters
+    ----------
+    table : sqlalchemy.Table
+        The SQLAlchemy table to retrieve the column from.
+    column_name : str
+        The name of the column to retrieve.
+
+    Returns
+    -------
+    sqlalchemy.Column
+        The SQLAlchemy column object corresponding to the given column name.
 
     Example
     -------
-    >>> import sqlalchemize as sz
+    >>> import fullmetalalchemy as fa
 
-    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> sz.features.get_column(table, 'x')
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.features.get_column(table, 'x')
     Column('x', INTEGER(), table=<xy>)
     """
     return table.c[column_name]
@@ -241,14 +346,24 @@ def get_table_constraints(
     table: _sa.Table
 ) -> set:
     """
-    Get sql table constraints.
+    Get a set of all constraints for a given SQLAlchemy Table object.
+
+    Parameters
+    ----------
+    table : sqlalchemy.Table
+        The Table object to get the constraints from.
+
+    Returns
+    -------
+    set
+        A set of all constraints for the given Table object.
 
     Example
     -------
-    >>> import sqlalchemize as sz
+    >>> import fullmetalalchemy as fa
 
-    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> sz.features.get_table_constraints(table)
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.features.get_table_constraints(table)
     {PrimaryKeyConstraint(Column('id', INTEGER(), table=<xy>, primary_key=True, nullable=False))}
     """
     return table.constraints
@@ -258,12 +373,25 @@ def get_primary_key_constraints(
     table: _sa.Table
 ) -> _t.Tuple[str,  _t.List[str]]:
     """
+    Get the primary key constraints of a SQLAlchemy table.
+
+    Parameters
+    ----------
+    table : sqlalchemy.Table
+        The SQLAlchemy table object to get the primary key constraints of.
+
+    Returns
+    -------
+    Tuple[Optional[str], List[str]]
+        A tuple with the primary key constraint name (if it exists) and a list of
+        the column names that make up the primary key.
+
     Example
     -------
-    >>> import sqlalchemize as sz
+    >>> import fullmetalalchemy as fa
 
-    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> sz.features.get_primary_key_constraints(table)
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.features.get_primary_key_constraints(table)
     (None, ['id'])
     """
     cons = get_table_constraints(table)
@@ -277,12 +405,24 @@ def missing_primary_key(
     table: _sa.Table,
 ) -> bool:
     """
-    Example
-    -------
-    >>> import sqlalchemize as sz
+    Check if a sqlalchemy table has a primary key.
 
-    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> sz.features.missing_primary_key(table)
+    Parameters
+    ----------
+    table : sqlalchemy.Table
+        The table to check.
+
+    Returns
+    -------
+    bool
+        True if the table doesn't have a primary key, False otherwise.
+
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.features.missing_primary_key(table)
     False
     """
     pks = get_primary_key_constraints(table)
@@ -293,12 +433,25 @@ def get_column_types(
     table: _sa.Table
 ) -> dict:
     """
+    Get the types of columns in a SQLAlchemy table.
+
+    Parameters
+    ----------
+    table : sqlalchemy.Table
+        SQLAlchemy table to get column types from.
+
+    Returns
+    -------
+    dict
+        A dictionary with the names of columns as keys and the SQLAlchemy
+        types of the columns as values.
+
     Example
     -------
-    >>> import sqlalchemize as sz
+    >>> import fullmetalalchemy as fa
 
-    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> sz.features.get_column_types(table)
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.features.get_column_types(table)
     {'id': INTEGER(), 'x': INTEGER(), 'y': INTEGER()}
     """
     return {c.name: c.type for c in table.c}
@@ -308,12 +461,24 @@ def get_column_names(
     table: _sa.Table
 ) ->  _t.List[str]:
     """
+    Returns a list of the column names for the given SQLAlchemy table object.
+
+    Parameters
+    ----------
+    table : sqlalchemy.Table
+        The SQLAlchemy table object to get column names for.
+
+    Returns
+    -------
+    List[str]
+        A list of the column names for the given table.
+
     Example
     -------
-    >>> import sqlalchemize as sz
+    >>> import fullmetalalchemy as fa
 
-    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> sz.features.get_column_names(table)
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.features.get_column_names(table)
     ['id', 'x', 'y']
     """
     return [c.name for c in table.columns]
@@ -324,12 +489,26 @@ def get_table_names(
     schema: _t.Optional[str] = None
 ) ->  _t.List[str]:
     """
-    Example
-    -------
-    >>> import sqlalchemize as sz
+    Get a list of the names of tables in the database connected to the given engine.
 
-    >>> engine = sz.create_engine('sqlite:///data/test.db')
-    >>> sz.features.get_table_names(engine)
+    Parameters
+    ----------
+    engine : _sa_engine.Engine
+        An SQLAlchemy engine instance connected to a database.
+    schema : Optional[str], optional
+        The name of the schema to filter by, by default None.
+
+    Returns
+    -------
+    List[str]
+        A list of table names.
+
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> fa.features.get_table_names(engine)
     ['xy']
     """
     return _sa.inspect(engine).get_table_names(schema)
@@ -340,12 +519,25 @@ def get_row_count(
     session: _t.Optional[_types.SqlConnection] = None
 ) -> int:
     """
-    Example
-    -------
-    >>> import sqlalchemize as sz
+    Returns the number of rows in a given table.
 
-    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> sz.features.get_row_count(table)
+    Parameters
+    ----------
+    table : sqlalchemy.Table
+        The table to get the row count from.
+    session : sqlalchemy.orm.Session, optional
+        The session to use. If not provided, a new session is created.
+
+    Returns
+    -------
+    int
+        The number of rows in the table.
+
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.features.get_row_count(table)
     0
     """
     session = _ex.check_for_engine(table, session)
@@ -359,12 +551,24 @@ def get_schemas(
     engine: _sa_engine.Engine
 ) ->  _t.List[str]:
     """
+    Get a list of all schemas in the database connected to the given engine.
+
+    Parameters
+    ----------
+    engine : sqlalchemy.engine.Engine
+        An instance of the SQLAlchemy engine connected to the database.
+
+    Returns
+    -------
+    List[str]
+        A list of all schemas in the connected database.
+
     Example
     -------
-    >>> import sqlalchemize as sz
+    >>> import fullmetalalchemy as fa
 
-    >>> engine = sz.create_engine('sqlite:///data/test.db')
-    >>> sz.features.get_schemas(engine)
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> fa.features.get_schemas(engine)
     ['main']
     """
     insp = _sa.inspect(engine)
@@ -376,14 +580,26 @@ def tables_metadata_equal(
     table2: _sa.Table
 ) -> bool:
     """
-    Check if two sql tables have the same metadata.
+    Check if two SQL tables have the same metadata.
 
-    Example
+    Parameters
+    ----------
+    table1 : sqlalchemy.Table
+        First SQL table to compare
+    table2 : sqlalchemy.Table
+        Second SQL table to compare
+
+    Returns
     -------
-    >>> import sqlalchemize as sz
+    bool
+        True if the two SQL tables have the same metadata, otherwise False.
 
-    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> sz.features.tables_metadata_equal(table, table)
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.features.tables_metadata_equal(table, table)
     True
     """
     if table1.name != table2.name: return False
@@ -403,6 +619,40 @@ def str_to_table(
     table_name: _t.Union[str, _sa.Table],
     connection: _t.Optional[_types.SqlConnection]
 ) -> _sa.Table:
+    """
+    Convert a table name to a SQLAlchemy table object.
+
+    Parameters
+    ----------
+    table_name : str or sqlalchemy.Table
+        If a string is passed, it should be the name of the table to be fetched.
+        If a `sqlalchemy.Table` object is passed, it is simply returned.
+
+    connection : SQLAlchemy connection
+        Connection to the database.
+
+    Returns
+    -------
+    sqlalchemy.Table
+        The corresponding table object.
+
+    Raises
+    ------
+    ValueError
+        If `table_name` is a string and `connection` is `None`.
+
+    TypeError
+        If `table_name` is neither a string nor a `sqlalchemy.Table`.
+
+    Example
+    -------
+    >>> import fullmetalalchemy as fa
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> table_name = 'xy'
+    >>> table = fa.features.str_to_table(table_name, engine)
+    >>> print(table.name)
+    xy
+    """
     if type(table_name) is str:
         if connection is None:
             raise ValueError('table_name cannot be str while connection is None')

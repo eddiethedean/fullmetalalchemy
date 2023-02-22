@@ -41,19 +41,19 @@ def delete_records_session(
 
     Example
     -------
-    >>> import sqlalchemize as sz
+    >>> import fullmetalalchemy as fa
 
-    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> sz.select.select_records_all(table)
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
 
-    >>> session = sz.features.get_session(engine)
-    >>> delete_records_session(table, 'id', [1], session)
+    >>> session = fa.features.get_session(engine)
+    >>> fa.delete.delete_records_session(table, 'id', [1], session)
     >>> session.commit()
-    >>> sz.select.select_records_all(table)
+    >>> fa.select.select_records_all(table)
     [{'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
@@ -93,17 +93,17 @@ def delete_records(
 
     Example
     -------
-    >>> import sqlalchemize as sz
+    >>> import fullmetalalchemy as fa
 
-    >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> sz.select.select_records_all(table)
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_records_all(table)
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
 
-    >>> sz.delete.delete_records(table, 'id', [1])
-    >>> sz.select.select_records_all(table)
+    >>> fa.delete.delete_records(table, 'id', [1])
+    >>> fa.select.select_records_all(table)
     [{'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
@@ -159,6 +159,43 @@ def delete_record_by_values_session(
     record: _types.Record,
     session: _sa_session.Session
 ) -> None:
+    """
+    Deletes a single row from a table based on the values in the specified record.
+    
+    Parameters
+    ----------
+    table : Union[sqlalchemy.Table, str]
+        The table to delete from. Can either be a `sqlalchemy.Table` object
+        or a string containing the name of the table.
+    record : fullmetalalchemy.types.Record
+        A dictionary of column names and values representing the row to delete.
+    session : sqlalchemy.orm.session.Session
+        The session object to use for the database transaction.
+
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_records_all(table)
+    [{'id': 1, 'x': 1, 'y': 2},
+     {'id': 2, 'x': 2, 'y': 4},
+     {'id': 3, 'x': 4, 'y': 8},
+     {'id': 4, 'x': 8, 'y': 11}]
+    
+    >>> session = fa.features.get_session(engine)
+    >>> fa.delete.delete_record_by_values_session(table, {'id': 1, 'x': 1, 'y': 2}, session)
+    >>> session.commit()
+    >>> fa.select.select_records_all(table)
+    [{'id': 2, 'x': 2, 'y': 4},
+     {'id': 3, 'x': 4, 'y': 8},
+     {'id': 4, 'x': 8, 'y': 11}]
+
+    """
     table = _features.str_to_table(table, session)
     delete = _build_delete_from_record(table, record)
     session.execute(delete)
@@ -170,6 +207,21 @@ def delete_records_by_values_session(
     session: _sa_session.Session
 ) -> None:
     """
+    Delete records from the specified table that match the given records by values using the provided session.
+
+    Parameters
+    ----------
+    table : Union[Table, str]
+        The SQLAlchemy table object or name of the table to delete records from.
+    records : Sequence[Record]
+        A sequence of records to delete from the table. Each record is a dictionary with keys as column names and values as the value to match.
+    session : Session
+        The SQLAlchemy session to use for the database operation.
+
+    Returns
+    -------
+    None
+
     Example
     -------
     >>> import sqlalchemize as sz
@@ -197,6 +249,37 @@ def _build_where_from_record(
     table: _sa.Table,
     record: _types.Record
 ) -> _Select:
+    """
+    Builds a WHERE clause using the given record.
+
+    Parameters
+    ----------
+    table : Union[sqlalchemy.Table, str]
+        The table object or name to build the WHERE clause for.
+    record : Dict[str, Any]
+        The record to use to build the WHERE clause.
+
+    Returns
+    -------
+    sqlalchemy.sql.expression.Select
+        A SQL SELECT statement with the WHERE clause built from the record.
+
+    Example
+    -------
+    >>> from sqlalchemy import Table, Column, Integer, MetaData
+
+    >>> metadata = MetaData()
+    >>> table = Table('mytable', metadata,
+    ...               Column('id', Integer, primary_key=True),
+    ...               Column('name', String))
+    >>> record = {'id': 1, 'name': 'test'}
+    >>> where_clause = _build_where_from_record(table, record)
+    >>> print(where_clause)
+    SELECT mytable.id, mytable.name
+    FROM mytable
+    WHERE mytable.id = :id_1 AND mytable.name = :name_1
+
+    """
     s = _sa.select(table)
     for col, val in record.items():
         s = s.where(table.c[col]==val)
@@ -218,8 +301,21 @@ def delete_all_records_session(
     session: _sa_session.Session
 ) -> None:
     """
-    Example
+    Delete all records from the specified table.
+
+    Parameters
+    ----------
+    table : Union[Table, str]
+        The table to delete records from. It can be either a sqlalchemy Table object or a table name.
+    session : Session
+        The session to use to execute the query.
+
+    Returns
     -------
+    None
+
+    Examples
+    --------
     >>> import sqlalchemize as sz
 
     >>> engine, table = sz.get_engine_table('sqlite:///data/test.db', 'xy')
@@ -242,6 +338,26 @@ def delete_all_records(
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
     """
+    Delete all records from a table.
+
+    Parameters
+    ----------
+    table : Union[sqlalchemy.Table, str]
+        The table to delete records from.
+    engine : Optional[sqlalchemy.engine.Engine]
+        The engine to use. If `None`, use default engine.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    fullmetalalchemy.exceptions.InvalidInputType
+        If `table` parameter is not a valid SQLAlchemy Table object or a string.
+    Exception
+        If any other error occurs.
+
     Example
     -------
     >>> import sqlalchemize as sz

@@ -970,19 +970,18 @@ def delete_records_session(
     session: _sa_session.Session
 ) -> None:
     """
-    Delete records from a database table where a specified column has values in a given sequence.
+    Delete rows from a table matching the given column name and values.
 
     Parameters
     ----------
     table : Union[sqlalchemy.Table, str]
-        The database table to delete records from.
+        The name of the table as a string or the SQLAlchemy Table object.
     column_name : str
-        The name of the column in the table to use as a filter.
+        The name of the column to match against the values.
     values : Sequence
-        A sequence of values to filter on. Any records in the table where the specified column
-        contains a value in this sequence will be deleted.
-    session : sqlalchemy.orm.session.Session
-        The SQLAlchemy session to use for the delete operation.
+        A sequence of values to match against the column.
+    session : sqlalchemy.orm.Session
+        The SQLAlchemy session object for the transaction.
 
     Returns
     -------
@@ -990,12 +989,22 @@ def delete_records_session(
 
     Examples
     --------
-    >>> from sqlalchemy import create_engine
-    >>> from sqlalchemy.orm import sessionmaker
-    >>> engine = create_engine('sqlite:///example.db')
-    >>> Session = sessionmaker(bind=engine)
-    >>> session = Session()
-    >>> delete_records_session('my_table', 'my_column', [1, 2, 3], session)
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_records_all(table)
+    [{'id': 1, 'x': 1, 'y': 2},
+     {'id': 2, 'x': 2, 'y': 4},
+     {'id': 3, 'x': 4, 'y': 8},
+     {'id': 4, 'x': 8, 'y': 11}]
+
+    >>> session = fa.features.get_session(engine)
+    >>> fa.delete.delete_records_session(table, 'id', [1], session)
+    >>> session.commit()
+    >>> fa.select.select_records_all(table)
+    [{'id': 2, 'x': 2, 'y': 4},
+     {'id': 3, 'x': 4, 'y': 8},
+     {'id': 4, 'x': 8, 'y': 11}]
     """
     table = _features.str_to_table(table, session)
     col = _features.get_column(table, column_name)
@@ -1008,38 +1017,39 @@ def delete_records(
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
     """
-    Delete records from a database table with the specified column name and values.
+    Deletes records from a given table with a given value in a given column.
 
     Parameters
     ----------
-    table : Union[Table, str]
-        The database table to delete records from. This can be either a SQLAlchemy `Table` object or the name of the table as a string.
+    table : Union[sqlalchemy.Table, str]
+        A SQLAlchemy Table object or the name of a table in the database.
     column_name : str
-        The name of the column to filter records by.
+        The name of the column to filter the records.
     values : Sequence
-        The values to filter the records by.
-    engine : Optional[Engine]
-        The SQLAlchemy engine to use to execute the deletion. If not provided, a new engine will be created using the default configuration.
+        The values of the column to match against and delete the records.
+    engine : Optional[sqlalchemy.engine.Engine], optional
+        A SQLAlchemy Engine object representing the database connection, by default None.
 
     Returns
     -------
     None
-        This function does not return anything, it simply deletes records from the specified database table.
 
     Examples
     --------
-    >>> engine = create_engine("sqlite:///:memory:")
-    >>> metadata = MetaData()
-    >>> user = Table('user', metadata, Column('id', Integer, primary_key=True), Column('name', String))
-    >>> metadata.create_all(engine)
-    >>> with engine.begin() as conn:
-    ...     conn.execute(user.insert(), [{'id': 1, 'name': 'foo'}, {'id': 2, 'name': 'bar'}, {'id': 3, 'name': 'baz'}])
-    >>> delete_records(user, 'name', ['foo', 'bar'], engine)
-    >>> with engine.connect() as conn:
-    ...     result = conn.execute(select([user]))
-    ...     rows = result.fetchall()
-    ...     print(rows)
-    [(3, 'baz')]
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_records_all(table)
+    [{'id': 1, 'x': 1, 'y': 2},
+     {'id': 2, 'x': 2, 'y': 4},
+     {'id': 3, 'x': 4, 'y': 8},
+     {'id': 4, 'x': 8, 'y': 11}]
+
+    >>> fa.delete.delete_records(table, 'id', [1])
+    >>> fa.select.select_records_all(table)
+    [{'id': 2, 'x': 2, 'y': 4},
+     {'id': 3, 'x': 4, 'y': 8},
+     {'id': 4, 'x': 8, 'y': 11}]
     """
     table, engine = _ex.convert_table_engine(table, engine)
     session = _features.get_session(engine)
