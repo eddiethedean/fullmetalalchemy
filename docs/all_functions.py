@@ -969,6 +969,34 @@ def delete_records_session(
     values: _t.Sequence,
     session: _sa_session.Session
 ) -> None:
+    """
+    Delete records from a database table where a specified column has values in a given sequence.
+
+    Parameters
+    ----------
+    table : Union[sqlalchemy.Table, str]
+        The database table to delete records from.
+    column_name : str
+        The name of the column in the table to use as a filter.
+    values : Sequence
+        A sequence of values to filter on. Any records in the table where the specified column
+        contains a value in this sequence will be deleted.
+    session : sqlalchemy.orm.session.Session
+        The SQLAlchemy session to use for the delete operation.
+
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> from sqlalchemy import create_engine
+    >>> from sqlalchemy.orm import sessionmaker
+    >>> engine = create_engine('sqlite:///example.db')
+    >>> Session = sessionmaker(bind=engine)
+    >>> session = Session()
+    >>> delete_records_session('my_table', 'my_column', [1, 2, 3], session)
+    """
     table = _features.str_to_table(table, session)
     col = _features.get_column(table, column_name)
     session.query(table).filter(col.in_(values)).delete(synchronize_session=False)
@@ -979,6 +1007,40 @@ def delete_records(
     values: _t.Sequence,
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
+    """
+    Delete records from a database table with the specified column name and values.
+
+    Parameters
+    ----------
+    table : Union[Table, str]
+        The database table to delete records from. This can be either a SQLAlchemy `Table` object or the name of the table as a string.
+    column_name : str
+        The name of the column to filter records by.
+    values : Sequence
+        The values to filter the records by.
+    engine : Optional[Engine]
+        The SQLAlchemy engine to use to execute the deletion. If not provided, a new engine will be created using the default configuration.
+
+    Returns
+    -------
+    None
+        This function does not return anything, it simply deletes records from the specified database table.
+
+    Examples
+    --------
+    >>> engine = create_engine("sqlite:///:memory:")
+    >>> metadata = MetaData()
+    >>> user = Table('user', metadata, Column('id', Integer, primary_key=True), Column('name', String))
+    >>> metadata.create_all(engine)
+    >>> with engine.begin() as conn:
+    ...     conn.execute(user.insert(), [{'id': 1, 'name': 'foo'}, {'id': 2, 'name': 'bar'}, {'id': 3, 'name': 'baz'}])
+    >>> delete_records(user, 'name', ['foo', 'bar'], engine)
+    >>> with engine.connect() as conn:
+    ...     result = conn.execute(select([user]))
+    ...     rows = result.fetchall()
+    ...     print(rows)
+    [(3, 'baz')]
+    """
     table, engine = _ex.convert_table_engine(table, engine)
     session = _features.get_session(engine)
     delete_records_session(table, column_name, values, session)
@@ -993,6 +1055,38 @@ def delete_records_by_values(
     records: _t.Sequence[dict],
     engine: _t.Optional[_sa.engine.Engine] = None
 ) -> None:
+    """
+    Delete records from a database table based on the provided dictionary of values.
+
+    Parameters
+    ----------
+    table : Union[Table, str]
+        The database table to delete records from. This can be either a SQLAlchemy `Table` object or the name of the table as a string.
+    records : Sequence[dict]
+        A list of dictionaries, where each dictionary represents a record to delete from the table. The keys of the dictionary should correspond to column names, and the values should correspond to the values to filter the records by.
+    engine : Optional[Engine]
+        The SQLAlchemy engine to use to execute the deletion. If not provided, a new engine will be created using the default configuration.
+
+    Returns
+    -------
+    None
+        This function does not return anything, it simply deletes records from the specified database table.
+
+    Examples
+    --------
+    >>> engine = create_engine("sqlite:///:memory:")
+    >>> metadata = MetaData()
+    >>> user = Table('user', metadata, Column('id', Integer, primary_key=True), Column('name', String), Column('age', Integer))
+    >>> metadata.create_all(engine)
+    >>> with engine.begin() as conn:
+    ...     conn.execute(user.insert(), [{'id': 1, 'name': 'foo', 'age': 20}, {'id': 2, 'name': 'bar', 'age': 30}, {'id': 3, 'name': 'baz', 'age': 40}])
+    >>> delete_records_by_values(user, [{'name': 'foo'}, {'name': 'bar'}], engine)
+    >>> with engine.connect() as conn:
+    ...     result = conn.execute(select([user]))
+    ...     rows = result.fetchall()
+    ...     print(rows)
+    [(3, 'baz', 40)]
+    """
     table, engine = _ex.convert_table_engine(table, engine)
     session = _features.get_session(engine)
     try:
@@ -1007,6 +1101,40 @@ def delete_record_by_values_session(
     record: _types.Record,
     session: _sa_session.Session
 ) -> None:
+    """
+    Delete a single record from a database table based on the provided dictionary of values.
+
+    Parameters
+    ----------
+    table : Union[Table, str]
+        The database table to delete the record from. This can be either a SQLAlchemy `Table` object or the name of the table as a string.
+    record : Record
+        A dictionary representing the record to delete. The keys of the dictionary should correspond to column names, and the values should correspond to the values to filter the record by.
+    session : Session
+        The SQLAlchemy session to use to execute the deletion.
+
+    Returns
+    -------
+    None
+        This function does not return anything, it simply deletes a record from the specified database table.
+
+    Examples
+    --------
+    >>> engine = create_engine("sqlite:///:memory:")
+    >>> metadata = MetaData()
+    >>> user = Table('user', metadata, Column('id', Integer, primary_key=True), Column('name', String), Column('age', Integer))
+    >>> metadata.create_all(engine)
+    >>> with engine.begin() as conn:
+    ...     conn.execute(user.insert(), [{'id': 1, 'name': 'foo', 'age': 20}, {'id': 2, 'name': 'bar', 'age': 30}, {'id': 3, 'name': 'baz', 'age': 40}])
+    >>> with sessionmaker(bind=engine)() as session:
+    ...     delete_record_by_values_session(user, {'name': 'foo', 'age': 20}, session)
+    ...     session.commit()
+    >>> with engine.connect() as conn:
+    ...     result = conn.execute(select([user]))
+    ...     rows = result.fetchall()
+    ...     print(rows)
+    [(2, 'bar', 30), (3, 'baz', 40)]
+    """
     table = _features.str_to_table(table, session)
     delete = _build_delete_from_record(table, record)
     session.execute(delete)
@@ -1016,6 +1144,40 @@ def delete_records_by_values_session(
     records: _t.Sequence[_types.Record],
     session: _sa_session.Session
 ) -> None:
+    """
+    Delete multiple records from a database table based on a sequence of dictionaries of values.
+
+    Parameters
+    ----------
+    table : Union[Table, str]
+        The database table to delete the records from. This can be either a SQLAlchemy `Table` object or the name of the table as a string.
+    records : Sequence[Record]
+        A sequence of dictionaries representing the records to delete. Each dictionary should represent a single record and the keys of the dictionary should correspond to column names, and the values should correspond to the values to filter the record by.
+    session : Session
+        The SQLAlchemy session to use to execute the deletions.
+
+    Returns
+    -------
+    None
+        This function does not return anything, it simply deletes multiple records from the specified database table.
+
+    Examples
+    --------
+    >>> engine = create_engine("sqlite:///:memory:")
+    >>> metadata = MetaData()
+    >>> user = Table('user', metadata, Column('id', Integer, primary_key=True), Column('name', String), Column('age', Integer))
+    >>> metadata.create_all(engine)
+    >>> with engine.begin() as conn:
+    ...     conn.execute(user.insert(), [{'id': 1, 'name': 'foo', 'age': 20}, {'id': 2, 'name': 'bar', 'age': 30}, {'id': 3, 'name': 'baz', 'age': 40}])
+    >>> with sessionmaker(bind=engine)() as session:
+    ...     delete_records_by_values_session(user, [{'name': 'foo', 'age': 20}, {'name': 'bar', 'age': 30}], session)
+    ...     session.commit()
+    >>> with engine.connect() as conn:
+    ...     result = conn.execute(select([user]))
+    ...     rows = result.fetchall()
+    ...     print(rows)
+    [(3, 'baz', 40)]
+    """
     table = _features.str_to_table(table, session)
     for record in records:
         delete_record_by_values_session(table, record, session)
@@ -1024,6 +1186,38 @@ def delete_all_records_session(
     table: _t.Union[_sa.Table, str],
     session: _sa_session.Session
 ) -> None:
+    """
+    Delete all records from a database table.
+
+    Parameters
+    ----------
+    table : Union[Table, str]
+        The database table to delete all records from. This can be either a SQLAlchemy `Table` object or the name of the table as a string.
+    session : Session
+        The SQLAlchemy session to use to execute the deletion.
+
+    Returns
+    -------
+    None
+        This function does not return anything, it simply deletes all records from the specified database table.
+
+    Examples
+    --------
+    >>> engine = create_engine("sqlite:///:memory:")
+    >>> metadata = MetaData()
+    >>> user = Table('user', metadata, Column('id', Integer, primary_key=True), Column('name', String), Column('age', Integer))
+    >>> metadata.create_all(engine)
+    >>> with engine.begin() as conn:
+    ...     conn.execute(user.insert(), [{'id': 1, 'name': 'foo', 'age': 20}, {'id': 2, 'name': 'bar', 'age': 30}, {'id': 3, 'name': 'baz', 'age': 40}])
+    >>> with sessionmaker(bind=engine)() as session:
+    ...     delete_all_records_session(user, session)
+    ...     session.commit()
+    >>> with engine.connect() as conn:
+    ...     result = conn.execute(select([user]))
+    ...     rows = result.fetchall()
+    ...     print(rows)
+    []
+    """
     table = _features.str_to_table(table, session)
     query = _sa.delete(table)
     session.execute(query)
@@ -1032,6 +1226,36 @@ def delete_all_records(
     table: _t.Union[_sa.Table, str],
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
+    """
+    Delete all records from a database table.
+
+    Parameters
+    ----------
+    table : Union[Table, str]
+        The database table to delete all records from. This can be either a SQLAlchemy `Table` object or the name of the table as a string.
+    engine : Engine, optional
+        The SQLAlchemy engine to use for the session. If not provided, the default engine will be used.
+
+    Returns
+    -------
+    None
+        This function does not return anything, it simply deletes all records from the specified database table.
+
+    Examples
+    --------
+    >>> engine = create_engine("sqlite:///:memory:")
+    >>> metadata = MetaData()
+    >>> user = Table('user', metadata, Column('id', Integer, primary_key=True), Column('name', String), Column('age', Integer))
+    >>> metadata.create_all(engine)
+    >>> with engine.begin() as conn:
+    ...     conn.execute(user.insert(), [{'id': 1, 'name': 'foo', 'age': 20}, {'id': 2, 'name': 'bar', 'age': 30}, {'id': 3, 'name': 'baz', 'age': 40}])
+    >>> delete_all_records(user, engine)
+    >>> with engine.connect() as conn:
+    ...     result = conn.execute(select([user]))
+    ...     rows = result.fetchall()
+    ...     print(rows)
+    []
+    """
     table, engine = _ex.convert_table_engine(table, engine)
     session = _features.get_session(engine)
     try:
@@ -1047,6 +1271,35 @@ def drop_table(
     if_exists: bool = True,
     schema: _t.Optional[str] = None
 ) -> None:
+    """
+    Drop a database table.
+
+    Parameters:
+    -----------
+    table : Union[_sa.Table, str]
+        The table to be dropped. This can be either the table object or the name of the table as a string.
+    engine : Optional[_sa_engine.Engine]
+        The SQLAlchemy engine instance to use. If not provided, the table object must be passed as the first argument.
+    if_exists : bool, default True
+        If True, does not raise an error if the table does not exist.
+    schema : Optional[str], default None
+        The schema of the table. If None, the default schema is used.
+
+    Returns:
+    --------
+    None
+
+    Raises:
+    -------
+    ValueError
+        If table is a string and engine is not provided.
+
+    Example:
+    --------
+    >>> from sqlalchemy import create_engine
+    >>> engine = create_engine('sqlite:///example.db')
+    >>> drop_table('my_table', engine)
+    """
     if isinstance(table, str):
         if table not in _sa.inspect(engine).get_table_names(schema=schema):
             if if_exists:
@@ -1064,6 +1317,119 @@ def insert_from_table_session(
     table2: _t.Union[_sa.Table, str],
     session: _sa_session.Session
 ) -> None:
+    """
+    Inserts records from one table into another using a session.
+
+    Parameters
+    ----------
+    table1 : Union[_sa.Table, str]
+        The table to select records from.
+    table2 : Union[_sa.Table, str]
+        The table to insert records into.
+    session : sqlalchemy.orm.session.Session
+        The session to use for the database transaction.
+
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> from sqlalchemy import create_engine, Table, Column, Integer
+    >>> from sqlalchemy.orm import sessionmaker
+    >>> engine = create_engine('sqlite://')
+    >>> connection = engine.connect()
+    >>> metadata = MetaData()
+    >>> table1 = Table('table1', metadata, Column('id', Integer, primary_key=True))
+    >>> table2 = Table('table2', metadata, Column('id', Integer, primary_key=True))
+    >>> metadata.create_all(engine)
+    >>> Session = sessionmaker(bind=engine)
+    >>> session = Session()
+    >>> session.add(table1.insert().values(id=1))
+    >>> session.add(table1.insert().values(id=2))
+    >>> session.commit()
+    >>> insert_from_table_session(table1, table2, session)
+    >>> result = connection.execute(table2.select())
+    >>> list(result)
+    [(1,), (2,)]
+    """
     table1 = _features.str_to_table(table1, session)
     table2 = _features.str_to_table(table2, session)
     session.execute(table2.insert().from_select(table1.columns.keys(), table1))
+
+def insert_from_table(
+    table1: _t.Union[_sa.Table, str],
+    table2: _t.Union[_sa.Table, str],
+    engine: _t.Optional[_sa_engine.Engine] = None
+) -> None:
+    """
+    Insert rows from `table1` into `table2`.
+
+    Parameters
+    ----------
+    table1 : Union[sqlalchemy.Table, str]
+        The source table from which rows will be inserted into `table2`.
+    table2 : Union[sqlalchemy.Table, str]
+        The target table into which rows from `table1` will be inserted.
+    engine : Optional[sqlalchemy.engine.Engine], optional
+        The database engine to use, by default None.
+
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+
+    # Create an engine and get the source and target tables
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> table1 = fa.features.get_table('xy', engine)
+    >>> table2 = fa.features.get_table('xyz', engine)
+
+    # Verify that table2 is empty
+    >>> fa.select.select_records_all(table2)
+    []
+
+    # Insert rows from table1 into table2 and verify that the rows have been added
+    >>> fa.insert.insert_from_table(table1, table2, engine)
+    >>> fa.select.select_records_all(table2)
+    [{'id': 1, 'x': 1, 'y': 2, 'z': None},
+     {'id': 2, 'x': 2, 'y': 4, 'z': None},
+     {'id': 3, 'x': 4, 'y': 8, 'z': None},
+     {'id': 4, 'x': 8, 'y': 11, 'z': None}]
+    """
+    engine = _ex.check_for_engine(table1, engine)
+    session = _features.get_session(engine)
+    try:
+        insert_from_table_session(table1, table2, session)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+    
+def insert_records_session(
+    table: _t.Union[_sa.Table, str],
+    records: _t.Sequence[_types.Record],
+    session: _sa_session.Session
+) -> None:
+    table = _features.str_to_table(table, session)
+    if _features.missing_primary_key(table):
+        _insert_records_slow_session(table, records, session)
+    else:
+        _insert_records_fast_session(table, records, session)
+
+def insert_records(
+    table: _t.Union[_sa.Table, str],
+    records: _t.Sequence[_types.Record],
+    engine: _t.Optional[_sa_engine.Engine] = None
+) -> None:
+    table, engine = _ex.convert_table_engine(table, engine)
+    session = _features.get_session(engine)
+    try:
+        insert_records_session(table, records, session)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+    
