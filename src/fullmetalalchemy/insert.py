@@ -19,7 +19,20 @@ def insert_from_table_session(
     session: _sa_session.Session
 ) -> None:
     """
-    Insert all records from one table to another.
+    Inserts all rows from table1 to table2 using the provided SQLAlchemy session.
+
+    Parameters
+    ----------
+    table1 : Union[sqlalchemy.Table, str]
+        The source table to copy from. If a string is passed, it is used as the table name to fetch from the database.
+    table2 : Union[sqlalchemy.Table, str]
+        The destination table to insert into. If a string is passed, it is used as the table name to fetch from the database.
+    session : sqlalchemy.orm.session.Session
+        The SQLAlchemy session to use for the database connection.
+
+    Returns
+    -------
+    None
 
     Example
     -------
@@ -51,10 +64,24 @@ def insert_from_table(
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
     """
-    Insert all records from one table to another.
+    Insert rows from one table into another.
 
-    Example
+    Parameters
+    ----------
+    table1 : Union[sqlalchemy.Table, str]
+        The source table. Can be a string representing the name of the table or the actual table object.
+    table2 : Union[sqlalchemy.Table, str]
+        The destination table. Can be a string representing the name of the table or the actual table object.
+    engine : Optional[sqlalchemy.engine.Engine], optional
+        The engine to be used to create a session, by default None. If None, the function will try to extract the engine
+        from either table1 or table2.
+
+    Returns
     -------
+    None
+
+    Examples
+    --------
     >>> import fullmetalalchemy as fa
 
     >>> engine = fa.create_engine('sqlite:///data/test.db')
@@ -86,10 +113,24 @@ def insert_records_session(
     session: _sa_session.Session
 ) -> None:
     """
-    Insert records into table.
+    Insert records into a given table using a provided session.
 
-    Example
+    Parameters
+    ----------
+    table : Union[sqlalchemy.Table, str]
+        The table to insert records into. Can be a string name of the table or a SQLAlchemy
+        Table object.
+    records : Sequence[Dict[str, Any]]
+        A sequence of dictionaries representing the records to insert into the table.
+    session : sqlalchemy.orm.Session
+        A SQLAlchemy session to use for the insertion.
+
+    Returns
     -------
+    None
+
+    Examples
+    --------
     >>> import fullmetalalchemy as fa
 
     >>> engine = fa.create_engine('sqlite:///data/test.db')
@@ -126,10 +167,23 @@ def insert_records(
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
     """
-    Insert records into table.
+    Insert records into a table.
 
-    Example
+    Parameters
+    ----------
+    table : Union[sqlalchemy.Table, str]
+        The table object or name of the table.
+    records : Sequence[Record]
+        A sequence of records to insert into the table.
+    engine : Optional[sqlalchemy.engine.Engine], optional
+        The database engine to use. If None, then the default engine will be used.
+
+    Returns
     -------
+    None
+
+    Examples
+    --------
     >>> import fullmetalalchemy as fa
 
     >>> engine = fa.create_engine('sqlite:///data/test.db')
@@ -166,7 +220,51 @@ def _insert_records_fast(
     records: _t.Sequence[_types.Record],
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
-    """Fast insert needs primary key."""
+    """
+    Inserts records into a database table using a fast method that avoids checking for a missing primary key.
+
+    Parameters
+    ----------
+    table : sqlalchemy.Table
+        The table to insert records into.
+    records : Sequence[Dict[str, Any]]
+        A sequence of records to insert into the table. Each record is a dictionary where the keys correspond
+        to the column names and the values correspond to the data to be inserted.
+    engine : sqlalchemy.engine.Engine, optional
+        An optional database engine to use for the insertion. If not provided, the engine associated with the table is used.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    MissingPrimaryKey
+        If the table does not have a primary key.
+
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine = fa.create_engine('sqlite:///data/test.db')
+    >>> table = fa.features.get_table('xy', engine)
+
+    >>> fa.select.select_records_all(table)
+    [{'id': 1, 'x': 1, 'y': 2},
+     {'id': 2, 'x': 2, 'y': 4},
+     {'id': 3, 'x': 4, 'y': 8},
+     {'id': 4, 'x': 8, 'y': 11}]
+    
+    >>> new_records = [{'id': 5, 'x': 11, 'y': 5}, {'id': 6, 'x': 9, 'y': 9}]
+    >>> fa.insert._insert_records_fast(table, new_records, engine)
+    >>> fa.select.select_records_all(table)
+    [{'id': 1, 'x': 1, 'y': 2},
+     {'id': 2, 'x': 2, 'y': 4},
+     {'id': 3, 'x': 4, 'y': 8},
+     {'id': 4, 'x': 8, 'y': 11},
+     {'id': 5, 'x': 11, 'y': 5},
+     {'id': 6, 'x': 9, 'y': 9}]
+    """
     if _features.missing_primary_key(table):
         raise _ex.MissingPrimaryKey()
     engine = _ex.check_for_engine(table, engine)
@@ -184,7 +282,52 @@ def _insert_records_fast_session(
     records: _t.Sequence[_types.Record],
     session: _sa_session.Session
 ) -> None:
-    """Fast insert needs primary key."""
+    """
+    Insert a sequence of new records into a SQLAlchemy Table using bulk insert.
+
+    Parameters
+    ----------
+    table : sqlalchemy.Table
+        The SQLAlchemy Table to insert the records into.
+    records : Sequence[fullmetalalchemy.types.Record]
+        The sequence of new records to insert into the table.
+    session : sqlalchemy.orm.Session
+        The SQLAlchemy Session to use for the transaction.
+
+    Raises
+    ------
+    fullmetalalchemy.exceptions.MissingPrimaryKey
+        If the table does not have a primary key.
+
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> from fullmetalalchemy import insert, features, create_engine, select
+
+    >>> engine = create_engine('sqlite:///data/test.db')
+    >>> table = features.get_table('xy', engine)
+
+    >>> select.select_records_all(table)
+    [{'id': 1, 'x': 1, 'y': 2},
+     {'id': 2, 'x': 2, 'y': 4},
+     {'id': 3, 'x': 4, 'y': 8},
+     {'id': 4, 'x': 8, 'y': 11}]
+    
+    >>> new_records = [{'id': 5, 'x': 11, 'y': 5}, {'id': 6, 'x': 9, 'y': 9}]
+    >>> session = features.get_session(engine)
+    >>> insert._insert_records_fast_session(table, new_records, session)
+    >>> session.commit()
+    >>> select.select_records_all(table)
+    [{'id': 1, 'x': 1, 'y': 2},
+     {'id': 2, 'x': 2, 'y': 4},
+     {'id': 3, 'x': 4, 'y': 8},
+     {'id': 4, 'x': 8, 'y': 11},
+     {'id': 5, 'x': 11, 'y': 5},
+     {'id': 6, 'x': 9, 'y': 9}]
+    """
     if _features.missing_primary_key(table):
         raise _ex.MissingPrimaryKey()
     table_class = _features.get_class(table.name, session, schema=table.schema)
@@ -197,21 +340,22 @@ def _insert_records_slow_session(
     records: _t.Sequence[_types.Record],
     session: _sa_session.Session
 ) -> None:
-    """Slow insert does not need primary key."""
+    """
+    Inserts records into the given table using the provided session and
+    the slow method of SQLAlchemy.
+
+    Parameters
+    ----------
+    table : sqlalchemy.Table
+        The table into which the records are being inserted.
+    records : Sequence[fullmetalalchemy.types.Record]
+        The records to be inserted.
+    session : sqlalchemy.orm.session.Session
+        The session to use for the insertion.
+
+    Returns
+    -------
+    None
+
+    """
     session.execute(table.insert(), records)
-
-
-def _insert_records_slow(
-    table: _sa.Table,
-    records: _t.Sequence[_types.Record],
-    engine: _t.Optional[_sa_engine.Engine] = None
-) -> None:
-    """Slow insert does not need primary key."""
-    engine = _ex.check_for_engine(table, engine)
-    session = _features.get_session(engine)
-    try:
-        _insert_records_slow_session(table, records, session)
-        session.commit()
-    except Exception as e:
-        session.rollback()
-        raise e

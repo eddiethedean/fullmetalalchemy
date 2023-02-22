@@ -20,14 +20,31 @@ def select_records_all(
     include_columns: _t.Optional[_t.Sequence[str]] = None
 ) ->  _t.List[_types.Record]:
     """
-    Select all records from table.
+    Select all records from the specified table.
 
-    Example
+    Parameters
+    ----------
+    table : Union[sqlalchemy.Table, str]
+        The table to select records from.
+    connection : Optional[fullmetalalchemy.types.SqlConnection]
+        The database connection to use. If not provided, the default connection
+        will be used.
+    sorted : bool, optional
+        If True, the records will be sorted by their primary key(s), by default False.
+    include_columns : Optional[Sequence[str]], optional
+        A sequence of column names to include in the query, by default None.
+
+    Returns
     -------
+    List[fullmetalalchemy.types.Record]
+        A list of dictionaries representing the selected records.
+
+    Examples
+    --------
     >>> import fullmetalalchemy as fa
 
     >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> fa.select.select_records_all(table, engine)
+    >>> fa.select_records_all(table, engine)
     [{'id': 1, 'x': 1, 'y': 2},
      {'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8},
@@ -56,10 +73,30 @@ def select_records_chunks(
     include_columns: _t.Optional[_t.Sequence[str]] = None
 ) -> _t.Generator[ _t.List[_types.Record], None, None]:
     """
-    Select chunks of records from table.
+    Return a generator yielding a chunk of records at a time from the specified table.
 
-    Example
-    -------
+    Parameters
+    ----------
+    table : Union[sqlalchemy.Table, str]
+        The table to select records from. It can be either a string
+        representing the name of the table or a SQLAlchemy table object.
+    connection : Optional[SqlConnection], optional
+        The database connection object, by default None.
+    chunksize : int, optional
+        The number of records to return per chunk, by default 2.
+    sorted : bool, optional
+        If True, the records are sorted by primary key, by default False.
+    include_columns : Optional[Sequence[str]], optional
+        A sequence of column names to include in the selection, by default None.
+
+    Yields
+    ------
+    Generator[List[Record]]
+        A generator that yields a chunk of records at a time from the specified table.
+        Each chunk contains a list of dictionaries, where each dictionary represents a record.
+
+    Examples
+    --------
     >>> import fullmetalalchemy as fa
 
     >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
@@ -94,17 +131,32 @@ def select_existing_values(
     connection: _t.Optional[_types.SqlConnection] = None
 ) -> list:
     """
-    Select values that exist in named column that are
-    also in passed values.
+    Selects existing values from a specified column in a database table.
 
-    Example
+    Parameters
+    ----------
+    table : Union[sqlalchemy.Table, str]
+        The table to select values from. Can be either a SQLAlchemy Table object or a string representing the table name.
+    column_name : str
+        The name of the column to select values from.
+    values : Sequence
+        A sequence of values to look for in the specified column.
+    connection : Optional[fullmetalalchemy.types.SqlConnection]
+        The database connection to use. If None, the default engine will be used.
+
+    Returns
     -------
-    >>> import fullmetalalchemy as fa
+    list
+        A list of existing values from the specified column that match the given sequence of values.
 
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
     >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
     >>> values = [1, 2, 3, 4, 5]
-    >>> fa.select.select_existing_values(table, 'x', values, engine)
+    >>> fa.select_existing_values(table, 'x', values, engine)
     [1, 2, 4]
+
     """
     table, connection = _ex.convert_table_connection(table, connection)
     column = _features.get_column(table, column_name)
@@ -121,15 +173,29 @@ def select_column_values_all(
     connection: _t.Optional[_types.SqlConnection] = None
 ) -> list:
     """
-    Select all values in named column.
+    Selects all values in a specified column in a database table.
 
-    Example
+    Parameters
+    ----------
+    table : Union[sqlalchemy.Table, str]
+        The table to select values from. Can be either a SQLAlchemy Table object or a string representing the table name.
+    column_name : str
+        The name of the column to select values from.
+    connection : Optional[fullmetalalchemy.types.SqlConnection]
+        The database connection to use. If None, the default engine will be used.
+
+    Returns
     -------
-    >>> import fullmetalalchemy as fa
+    list
+        A list of all values in the specified column.
 
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
     >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> fa.select.select_column_values_all(table, 'x', engine)
+    >>> fa.select_column_values_all(table, 'x', engine)
     [1, 2, 4, 8]
+
     """
     table, connection = _ex.convert_table_connection(table, connection)
     query = _sa.select(_features.get_column(table, column_name))
@@ -147,6 +213,22 @@ def select_column_values_chunks(
 ) -> _t.Generator[list, None, None]:
     """
     Select chunks of values in named column.
+
+    Parameters
+    ----------
+    table : Union[Table, str]
+        The table to select the values from, either as a string or as a Table object.
+    column_name : str
+        The name of the column from which to select the values.
+    chunksize : int
+        The size of the chunks in which to partition the results.
+    connection : Optional[SqlConnection], default=None
+        The database connection to use. If None, a new connection is created.
+
+    Returns
+    -------
+    Generator[list, None, None]
+        A generator of lists containing the selected values, partitioned into chunks of `chunksize`.
 
     Example
     -------
@@ -175,10 +257,31 @@ def select_records_slice(
     include_columns: _t.Optional[_t.Sequence[str]] = None
 ) ->  _t.List[_types.Record]:
     """
-    Select a slice of records from table.
+    Select a slice of records from the table.
 
-    Example
+    Parameters
+    ----------
+    table : Union[Table, str]
+        The SQLAlchemy Table object or name of the table from which to select records.
+    start : Optional[int], default None
+        The starting index of the slice. If None, slice starts from the beginning.
+    stop : Optional[int], default None
+        The ending index of the slice. If None, slice goes until the end.
+    connection : Optional[SqlConnection], default None
+        The SQLAlchemy database connection to use for the query. If None, a new connection
+        is created using the default settings.
+    sorted : bool, default False
+        Whether to sort the records by the primary key columns of the table.
+    include_columns : Optional[Sequence[str]], default None
+        The names of the columns to include in the records. If None, all columns are included.
+
+    Returns
     -------
+    List[Record]
+        A list of records, where each record is a dictionary representing a row in the table.
+
+    Examples
+    --------
     >>> import fullmetalalchemy as fa
 
     >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
@@ -210,14 +313,32 @@ def select_column_values_by_slice(
     connection: _t.Optional[_types.SqlConnection] = None,
 ) -> list:
     """
-    Select a slice of column values from table.
+    Select a slice of column values from the given table.
 
-    Example
+    Parameters
+    ----------
+    table : Union[sqlalchemy.Table, str]
+        The table object or name of the table from which to select values.
+    column_name : str
+        The name of the column from which to select values.
+    start : Optional[int], default None
+        The starting index of the slice of values to select. If not provided, the slice starts from the beginning.
+    stop : Optional[int], default None
+        The ending index of the slice of values to select. If not provided, the slice ends at the last row.
+    connection : Optional[fullmetalalchemy.types.SqlConnection], default None
+        The database connection to use. If not provided, a new connection is created.
+
+    Returns
     -------
+    list
+        A list of values selected from the column.
+
+    Examples
+    --------
     >>> import fullmetalalchemy as fa
 
     >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> fa.select.select_column_values_by_slice(table, engine, 'y', start=1, stop=3)
+    >>> fa.select.select_column_values_by_slice(table, 'y', start=1, stop=3)
     [4, 8]
     """
     table, connection = _ex.convert_table_connection(table, connection)
@@ -261,7 +382,22 @@ def select_record_by_index(
     connection: _t.Optional[_types.SqlConnection] = None,
 ) -> _t.Dict[str, _t.Any]:
     """
-    Select a record from table by index number.
+    Select a record from table by its index.
+
+    Parameters
+    ----------
+    table : Union[Table, str]
+        The table or table name to select records from.
+    index : int
+        The index of the record to select. If a negative index is provided, it will count from the end of the table.
+    connection : Optional[SqlConnection]
+        The database connection to use for the operation. If not provided, a connection will be obtained from the 
+        default connection pool.
+
+    Returns
+    -------
+    Dict[str, Any]
+        A dictionary containing the record's values.
 
     Example
     -------
@@ -289,15 +425,30 @@ def select_primary_key_records_by_slice(
     sorted: bool = False
 ) ->  _t.List[_types.Record]:
     """
-    Select a slice of primary key records from table.
-    Records only have primary key values.
+    Selects primary key records by slice from a table.
+
+    Parameters
+    ----------
+    table : Union[Table, str]
+        The table or table name to select the records from.
+    _slice : slice
+        The slice to select the records from.
+    connection : Optional[SqlConnection], optional
+        The database connection to use, by default None.
+    sorted : bool, optional
+        If set to True, the primary key records will be returned in ascending
+        order, by default False.
+
+    Returns
+    -------
+    List[Record]
+        A list of primary key records.
 
     Example
     -------
     >>> import fullmetalalchemy as fa
-
     >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> fa.select.select_primary_key_records_by_slice(table, engine, slice(1, 3))
+    >>> fa.select.select_primary_key_records_by_slice(table, slice(1, 3), engine)
     [{'id': 2}, {'id': 3}]
     """
     table, connection = _ex.convert_table_connection(table, connection)
@@ -322,14 +473,35 @@ def select_record_by_primary_key(
     include_columns: _t.Optional[_t.Sequence[str]] = None
 ) -> _types.Record:
     """
-    Select the first record that matches passed primary key values.
+    Retrieve a record from a database table using its primary key value.
+
+    Parameters
+    ----------
+    table : Union[sqlalchemy.Table, str]
+        The database table from which to retrieve the record. Can be either a `sqlalchemy.Table` object or a string with the name of the table.
+    primary_key_value : Record
+        A dictionary containing the primary key column names and their values for the record to retrieve.
+    connection : Optional[SqlConnection]
+        A connection to the database. If `None`, a new connection will be created.
+    include_columns : Optional[Sequence[str]]
+        A sequence of column names to include in the returned record. If `None`, all columns will be included.
+
+    Returns
+    -------
+    Record
+        A dictionary containing the values for the requested record.
+
+    Raises
+    ------
+    MissingPrimaryKey
+        If the primary key values are missing in the table or if no record matches the primary key value.
 
     Example
     -------
     >>> import fullmetalalchemy as fa
 
     >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> fa.select.select_record_by_primary_key(table, engine, {'id': 3})
+    >>> fa.select.select_record_by_primary_key(table, {'id': 3}, engine)
     {'id': 3, 'x': 4, 'y': 8}
     """
     table, connection = _ex.convert_table_connection(table, connection)
@@ -357,10 +529,28 @@ def select_records_by_primary_keys(
     include_columns: _t.Optional[_t.Sequence[str]] = None
 ) ->  _t.List[_types.Record]:
     """
-    Select all the records that matches passed primary key values.
+    Select records from a table using a sequence of primary key values.
 
-    Example
+    Parameters
+    ----------
+    table : Union[Table, str]
+        The table to select records from. Either the table object or the name of the table.
+    primary_keys_values : Sequence[Record]
+        A sequence of primary key values to select records by.
+    connection : Optional[SqlConnection], optional
+        The connection to use for the query, by default None.
+    schema : Optional[str], optional
+        The schema of the table, by default None.
+    include_columns : Optional[Sequence[str]], optional
+        A sequence of column names to include in the selected records, by default None.
+
+    Returns
     -------
+    List[Record]
+        A list of dictionaries representing the selected records.
+
+    Examples
+    --------
     >>> import fullmetalalchemy as fa
 
     >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
