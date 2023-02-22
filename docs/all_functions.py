@@ -962,3 +962,108 @@ def copy_table(
     # insert records from oldTable
     _insert.insert_from_table(srcTable, destTable, engine)
     return destTable
+
+def delete_records_session(
+    table: _t.Union[_sa.Table, str],
+    column_name: str,
+    values: _t.Sequence,
+    session: _sa_session.Session
+) -> None:
+    table = _features.str_to_table(table, session)
+    col = _features.get_column(table, column_name)
+    session.query(table).filter(col.in_(values)).delete(synchronize_session=False)
+
+def delete_records(
+    table: _t.Union[_sa.Table, str],
+    column_name: str,
+    values: _t.Sequence,
+    engine: _t.Optional[_sa_engine.Engine] = None
+) -> None:
+    table, engine = _ex.convert_table_engine(table, engine)
+    session = _features.get_session(engine)
+    delete_records_session(table, column_name, values, session)
+    try:
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+
+def delete_records_by_values(
+    table: _t.Union[_sa.Table, str],
+    records: _t.Sequence[dict],
+    engine: _t.Optional[_sa.engine.Engine] = None
+) -> None:
+    table, engine = _ex.convert_table_engine(table, engine)
+    session = _features.get_session(engine)
+    try:
+        delete_records_by_values_session(table, records, session)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+
+def delete_record_by_values_session(
+    table: _t.Union[_sa.Table, str],
+    record: _types.Record,
+    session: _sa_session.Session
+) -> None:
+    table = _features.str_to_table(table, session)
+    delete = _build_delete_from_record(table, record)
+    session.execute(delete)
+
+def delete_records_by_values_session(
+    table: _t.Union[_sa.Table, str],
+    records: _t.Sequence[_types.Record],
+    session: _sa_session.Session
+) -> None:
+    table = _features.str_to_table(table, session)
+    for record in records:
+        delete_record_by_values_session(table, record, session)
+
+def delete_all_records_session(
+    table: _t.Union[_sa.Table, str],
+    session: _sa_session.Session
+) -> None:
+    table = _features.str_to_table(table, session)
+    query = _sa.delete(table)
+    session.execute(query)
+
+def delete_all_records(
+    table: _t.Union[_sa.Table, str],
+    engine: _t.Optional[_sa_engine.Engine] = None
+) -> None:
+    table, engine = _ex.convert_table_engine(table, engine)
+    session = _features.get_session(engine)
+    try:
+        delete_all_records_session(table, session)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+    
+def drop_table(
+    table: _t.Union[_sa.Table, str],
+    engine: _t.Optional[_sa_engine.Engine] = None,
+    if_exists: bool = True,
+    schema: _t.Optional[str] = None
+) -> None:
+    if isinstance(table, str):
+        if table not in _sa.inspect(engine).get_table_names(schema=schema):
+            if if_exists:
+                return
+        if engine is None:
+            raise ValueError('Must pass engine if table is str.')
+        table = _features.get_table(table, engine, schema=schema)
+    sql = _sa_schema.DropTable(table, if_exists=if_exists)
+    engine = _ex.check_for_engine(table, engine)
+    with engine.connect() as con:
+        con.execute(sql)
+
+def insert_from_table_session(
+    table1: _t.Union[_sa.Table, str],
+    table2: _t.Union[_sa.Table, str],
+    session: _sa_session.Session
+) -> None:
+    table1 = _features.str_to_table(table1, session)
+    table2 = _features.str_to_table(table2, session)
+    session.execute(table2.insert().from_select(table1.columns.keys(), table1))

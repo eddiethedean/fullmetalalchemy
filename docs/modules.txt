@@ -1,0 +1,27 @@
+Organize the following python functions into different modules based on their names and descriptions.
+Give each python module and appropriate name. List the function names that you put in each module.
+I will provide function names and their descriptions after a colon, like this: function name: function description
+get_engine: Returns a SQLAlchemy engine object for a given connection.
+primary_key_columns: Returns a list of primary key columns for a given SQLAlchemy table.
+primary_key_names: Returns a list of names of the primary key columns for a given SQLAlchemy table.
+get_connection: Returns a SQLAlchemy connection object for a given SQLAlchemy Session or connection object.
+get_metadata: Returns a SQLAlchemy MetaData object for a given SQLAlchemy connection.
+get_table: Returns a SQLAlchemy Table object for a given table name and connection.
+get_engine_table: Returns a tuple of a SQLAlchemy Engine object and a Table object for a given connection string and table name.
+get_class: Returns a declarative class object for a given table name and connection.
+get_session: Returns a new session object for the given engine.
+get_column: Returns a column object for a given column name and table.
+get_table_constraints: Returns a set of constraints defined on a given table.
+get_primary_key_constraints: Returns the name and list of columns of the primary key constraint for a given table.
+missing_primary_key: Returns a boolean indicating whether a given table has a primary key constraint.
+get_column_types: Returns a dictionary mapping column names to their corresponding SQLAlchemy column types for a given table.
+get_column_names: Get a list of column names from the given SQLAlchemy table object.
+get_table_names: Get a list of table names from the given SQLAlchemy engine object.
+get_row_count: Get the number of rows in the given table using the provided SQLAlchemy session.
+get_schemas: Returns a list of schema names for a given SQLAlchemy engine.
+tables_metadata_equal: Determines if two SQLAlchemy Table objects have identical metadata.
+str_to_table: Converts a table name string or SQLAlchemy Table object to a Table object.
+create_engine: Create a SQLAlchemy engine using the specified URL.
+create_table: Create a new database table with the specified column names and types.
+create_table_from_records: Creates a table in the database and populates it with the data from the provided sequence of records.
+copy_table: Copy a table to a new table with a new name.
