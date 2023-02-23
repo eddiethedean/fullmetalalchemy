@@ -128,6 +128,21 @@ def delete_records_by_values(
     engine: _t.Optional[_sa.engine.Engine] = None
 ) -> None:
     """
+    Deletes records from a SQL table that match the passed records.
+
+    Parameters
+    ----------
+    table : sa.Table | str
+        SqlAlchemy Table or table name
+    records : Sequence[Dict]
+        records to match in SQL table
+    engine : Optional[sa.engine.Engine]
+        SqlAlchemy connection engine. If not given, it will try to obtain one from the passed table.
+
+    Returns
+    -------
+    None
+
     Example
     -------
     >>> import sqlalchemize as sz
@@ -207,7 +222,8 @@ def delete_records_by_values_session(
     session: _sa_session.Session
 ) -> None:
     """
-    Delete records from the specified table that match the given records by values using the provided session.
+    Delete records from the specified table that match the given records
+    by values using the provided session.
 
     Parameters
     ----------
@@ -290,6 +306,35 @@ def _build_delete_from_record(
     table: _sa.Table,
     record: _types.Record
 ) -> _sa.sql.Delete:
+    """
+    Builds a SQL DELETE statement for deleting a record from a table based on a
+    dictionary of key-value pairs.
+
+    Parameters
+    ----------
+    table : Union[sqlalchemy.Table, str]
+        The table object or name to delete from.
+    record : Dict[str, Any]
+        A dictionary of key-value pairs representing the record to delete.
+
+    Returns
+    -------
+    sqlalchemy.sql.expression.Delete
+        A SQL DELETE statement for deleting a record from the table based on the given record.
+
+    Example
+    -------
+    >>> from sqlalchemy import Table, Column, Integer, MetaData
+
+    >>> metadata = MetaData()
+    >>> table = Table('mytable', metadata,
+    ...               Column('id', Integer, primary_key=True),
+    ...               Column('name', String))
+    >>> record = {'id': 1, 'name': 'test'}
+    >>> delete_statement = _build_delete_from_record(table, record)
+    >>> print(delete_statement)
+    DELETE FROM mytable WHERE mytable.id = :id_1 AND mytable.name = :name_1
+    """
     d = _sa.delete(table)
     for column, value in record.items():
         d = d.where(table.c[column]==value)

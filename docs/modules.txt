@@ -1,27 +1,74 @@
-Organize the following python functions into different modules based on their names and descriptions.
-Give each python module and appropriate name. List the function names that you put in each module.
-I will provide function names and their descriptions after a colon, like this: function name: function description
-get_engine: Returns a SQLAlchemy engine object for a given connection.
-primary_key_columns: Returns a list of primary key columns for a given SQLAlchemy table.
-primary_key_names: Returns a list of names of the primary key columns for a given SQLAlchemy table.
-get_connection: Returns a SQLAlchemy connection object for a given SQLAlchemy Session or connection object.
-get_metadata: Returns a SQLAlchemy MetaData object for a given SQLAlchemy connection.
-get_table: Returns a SQLAlchemy Table object for a given table name and connection.
-get_engine_table: Returns a tuple of a SQLAlchemy Engine object and a Table object for a given connection string and table name.
-get_class: Returns a declarative class object for a given table name and connection.
-get_session: Returns a new session object for the given engine.
-get_column: Returns a column object for a given column name and table.
-get_table_constraints: Returns a set of constraints defined on a given table.
-get_primary_key_constraints: Returns the name and list of columns of the primary key constraint for a given table.
-missing_primary_key: Returns a boolean indicating whether a given table has a primary key constraint.
-get_column_types: Returns a dictionary mapping column names to their corresponding SQLAlchemy column types for a given table.
-get_column_names: Get a list of column names from the given SQLAlchemy table object.
-get_table_names: Get a list of table names from the given SQLAlchemy engine object.
-get_row_count: Get the number of rows in the given table using the provided SQLAlchemy session.
-get_schemas: Returns a list of schema names for a given SQLAlchemy engine.
-tables_metadata_equal: Determines if two SQLAlchemy Table objects have identical metadata.
-str_to_table: Converts a table name string or SQLAlchemy Table object to a Table object.
-create_engine: Create a SQLAlchemy engine using the specified URL.
-create_table: Create a new database table with the specified column names and types.
-create_table_from_records: Creates a table in the database and populates it with the data from the provided sequence of records.
-copy_table: Copy a table to a new table with a new name.
+Organize the following python functions into different modules based on their names, descriptions, and dependencies.
+Give each python module an appropriate name and description. List the function names that you put in each module.
+I will provide function names, their descriptions after a colon, and then their dependencies after a colon, like this: function name : function description : function dependencies
+create_engine : Returns a SQLAlchemy engine object for a given connection. : 
+create_table : Create a sql table from specifications. : get_table
+create_table_from_records : Create a sql table from specs and insert records. : create_table, insert_records
+copy_table : Create a copy of an existing table with a new name. : insert_from_table
+delete_records_session : Delete records from SQL table that match passed values in column. Adds deletes to passed session. : str_to_table, get_column
+delete_records : Delete records from SQL table that match passed values in column. : get_session, delete_records_session
+delete_records_by_values : Deletes records from a SQL table that match the passed records. : get_session, delete_records_by_values_session
+delete_record_by_values_session : Deletes a single row from a table based on the values in the specified record. : str_to_table, _build_delete_from_record
+delete_records_by_values_session : Delete records from the specified table that match the given records by values using the provided session. : str_to_table, delete_record_by_values_session
+_build_where_from_record : Builds a WHERE clause using the given record. : 
+_build_delete_from_record : Builds a SQL DELETE statement for deleting a record from a table based on a dictionary of key-value pairs. : 
+delete_all_records_session : Delete all records from the specified table. : str_to_table
+delete_all_records : Delete all records from a table. : get_session, delete_all_records_session
+drop_table : Drop a table from SQL database. : get_table
+get_engine : Returns a SQLAlchemy engine object for a given connection. : 
+primary_key_columns : Return the primary key columns of a SQLAlchemy Table. : 
+primary_key_names : Return the names of the primary key columns of a SQLAlchemy Table. : primary_key_columns
+get_connection : Get the engine connection from a SQLAlchemy Session object or return the input connection. : 
+get_metadata : Get a SQLAlchemy MetaData object associated with a given database connection and schema. : 
+get_table : Get a SQLAlchemy Table object associated with a given table name, database connection, and schema. : get_metadata, get_connection
+get_engine_table : Get the engine and table objects from a given connection string, table name, and optional schema. : get_table
+get_class : Reflects the specified table and returns a declarative class that corresponds to it. : get_metadata, get_connection
+get_session : Creates and returns a new SQLAlchemy session object using the provided SQLAlchemy engine object. : 
+get_column : Retrieve a SQLAlchemy column object from a SQLAlchemy table. : 
+get_table_constraints : Get a set of all constraints for a given SQLAlchemy Table object. : 
+get_primary_key_constraints : Get the primary key constraints of a SQLAlchemy table. : get_table_constraints
+missing_primary_key : Check if a sqlalchemy table has a primary key. : get_primary_key_constraints
+get_column_types : Get the types of columns in a SQLAlchemy table. : 
+get_column_names : Returns a list of the column names for the given SQLAlchemy table object. : 
+get_table_names : Get a list of the names of tables in the database connected to the given engine. : 
+get_row_count : Returns the number of rows in a given table. : get_column_names, get_column
+get_schemas : Get a list of all schemas in the database connected to the given engine. : 
+tables_metadata_equal : Check if two SQL tables have the same metadata. : get_column_types, primary_key_names
+str_to_table : Convert a table name to a SQLAlchemy table object. : get_table
+_get_where_clause : Given a record, return a list of SQLAlchemy binary expressions representing the WHERE clause for a SQL query. : 
+insert_from_table_session : Inserts all rows from table1 to table2 using the provided SQLAlchemy session. : str_to_table,
+insert_from_table : Insert rows from one table into another. : get_session, insert_from_table_session
+insert_records_session : Insert records into a given table using a provided session. : str_to_table, missing_primary_key, _insert_records_slow_session, _insert_records_fast_session
+insert_records : Insert records into a table. : get_session, insert_records_session
+_insert_records_fast : Inserts records into a database table using a fast method that avoids checking for a missing primary key. : missing_primary_key, get_session, _insert_records_fast_session
+_insert_records_fast_session : Insert a sequence of new records into a SQLAlchemy Table using bulk insert. : missing_primary_key, get_class
+_insert_records_slow_session : Inserts records into the given table using the provided session and the slow method of SQLAlchemy. : 
+filter_record : Filter out the given columns from the record. : 
+records_equal : Check if two sets of records contain the same records. : 
+select_records_all : Select all records from the specified table. : get_column, primary_key_columns, get_engine
+select_records_chunks : Return a generator yielding a chunk of records at a time from the specified table. : get_column, primary_key_columns, get_engine
+select_existing_values : Selects existing values from a specified column in a database table. : get_column, check_for_engine, get_engine
+select_column_values_all : Selects all values in a specified column in a database table. : get_column, check_for_engine, get_engine
+select_column_values_chunks : Select chunks of values in named column. : get_column
+select_records_slice : Select a slice of records from the table. : _convert_slice_indexes, get_column, primary_key_columns
+select_column_values_by_slice : Select a slice of column values from the given table. : _convert_slice_indexes, get_column
+select_column_value_by_index : Selects the value in a column of a table at a given index. : get_row_count, _calc_positive_index, get_column
+select_record_by_index : Select a record from table by its index. : get_row_count, _calc_positive_index
+select_primary_key_records_by_slice : Selects primary key records by slice from a table. : _convert_slice_indexes, primary_key_columns
+select_record_by_primary_key : Retrieve a record from a database table using its primary key value. : _get_where_clause, get_column
+select_records_by_primary_keys : Select records from a table using a sequence of primary key values. : _get_where_clause, get_column
+select_column_values_by_primary_keys : Selects the values in a column of a table for rows with specified primary key values. : _get_where_clause, get_column
+select_value_by_primary_keys : Select a single value from a database table by primary key. : _get_where_clause, get_column
+_convert_slice_indexes : Convert slice indexes. : get_row_count, _calc_positive_index, _stop_underflow_index, _stop_overflow_index
+_calc_positive_index : Takes an integer index and row count, and returns the corresponding positive index if the given index is negative. : 
+_stop_overflow_index : Checks if the given index is greater than the row count of the table. If so, it returns the row count, otherwise it returns the given index. : 
+_stop_underflow_index : Return the input index or 0 if it is less than 0 and less than -row_count. : 
+update_matching_records_session : Update records in the database table that match the specified column names and values with the new record values. : str_to_table, filter_record, _make_update_statement
+update_matching_records : Update records in the given table that match the specified columns in the given session. : get_session, update_matching_records_session
+update_records_session : Update the specified records in the given SQLAlchemy session. : str_to_table, missing_primary_key, update_matching_records_session, _update_records_fast_session
+update_records : Update a sequence of records in a table. : get_session, update_records_session
+_update_records_fast_session : Update records in a database table using the SQLAlchemy ORM's bulk_update_mappings function. : str_to_table, get_class
+_make_update_statement : Constructs a SQLAlchemy update statement based on the given table and record values. : 
+_make_update_statement_column_value : Create an update statement to set a column's value. : 
+set_column_values_session : Update the values of a column for all rows in the table using the given session. : str_to_table, _make_update_statement_column_value
+set_column_values : Update the specified records in the given table. : get_session, set_column_values_session

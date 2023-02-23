@@ -19,6 +19,8 @@ def drop_table(
     schema: _t.Optional[str] = None
 ) -> None:
     """
+    Drop a table from SQL database.
+    
     Parameters
     ----------
     table : sa.Table | str

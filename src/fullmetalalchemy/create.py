@@ -148,7 +148,9 @@ def create_table_from_records(
     columns:  _t.Optional[ _t.Sequence[str]] = None,
     missing_value:  _t.Optional[_t.Any] = None
 ) -> _sa.Table:
-    """Create a sql table from specs and insert records.
+    """
+    Create a sql table from specs and insert records.
+    
     Returns
     -------
     sqlalchemy.Table
@@ -217,7 +219,35 @@ def copy_table(
     if_exists: str = 'replace'
 ) -> _sa.Table:
     """
-    Create a copy of an existing table with new name.
+    Create a copy of an existing table with a new name.
+
+    Parameters
+    ----------
+    new_name : str
+        The name of the new table to create.
+    table : sqlalchemy.Table
+        The table to copy.
+    engine : sqlalchemy.engine.Engine
+        The database engine to use for the operation.
+    if_exists : {'fail', 'replace'}, optional
+        What to do if the new table already exists. The default is 'replace'.
+
+    Returns
+    -------
+    sqlalchemy.Table
+        The newly created table.
+
+    Examples
+    --------
+    >>> from sqlalchemy import create_engine
+    >>> engine = create_engine('sqlite:///:memory:')
+    >>> from sqlalchemy import Column, Integer, String, MetaData
+    >>> metadata = MetaData()
+    >>> test_table = Table('test', metadata, Column('id', Integer, primary_key=True), Column('name', String))
+    >>> test_table.create(engine)
+    >>> copy_table('test_copy', test_table, engine)
+    Table('test_copy', MetaData(bind=None), Column('id', Integer(), table=<test_copy>, primary_key=True, nullable=False), Column('name', String(), table=<test_copy>), schema=None)
+
     """
     src_engine = engine
     dest_engine = engine

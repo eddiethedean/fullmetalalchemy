@@ -666,5 +666,33 @@ def str_to_table(
 def _get_where_clause(
     sa_table: _sa.Table,
     record: _types.Record
-) ->  _t.List[bool]:
-    return [sa_table.c[key_name]==key_value for key_name, key_value in record.items()]
+) -> _t.List:
+    """
+    Given a record, return a list of SQLAlchemy binary expressions representing the WHERE clause for a SQL query.
+
+    Parameters
+    ----------
+    sa_table : sqlalchemy.Table
+        The table object that the WHERE clause is for.
+    record : Dict[str, Any]
+        The record to match against.
+
+    Returns
+    -------
+    List[sqlalchemy.sql.elements.BinaryExpression]
+        A list of SQLAlchemy binary expressions representing the WHERE clause.
+
+    Examples
+    --------
+    >>> from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String
+    >>> engine = create_engine('sqlite://')
+    >>> metadata = MetaData()
+    >>> test_table = Table('test', metadata, Column('id', Integer, primary_key=True), Column('name', String))
+    >>> metadata.create_all(engine)
+    >>> record = {'id': 1, 'name': 'test_name'}
+    >>> where_clause = _get_where_clause(test_table, record)
+    >>> where_clause
+    [test.id = :id_1, test.name = :name_1]
+
+    """
+    return [sa_table.c[key_name] == key_value for key_name, key_value in record.items()]

@@ -356,14 +356,35 @@ def select_column_value_by_index(
     connection: _t.Optional[_types.SqlConnection] = None
 ) -> _t.Any:
     """
-    Select a column value from table by index number.
+    Selects the value in a column of a table at a given index.
 
-    Example
+    Parameters
+    ----------
+    table : Union[sqlalchemy.Table, str]
+        The table to select the value from. Can be either the SQLAlchemy table object or the name of the table as a string.
+    column_name : str
+        The name of the column to select the value from.
+    index : int
+        The index of the row to select the value from. Can be negative to indicate an index from the end (e.g. -1 selects the last row).
+    connection : Optional[fullmetalalchemy.types.SqlConnection], optional
+        The database connection to use. If not provided, a new connection will be created and closed after use.
+
+    Returns
     -------
+    Any
+        The value in the specified column and row of the table.
+
+    Raises
+    ------
+    IndexError
+        If the index is out of range (either too large or too negative).
+
+    Examples
+    --------
     >>> import fullmetalalchemy as fa
 
     >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> fa.select.select_column_value_by_index(table, engine, 'y', 2)
+    >>> fa.select_column_value_by_index(table, 'y', 2)
     8
     """
     table, connection = _ex.convert_table_connection(table, connection)
@@ -581,14 +602,30 @@ def select_column_values_by_primary_keys(
     connection: _t.Optional[_types.SqlConnection] = None
 ) -> list:
     """
-    Select all the column value that matches passed primary key values.
+    Selects the values in a column of a table for rows with specified primary key values.
 
-    Example
+    Parameters
+    ----------
+    table : Union[sqlalchemy.Table, str]
+        The table to select the values from. Can be either the SQLAlchemy table object or the name of the table as a string.
+    column_name : str
+        The name of the column to select the values from.
+    primary_keys_values : Sequence[fullmetalalchemy.types.Record]
+        A sequence of primary key values to filter the rows by. Each value is a dictionary mapping column names to values for the corresponding row.
+    connection : Optional[fullmetalalchemy.types.SqlConnection], optional
+        The database connection to use. If not provided, a new connection will be created and closed after use.
+
+    Returns
     -------
+    list
+        A list of the values in the specified column for rows that match the primary key values.
+
+    Examples
+    --------
     >>> import fullmetalalchemy as fa
 
     >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> fa.select.select_column_values_by_primary_keys(table, engine, 'y', [{'id': 3}, {'id': 1}])
+    >>> fa.select_column_values_by_primary_keys(table, 'y', [{'id': 3}, {'id': 1}])
     [2, 8]
     """
     table, connection = _ex.convert_table_connection(table, connection)
@@ -613,14 +650,34 @@ def select_value_by_primary_keys(
     schema: _t.Optional[str] = None
 ) -> _t.Any:
     """
-    Select the first column value that matches passed primary key values.
+    Select a single value from a database table by primary key.
 
-    Example
+    Parameters
+    ----------
+    table : Union[Table, str]
+        A SQLAlchemy table object or string that specifies the table name.
+    column_name : str
+        The name of the column containing the value to be selected.
+    primary_key_value : Record
+        A dictionary that maps the primary key column names to their corresponding values.
+    connection : Optional[SqlConnection]
+        A SQLAlchemy database connection object. If None, a connection will be
+        created using the default connection settings.
+    schema : Optional[str]
+        The name of the schema containing the table. If None, the default schema
+        for the database connection will be used.
+
+    Returns
     -------
+    Any
+        The value of the specified column for the record with the given primary key.
+
+    Examples
+    --------
     >>> import fullmetalalchemy as fa
 
     >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
-    >>> fa.select.select_value_by_primary_keys(table, engine, 'y', {'id': 3})
+    >>> fa.select.select_value_by_primary_keys(table, 'y', {'id': 3})
     8
     """
     table, connection = _ex.convert_table_connection(table, connection)
@@ -638,6 +695,34 @@ def _convert_slice_indexes(
     start: _t.Optional[int] = None,
     stop: _t.Optional[int] = None
 ) -> _t.Tuple[int, int]:
+    """
+    Convert slice indexes.
+
+    Parameters
+    ----------
+    table : str or sqlalchemy.Table
+        The name or object of the table.
+    connection : sqlalchemy.engine.Connection
+        The connection object.
+    start : int, optional
+        The starting index of the slice. Defaults to None.
+    stop : int, optional
+        The stopping index of the slice. Defaults to None.
+
+    Returns
+    -------
+    tuple
+        A tuple of two ints representing the converted start and stop indexes.
+
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> start, stop = fa.select._convert_slice_indexes(table, engine, 2, 6)
+    >>> start, stop
+    (2, 6)
+    """
     table, connection = _ex.convert_table_connection(table, connection)
     # start index is 0 if None
     start = 0 if start is None else start
@@ -661,6 +746,32 @@ def _calc_positive_index(
     index: int,
     row_count: int
 ) -> int:
+    """
+    Takes an integer index and row count, and returns the corresponding
+    positive index if the given index is negative.
+
+    Parameters
+    ----------
+    index : int
+        The index to be converted to a positive index.
+        If the index is negative, it will be converted to a positive index.
+    row_count : int
+        The number of rows in the table.
+
+    Returns
+    -------
+    int
+        The positive index that corresponds to the given index.
+
+    Examples
+    --------
+    >>> _calc_positive_index(-1, 10)
+    9
+    >>> _calc_positive_index(-10, 20)
+    10
+    >>> _calc_positive_index(5, 10)
+    5
+    """
     # convert negative index to real index
     if index < 0:
         index = row_count + index
@@ -671,6 +782,30 @@ def _stop_overflow_index(
     index: int,
     row_count: int
 ) -> int:
+    """
+    Checks if the given index is greater than the row count of the table.
+    If so, it returns the row count, otherwise it returns the given index.
+
+    Parameters
+    ----------
+    index : int
+        The index value to check
+    row_count : int
+        The number of rows in the table.
+
+    Returns
+    -------
+    int
+        The modified index value, which is either the given index value or
+        the row count of the table.
+
+    Examples
+    --------
+    >>> _stop_overflow_index(5, 10)
+    5
+    >>> _stop_overflow_index(15, 10)
+    10
+    """
     if index > row_count - 1:
         return row_count
     return index
@@ -680,6 +815,30 @@ def _stop_underflow_index(
     index: int,
     row_count: int
 ) -> int:
+    """
+    Return the input index or 0 if it is less than 0 and less than -row_count.
+
+    Parameters
+    ----------
+    index : int
+        The index to check.
+    row_count : int
+        The number of rows in the table.
+
+    Returns
+    -------
+    int
+        The input index or 0 if it is less than 0 and less than -row_count.
+
+    Examples
+    --------
+    >>> _stop_underflow_index(1, 10)
+    1
+    >>> _stop_underflow_index(-5, 10)
+    0
+    >>> _stop_underflow_index(-15, 10)
+    0
+    """
     if index < 0 and index < -row_count:
         return 0
     return index
