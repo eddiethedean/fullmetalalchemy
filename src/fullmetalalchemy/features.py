@@ -133,7 +133,7 @@ def get_connection(
 
 
 def get_metadata(
-    connection: _types.SqlConnection,
+    connection: _types.SqlConnectionSession,
     schema: _t.Optional[str] = None
 ) -> _sa.MetaData:
     """
@@ -158,12 +158,15 @@ def get_metadata(
     >>> fa.features.get_metadata(engine)
     MetaData(bind=Engine(sqlite:///data/test.db))
     """
-    return _sa.MetaData(bind=connection, schema=schema)
+    metadata = _sa.MetaData(schema=schema)
+    engine = get_engine(connection)
+    metadata.reflect(bind=engine)
+    return metadata
 
 
 def get_table(
     table_name: str,
-    connection: _types.SqlConnection,
+    connection: _types.SqlConnectionSession,
     schema: _t.Optional[str] = None
 ) -> _sa.Table:
     """
@@ -240,7 +243,7 @@ def get_engine_table(
 
 def get_class(
     table_name: str,
-    connection: _t.Union[_types.SqlConnection, _sa_session.Session],
+    connection: _types.SqlConnection,
     schema: _t.Optional[str] = None
 ) -> _DeclarativeMeta:
     """
@@ -397,7 +400,7 @@ def get_primary_key_constraints(
     cons = get_table_constraints(table)
     for con in cons:
         if isinstance(con, _sa.PrimaryKeyConstraint):
-            return con.name, [col.name for col in con.columns]
+            return str(con.name), [col.name for col in con.columns]
     return tuple()
 
 
@@ -540,10 +543,11 @@ def get_row_count(
     >>> fa.features.get_row_count(table)
     0
     """
-    session = _ex.check_for_engine(table, session)
+    engine = _ex.check_for_engine(table, session)
     col_name = get_column_names(table)[0]
     col = get_column(table, col_name)
-    result = session.execute(_sa.func.count(col)).scalar()
+    with engine.begin() as connection:
+        result = connection.execute(_sa.func.count(col)).scalar()
     return result if result is not None else 0
 
 
@@ -617,7 +621,7 @@ def tables_metadata_equal(
 
 def str_to_table(
     table_name: _t.Union[str, _sa.Table],
-    connection: _t.Optional[_types.SqlConnection]
+    connection: _t.Optional[_types.SqlConnectionSession]
 ) -> _sa.Table:
     """
     Convert a table name to a SQLAlchemy table object.

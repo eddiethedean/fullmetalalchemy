@@ -9,7 +9,7 @@ import sqlalchemy.orm.session as sa_session
 
 
 Record = _t.Dict[str, _t.Any]
-SqlConnection = _t.Union[sa_engine.Engine, sa_session.Session, sa_engine.Connection]
+SqlConnection = _t.Union[sa_engine.Engine, sa_engine.Connection]
 
 
 
