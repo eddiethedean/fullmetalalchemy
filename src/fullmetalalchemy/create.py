@@ -17,7 +17,7 @@ from tinytim.data import column_names as _column_names
 import fullmetalalchemy.type_convert as _type_convert
 import fullmetalalchemy.features as _features
 import fullmetalalchemy.insert as _insert
-from fullmetalalchemy.features import get_session
+from fullmetalalchemy.features import get_session, get_metadata
 
 create_session = get_session
 
@@ -65,8 +65,8 @@ def create_table(
     primary_key: _t.Sequence[str],
     engine: _sa_engine.Engine,
     schema:  _t.Optional[str] = None,
-    autoincrement:  _t.Optional[bool] = False,
-    if_exists:  _t.Optional[str] = 'error'
+    autoincrement: bool = False,
+    if_exists:  str = 'error'
 ) -> _sa.Table:
     """
     Create a sql table from specifications.
@@ -124,7 +124,7 @@ def create_table(
             col = _sa.Column(name, sa_type)
         cols.append(col)
 
-    metadata = _sa.MetaData(engine)
+    metadata = get_metadata(engine)
     table = _sa.Table(table_name, metadata, *cols, schema=schema)
     if if_exists == 'replace':
         drop_table_sql = _sa_schema.DropTable(table, if_exists=True)
@@ -143,8 +143,8 @@ def create_table_from_records(
     engine: _sa_engine.Engine,
     column_types:  _t.Optional[ _t.Sequence] = None,
     schema:  _t.Optional[str] = None,
-    autoincrement:  _t.Optional[bool] = False,
-    if_exists:  _t.Optional[str] = 'error',
+    autoincrement:  bool = False,
+    if_exists:  str = 'error',
     columns:  _t.Optional[ _t.Sequence[str]] = None,
     missing_value:  _t.Optional[_t.Any] = None
 ) -> _sa.Table:
@@ -275,7 +275,7 @@ def copy_table(
     # copy schema and create newTable from oldTable
     for column in srcTable.columns:
         destTable.append_column(column.copy())
-    destTable.create()
+    destTable.create(bind=engine)
 
     # insert records from oldTable
     _insert.insert_from_table(srcTable, destTable, engine)
