@@ -6,7 +6,8 @@ import decimal as _decimal
 import datetime as _datetime
 import typing as _t
 
-from sqlalchemy import sql as _sql
+#from sqlalchemy import sql as _sql
+from sqlalchemy import types as _sql
 
 
 def sql_type(t):
@@ -18,51 +19,51 @@ def python_type(t):
 
 
 _type_convert = {
-    int: _sql.sqltypes.Integer,
-    str: _sql.sqltypes.Unicode,
-    float: _sql.sqltypes.Float,
-    _decimal.Decimal: _sql.sqltypes.Numeric,
-    _datetime.datetime: _sql.sqltypes.DateTime,
-    bytes: _sql.sqltypes.LargeBinary,
-    bool: _sql.sqltypes.Boolean,
-    _datetime.date: _sql.sqltypes.Date,
-    _datetime.time: _sql.sqltypes.Time,
-    _datetime.timedelta: _sql.sqltypes.Interval,
-    list: _sql.sqltypes.ARRAY,
-    dict: _sql.sqltypes.JSON
+    int: _sql.Integer,
+    str: _sql.Unicode,
+    float: _sql.Float,
+    _decimal.Decimal: _sql.Numeric,
+    _datetime.datetime: _sql.DateTime,
+    bytes: _sql.LargeBinary,
+    bool: _sql.Boolean,
+    _datetime.date: _sql.Date,
+    _datetime.time: _sql.Time,
+    _datetime.timedelta: _sql.Interval,
+    list: _sql.ARRAY,
+    dict: _sql.JSON
 }
 
 _sql_to_python = {
-    _sql.sqltypes.Integer: int,
-    _sql.sqltypes.SmallInteger: int,
-    _sql.sqltypes.SMALLINT: int,
-    _sql.sqltypes.BigInteger: int,
-    _sql.sqltypes.BIGINT: int,
-    _sql.sqltypes.INTEGER: int,
-    _sql.sqltypes.Unicode: str,
-    _sql.sqltypes.NVARCHAR: str,
-    _sql.sqltypes.NCHAR: str,
-    _sql.sqltypes.Float: _decimal.Decimal,
-    _sql.sqltypes.REAL: _decimal.Decimal,
-    _sql.sqltypes.FLOAT: _decimal.Decimal,
-    _sql.sqltypes.Numeric: _decimal.Decimal,
-    _sql.sqltypes.NUMERIC: _decimal.Decimal,
-    _sql.sqltypes.DECIMAL: _decimal.Decimal,
-    _sql.sqltypes.DateTime: _datetime.datetime,
-    _sql.sqltypes.TIMESTAMP: _datetime.datetime,
-    _sql.sqltypes.DATETIME: _datetime.datetime,
-    _sql.sqltypes.LargeBinary: bytes,
-    _sql.sqltypes.BLOB: bytes,
-    _sql.sqltypes.Boolean: bool,
-    _sql.sqltypes.BOOLEAN: bool,
-    _sql.sqltypes.MatchType: bool,
-    _sql.sqltypes.Date: _datetime.date,
-    _sql.sqltypes.DATE: _datetime.date,
-    _sql.sqltypes.Time: _datetime.time,
-    _sql.sqltypes.TIME: _datetime.time,
-    _sql.sqltypes.Interval: _datetime.timedelta,
-    _sql.sqltypes.ARRAY: list,
-    _sql.sqltypes.JSON: dict
+    _sql.Integer: int,
+    _sql.SmallInteger: int,
+    _sql.SMALLINT: int,
+    _sql.BigInteger: int,
+    _sql.BIGINT: int,
+    _sql.INTEGER: int,
+    _sql.Unicode: str,
+    _sql.NVARCHAR: str,
+    _sql.NCHAR: str,
+    _sql.Float: _decimal.Decimal,
+    _sql.REAL: _decimal.Decimal,
+    _sql.FLOAT: _decimal.Decimal,
+    _sql.Numeric: _decimal.Decimal,
+    _sql.NUMERIC: _decimal.Decimal,
+    _sql.DECIMAL: _decimal.Decimal,
+    _sql.DateTime: _datetime.datetime,
+    _sql.TIMESTAMP: _datetime.datetime,
+    _sql.DATETIME: _datetime.datetime,
+    _sql.LargeBinary: bytes,
+    _sql.BLOB: bytes,
+    _sql.Boolean: bool,
+    _sql.BOOLEAN: bool,
+    _sql.MatchType: bool,
+    _sql.Date: _datetime.date,
+    _sql.DATE: _datetime.date,
+    _sql.Time: _datetime.time,
+    _sql.TIME: _datetime.time,
+    _sql.Interval: _datetime.timedelta,
+    _sql.ARRAY: list,
+    _sql.JSON: dict
 }
 
 
