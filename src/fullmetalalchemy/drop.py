@@ -48,8 +48,10 @@ def drop_table(
     >>> sz.get_table_names(engine)
     []
     """
+    from sqlalchemy.engine.reflection import Inspector
     if isinstance(table, str):
-        if table not in _sa.inspect(engine).get_table_names(schema=schema):
+        inspector = _sa.inspect(engine)
+        if isinstance(inspector, Inspector) and table not in inspector.get_table_names(schema=schema):
             if if_exists:
                 return
         if engine is None:
