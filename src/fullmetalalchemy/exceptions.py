@@ -60,7 +60,7 @@ def convert_table_engine(
 def convert_table_connection(
         sa_table: _t.Union[_sa.Table, str],
         connection: _t.Optional[_types.SqlConnection]
-) -> _t.Tuple[_sa.Table, _types.SqlConnection]:
+) -> _t.Tuple[_sa.Table, _sa_engine.Engine]:
     """Convert possible str table name to SqlAlchemy Table.
        Pull out SqlAlchemy Engine from SqlAlchemy Table if engine is None.
        Return the table and engine.
