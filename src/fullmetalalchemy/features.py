@@ -243,7 +243,7 @@ def get_engine_table(
 
 def get_class(
     table_name: str,
-    connection: _types.SqlConnection,
+    connection: _types.SqlConnectionSession,
     schema: _t.Optional[str] = None
 ) -> _DeclarativeMeta:
     """
