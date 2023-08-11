@@ -60,6 +60,12 @@ class Table(BaseTable):
         records: _t.Sequence[_types.Record]
     ) -> None:
         _insert.insert_records(self.sa_table, records, self.engine) # type: ignore   
+
+    def insert_all(
+        self,
+        records: _t.Sequence[_types.Record]
+    ) -> None:
+        self.insert_records(records)
     
     def update_matching_records(
         self,
