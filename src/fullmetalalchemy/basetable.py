@@ -10,6 +10,8 @@ import fullmetalalchemy.features as _features
 import fullmetalalchemy.types as _types
 import fullmetalalchemy.select as _select
 
+from fullmetalalchemy.mustexist import mustexist
+
 Record = _t.Dict[str, _t.Any]
 
 
@@ -78,6 +80,10 @@ class BaseTable:
         elif type(key) is slice:
             records = self.select_records_slice(key.start, key.stop)
             self.delete_records_by_values(records)
+
+    def exists(self) -> bool:
+        """Check if the table exists in the database yet."""
+        return self.name in _features.get_table_names(self.engine, self.schema)
 
     @property
     def records(self) -> _t.List[Record]:

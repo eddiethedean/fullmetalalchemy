@@ -25,7 +25,10 @@ class Table(BaseTable):
     >>> table.update_records([{'id': 2, 'x': 33, 'y': 8}])
     """
     def __repr__(self) -> str:
-        return f'Table(name={self.name}, columns={self.column_names}, pks={self.primary_key_names}, types={self.column_types})'
+        if self.exists():
+            return f'Table(name="{self.name}", columns={self.column_names}, pks={self.primary_key_names}, types={self.column_types})'
+        else:
+            return f'Table(name="{self.name}", columns=[], pks=[], types=[]) # Does not exist yet'
 
     def drop(
         self,
