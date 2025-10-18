@@ -7,6 +7,7 @@ import fullmetalalchemy.features as features
 import fullmetalalchemy.insert as insert
 import fullmetalalchemy.records as records
 import fullmetalalchemy.select as select
+import fullmetalalchemy.session as session
 import fullmetalalchemy.type_convert as type_convert
 import fullmetalalchemy.update as update
 from fullmetalalchemy.batch import BatchProcessor, BatchResult
@@ -31,6 +32,7 @@ __all__ = [
     "insert",
     "records",
     "select",
+    "session",
     "type_convert",
     "update",
 ]
