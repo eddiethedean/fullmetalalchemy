@@ -2,11 +2,16 @@
 import pytest
 from sqlalchemy.ext.asyncio import create_async_engine
 
-# Handle SQLAlchemy 1.4 vs 2.0 compatibility
+# Handle SQLAlchemy 1.4 vs 2.0 async session creation
 try:
     from sqlalchemy.ext.asyncio import async_sessionmaker
 except ImportError:
-    from sqlalchemy.orm import sessionmaker as async_sessionmaker  # type: ignore
+    # SQLAlchemy 1.4 doesn't have async_sessionmaker
+    from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlalchemy.orm import sessionmaker
+
+    def async_sessionmaker(engine, **kwargs):  # type: ignore
+        return sessionmaker(engine, class_=AsyncSession, **kwargs)
 
 from fullmetalalchemy.async_api import AsyncSessionTable, create
 

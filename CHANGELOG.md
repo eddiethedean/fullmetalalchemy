@@ -8,12 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.2.2] - 2025-10-18
 
 ### Fixed
-- SQLAlchemy 1.4 compatibility for all async features
-  - Replaced `Select[T]` generic type with `Any`
+- **Complete SQLAlchemy 1.4 compatibility** for all async features
+  - Replaced `Select[T]`, `Insert`, `Update`, `Delete` generic types with `Any`
   - Replaced `ColumnElement[bool]` with `Any`
-  - Added fallback import for `async_sessionmaker` (not in SQLAlchemy 1.4)
-  - GitHub Actions now pass on all SQLAlchemy versions (1.4.* and 2.x)
-- All 336 tests pass with both SQLAlchemy 1.4 and 2.x
+  - Added proper `async_sessionmaker` wrapper for SQLAlchemy 1.4
+    - SQLAlchemy 1.4: Uses `sessionmaker(engine, class_=AsyncSession)`
+    - SQLAlchemy 2.0+: Uses native `async_sessionmaker`
+  - **Verified**: All 336 tests pass with both SQLAlchemy 1.4.54 and 2.0.44
+  - GitHub Actions should now pass on all SQLAlchemy versions (1.4.* and 2.x)
 
 ## [2.2.1] - 2025-10-18
 

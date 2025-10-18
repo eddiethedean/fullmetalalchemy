@@ -160,7 +160,7 @@ def build_where_clause_from_dict(
     return where_clause
 
 
-def build_insert_stmt(table: _sa.Table, records: _t.Sequence[_t.Dict[str, _t.Any]]) -> _sa.Insert:
+def build_insert_stmt(table: _sa.Table, records: _t.Sequence[_t.Dict[str, _t.Any]]) -> _t.Any:
     """Build INSERT statement.
 
     Parameters
@@ -182,7 +182,7 @@ def build_update_stmt_bulk(
     table: _sa.Table,
     records: _t.Sequence[_t.Dict[str, _t.Any]],
     match_column_names: _t.Sequence[str],
-) -> _t.List[_sa.Update]:
+) -> _t.List[_t.Any]:
     """Build UPDATE statements for bulk update by matching columns.
 
     Parameters
@@ -221,7 +221,7 @@ def build_update_stmt_bulk(
 
 def build_delete_stmt(
     table: _sa.Table, column_name: str, values: _t.Sequence[_t.Any]
-) -> _sa.Delete:
+) -> _t.Any:
     """Build DELETE statement.
 
     Parameters
@@ -244,7 +244,7 @@ def build_delete_stmt(
 
 def build_delete_stmt_from_records(
     table: _sa.Table, records: _t.Sequence[_t.Dict[str, _t.Any]]
-) -> _t.List[_sa.Delete]:
+) -> _t.List[_t.Any]:
     """Build DELETE statements from records.
 
     Parameters

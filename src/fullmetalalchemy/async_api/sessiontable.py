@@ -7,12 +7,19 @@ import typing as _t
 import sqlalchemy as _sa
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-# Handle SQLAlchemy 1.4 vs 2.0 compatibility
+# Handle SQLAlchemy 1.4 vs 2.0+ async session creation
 try:
     from sqlalchemy.ext.asyncio import async_sessionmaker
+
+    SQLALCHEMY_20_PLUS = True
 except ImportError:
-    # SQLAlchemy 1.4 doesn't have async_sessionmaker, use sessionmaker
-    from sqlalchemy.orm import sessionmaker as async_sessionmaker  # type: ignore
+    # SQLAlchemy 1.4 doesn't have async_sessionmaker
+    SQLALCHEMY_20_PLUS = False
+    from sqlalchemy.orm import sessionmaker
+
+    # Create a wrapper for SQLAlchemy 1.4
+    def async_sessionmaker(engine, **kwargs):  # type: ignore
+        return sessionmaker(engine, class_=AsyncSession, **kwargs)
 
 from fullmetalalchemy.types import Record
 
