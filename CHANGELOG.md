@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.3] - 2025-10-18
+
+### Fixed
+- Ruff formatting consistency across all files
+- GitHub Actions format-check now passes
+- All 336 tests verified on both SQLAlchemy 1.4 and 2.0
+
 ## [2.2.2] - 2025-10-18
 
 ### Fixed
@@ -15,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - SQLAlchemy 1.4: Uses `sessionmaker(engine, class_=AsyncSession)`
     - SQLAlchemy 2.0+: Uses native `async_sessionmaker`
   - **Verified**: All 336 tests pass with both SQLAlchemy 1.4.54 and 2.0.44
-  - GitHub Actions should now pass on all SQLAlchemy versions (1.4.* and 2.x)
+  - GitHub Actions now pass on all SQLAlchemy versions (1.4.* and 2.x)
 
 ## [2.2.1] - 2025-10-18
 
