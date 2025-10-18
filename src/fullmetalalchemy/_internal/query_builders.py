@@ -138,7 +138,7 @@ def build_select_by_primary_key_query(
 
 def build_where_clause_from_dict(
     table: _sa.Table, filter_dict: _t.Dict[str, _t.Any]
-) -> _t.List[_sa.ColumnElement[bool]]:
+) -> _t.List[_t.Any]:  # Use Any for SQLAlchemy 1.4 compatibility
     """Build WHERE clause from dictionary of column:value pairs.
 
     Parameters
@@ -150,7 +150,7 @@ def build_where_clause_from_dict(
 
     Returns
     -------
-    List[ColumnElement]
+    List[Any]
         List of WHERE clause conditions.
     """
     where_clause = []
