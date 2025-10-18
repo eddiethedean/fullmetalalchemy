@@ -6,11 +6,9 @@ import sqlalchemy as _sa
 import sqlalchemy.engine as _sa_engine
 import sqlalchemy.orm.session as _sa_session
 
-import fullmetalalchemy.delete as _delete
 import fullmetalalchemy.features as _features
-import fullmetalalchemy.insert as _insert
+import fullmetalalchemy.session as _session
 import fullmetalalchemy.types as _types
-import fullmetalalchemy.update as _update
 from fullmetalalchemy.basetable import BaseTable
 
 
@@ -84,24 +82,24 @@ class SessionTable(BaseTable):
         return SessionTable(self.name, self.engine, self.schema)
 
     def delete_records(self, column_name: str, values: _t.Sequence[_t.Any]) -> None:
-        _delete.delete_records_session(self.sa_table, column_name, values, self.session)
+        _session.delete_records(self.sa_table, column_name, values, self.session)
 
     def delete_records_by_values(self, records: _t.List[_t.Dict[str, _t.Any]]) -> None:
-        _delete.delete_records_by_values_session(self.sa_table, records, self.session)
+        _session.delete_records_by_values(self.sa_table, records, self.session)
 
     def delete_all_records(self) -> None:
-        _delete.delete_all_records_session(self.sa_table, self.session)
+        _session.delete_all_records(self.sa_table, self.session)
 
     def insert_from_table(self, sa_table: _sa.Table) -> None:
-        _insert.insert_from_table_session(self.sa_table, sa_table, self.session)
+        _session.insert_from_table(self.sa_table, sa_table, self.session)
 
     def insert_records(self, records: _t.Sequence[_types.Record]) -> None:
-        _insert.insert_records_session(self.sa_table, records, self.session)
+        _session.insert_records(self.sa_table, records, self.session)
 
     def update_matching_records(
         self, records: _t.Sequence[_types.Record], match_column_names: _t.Sequence[str]
     ) -> None:
-        _update.update_matching_records_session(
+        _session.update_matching_records(
             self.sa_table, records, match_column_names, self.session
         )
 
@@ -110,7 +108,7 @@ class SessionTable(BaseTable):
         records: _t.Sequence[_types.Record],
         match_column_names: _t.Sequence[str] | None = None,
     ) -> None:
-        _update.update_records_session(self.sa_table, records, self.session, match_column_names)
+        _session.update_records(self.sa_table, records, self.session, match_column_names)
 
     def set_column_values(self, column_name: str, value: _t.Any) -> None:
-        _update.set_column_values_session(self.sa_table, column_name, value, self.session)
+        _session.set_column_values(self.sa_table, column_name, value, self.session)

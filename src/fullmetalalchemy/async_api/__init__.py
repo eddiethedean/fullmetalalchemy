@@ -42,7 +42,7 @@ Classes
 - AsyncSessionTable: Async transaction management with context manager
 """
 
-from fullmetalalchemy.async_api import batch, create, delete, drop, insert, select, update
+from fullmetalalchemy.async_api import batch, create, delete, drop, insert, select, session, update
 from fullmetalalchemy.async_api.batch import AsyncBatchProcessor, AsyncBatchResult
 from fullmetalalchemy.async_api.sessiontable import AsyncSessionTable
 from fullmetalalchemy.async_api.table import AsyncTable
@@ -70,5 +70,6 @@ __all__ = [
     "drop",
     "insert",
     "select",
+    "session",
     "update",
 ]
