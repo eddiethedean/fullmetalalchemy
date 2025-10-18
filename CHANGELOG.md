@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2025-10-18
+
+### Added
+- **AsyncTable class** - Pythonic async interface with array-like access patterns
+  - Support for `await table[0]`, `await table['column']`, `await table[0:10]`
+  - Async iteration with `async for record in table`
+  - Context manager support for resource management
+  - All CRUD operations as async methods
+- **AsyncSessionTable class** - Transaction-safe async operations
+  - Async context manager with automatic commit/rollback
+  - Manual commit() and rollback() methods
+  - All session-based operations support
+- **BatchProcessor class** - Efficient sync batch operations
+  - Configurable batch sizes
+  - Progress tracking support (optional tqdm integration)
+  - Error handling modes ('raise' or 'continue')
+  - Memory-efficient chunking for large datasets
+- **AsyncBatchProcessor class** - Parallel async batch processing
+  - Concurrent batch execution with configurable max_concurrent
+  - Semaphore-based concurrency control
+  - Sequential processing option when order matters
+  - Async progress tracking support
+- 55 new tests for async classes and batch operations
+
+### Changed
+- Updated async_api exports to include AsyncTable and AsyncSessionTable
+- Main package now exports BatchProcessor and BatchResult
+- Test coverage increased to 84% (336 total tests: 258 sync + 78 async)
+
+### Fixed
+- Proper async engine binding in AsyncSessionTable
+- Array-like access returns coroutines that can be awaited
+- Async iteration protocol properly implemented
+
+### Documentation
+- Added AsyncTable usage examples with verified outputs
+- Added AsyncSessionTable transaction examples
+- Added batch processing examples (sync and async)
+- Added parallel processing examples with concurrency control
+- Added error handling examples for batch operations
+
 ## [2.1.0] - 2025-10-18
 
 ### Added

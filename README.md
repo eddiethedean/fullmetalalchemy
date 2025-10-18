@@ -18,12 +18,14 @@
 
 - 🔄 **SQLAlchemy 1.4+ and 2.x compatible** - Works seamlessly with both versions
 - ⚡ **Async/Await Support** - Full async API for high-performance applications (v2.1.0+)
+- 🏗️ **Async Classes** - AsyncTable and AsyncSessionTable for Pythonic async operations (v2.2.0+)
+- 📦 **Batch Processing** - Efficient bulk operations with progress tracking and parallel execution (v2.2.0+)
 - 🎯 **Simple API** - Intuitive functions for common database operations
 - 🔒 **Transaction Management** - Built-in context managers for safe operations
-- 📦 **Pythonic Interface** - Array-like access and familiar Python patterns
-- 🚀 **Memory Efficient** - Chunked iteration for large datasets
+- 📊 **Pythonic Interface** - Array-like access and familiar Python patterns
+- 🚀 **Memory Efficient** - Chunked iteration and concurrent processing for large datasets
 - 🛡️ **Type Safe** - Full type hints with MyPy strict mode compliance
-- ✅ **Thoroughly Tested** - 85% test coverage with 281 passing tests (258 sync + 23 async)
+- ✅ **Thoroughly Tested** - 84% test coverage with 336 passing tests (258 sync + 78 async)
 - 🎨 **Code Quality** - Ruff and MyPy strict mode verified
 
 ## Installation
@@ -447,6 +449,215 @@ pip install asyncpg  # For PostgreSQL
 pip install aiomysql  # For MySQL
 ```
 
+## Async Classes (v2.1.0+)
+
+### AsyncTable - Pythonic Async Interface
+
+The `AsyncTable` class provides an intuitive, array-like interface for async operations:
+
+```python
+import asyncio
+from fullmetalalchemy import async_api
+
+async def main():
+    engine = async_api.create_async_engine('sqlite+aiosqlite:///products.db')
+    
+    # Create table with initial data
+    await async_api.create.create_table_from_records(
+        'products',
+        [
+            {'id': 1, 'name': 'Laptop', 'price': 999, 'stock': 10},
+            {'id': 2, 'name': 'Mouse', 'price': 25, 'stock': 50}
+        ],
+        primary_key='id',
+        engine=engine
+    )
+    
+    # Use AsyncTable class
+    async with async_api.AsyncTable('products', engine) as table:
+        # Array-like access
+        first_product = await table[0]
+        print("First product:", first_product)
+        # Output: First product: {'id': 1, 'name': 'Laptop', 'price': 999, 'stock': 10}
+        
+        # Get column values
+        names = await table['name']
+        print("Product names:", names)
+        # Output: Product names: ['Laptop', 'Mouse']
+        
+        # Insert and update
+        await table.insert_records([{'id': 3, 'name': 'Keyboard', 'price': 75, 'stock': 30}])
+        await table.update_records([{'id': 2, 'name': 'Mouse', 'price': 29, 'stock': 45}])
+        
+        # Get count
+        count = await table.__len__()
+        print(f"Total products: {count}")
+        # Output: Total products: 3
+        
+        # Async iteration
+        print("All products:")
+        async for product in table:
+            print(f"  - {product['name']}: ${product['price']}")
+        # Output:
+        # All products:
+        #   - Laptop: $999
+        #   - Mouse: $29
+        #   - Keyboard: $75
+    
+    await engine.dispose()
+
+asyncio.run(main())
+```
+
+### AsyncSessionTable - Transaction Management
+
+The `AsyncSessionTable` class provides transaction-safe async operations with automatic commit/rollback:
+
+```python
+import asyncio
+from fullmetalalchemy import async_api
+
+async def main():
+    engine = async_api.create_async_engine('sqlite+aiosqlite:///orders.db')
+    
+    # Create table
+    await async_api.create.create_table_from_records(
+        'orders',
+        [
+            {'id': 1, 'customer': 'John', 'total': 150.0},
+            {'id': 2, 'customer': 'Jane', 'total': 200.0}
+        ],
+        primary_key='id',
+        engine=engine
+    )
+    
+    # Transaction automatically commits on success
+    async with async_api.AsyncSessionTable('orders', engine) as table:
+        await table.insert_records([{'id': 3, 'customer': 'Alice', 'total': 175.0}])
+        await table.update_records([{'id': 1, 'customer': 'John', 'total': 160.0}])
+        # Auto-commits here
+    
+    # Verify changes persisted
+    async with async_api.AsyncSessionTable('orders', engine) as table:
+        records = await table.select_all()
+        print(f"Total orders after transaction: {len(records)}")
+        # Output: Total orders after transaction: 3
+    
+    # Transaction rolls back on error
+    try:
+        async with async_api.AsyncSessionTable('orders', engine) as table:
+            await table.insert_records([{'id': 4, 'customer': 'Bob', 'total': 225.0}])
+            raise ValueError("Simulated error")
+    except ValueError:
+        pass
+    
+    # Verify rollback worked
+    async with async_api.AsyncSessionTable('orders', engine) as table:
+        records = await table.select_all()
+        print(f"Total orders after rollback: {len(records)}")
+        # Output: Total orders after rollback: 3 (Bob's order was rolled back)
+    
+    await engine.dispose()
+
+asyncio.run(main())
+```
+
+## Batch Operations (v2.2.0+)
+
+### Sync Batch Processing
+
+Process large datasets efficiently with the `BatchProcessor`:
+
+```python
+from fullmetalalchemy import BatchProcessor
+import fullmetalalchemy as fa
+
+engine = fa.create_engine('sqlite:///data.db')
+table = fa.get_table('users', engine)
+
+# Create large dataset
+large_dataset = [
+    {'id': i, 'value': i * 10, 'category': f'cat_{i % 5}'}
+    for i in range(1, 10001)
+]
+
+# Process in batches
+processor = BatchProcessor(batch_size=1000, show_progress=False)
+
+result = processor.process_batches(
+    large_dataset,
+    lambda batch: fa.insert.insert_records(table, batch, engine)
+)
+
+print(f"Processed {result.total_records} records in {result.total_batches} batches")
+# Output: Processed 10000 records in 10 batches
+```
+
+### Async Batch Processing with Parallelism
+
+The `AsyncBatchProcessor` processes multiple batches concurrently for better performance:
+
+```python
+import asyncio
+from fullmetalalchemy import async_api
+
+async def main():
+    engine = async_api.create_async_engine('sqlite+aiosqlite:///data.db')
+    
+    # Create large dataset
+    large_dataset = [{'id': i, 'value': i * 5} for i in range(1, 5001)]
+    
+    # Process batches concurrently (up to 5 at once)
+    processor = async_api.AsyncBatchProcessor(
+        batch_size=500,
+        max_concurrent=5,
+        show_progress=False
+    )
+    
+    async def async_insert_batch(batch):
+        # This would be your actual insert operation
+        await asyncio.sleep(0.01)  # Simulate I/O
+    
+    result = await processor.process_batches(large_dataset, async_insert_batch)
+    
+    print(f"Processed {result.total_records} records in {result.total_batches} batches")
+    # Output: Processed 5000 records in 10 batches
+    print(f"Max concurrent: {processor.max_concurrent}")
+    # Output: Max concurrent: 5
+    
+    await engine.dispose()
+
+asyncio.run(main())
+```
+
+### Batch Error Handling
+
+Handle errors gracefully with the `on_error='continue'` option:
+
+```python
+import asyncio
+from fullmetalalchemy import async_api
+
+async def main():
+    records = [{'id': i, 'status': 'pending'} for i in range(10)]
+    
+    # Continue processing even if some batches fail
+    processor = async_api.AsyncBatchProcessor(batch_size=3, on_error='continue')
+    
+    async def flaky_operation(batch):
+        if batch[0]['id'] == 6:
+            raise RuntimeError("Simulated error")
+    
+    result = await processor.process_batches(records, flaky_operation)
+    
+    print(f"Total batches: {result.total_batches}, Failed: {len(result.failed_batches)}")
+    # Output: Total batches: 4, Failed: 1
+    print(f"Successfully processed: {result.total_records - len(result.failed_batches) * 3} records")
+    # Output: Successfully processed: 7 records
+
+asyncio.run(main())
+```
+
 ## API Overview
 
 ### Connection & Table Access
@@ -548,11 +759,12 @@ mypy src/fullmetalalchemy
 ### Code Quality
 
 This project maintains high standards:
-- **85% Test Coverage** - Comprehensive test suite with 281 tests (258 sync + 23 async)
+- **84% Test Coverage** - Comprehensive test suite with 336 tests (258 sync + 78 async)
 - **MyPy Strict Mode** - Full type safety enforcement
 - **Ruff Verified** - Modern Python code style
 - **SQLAlchemy 1.4/2.x Dual Support** - Backwards compatible
-- **Async/Await Ready** - Full async API with minimal code duplication
+- **Async/Await Ready** - Full async API with AsyncTable/AsyncSessionTable classes
+- **Batch Operations** - Efficient processing with parallel execution support
 
 ## Contributing
 
