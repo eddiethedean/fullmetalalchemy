@@ -36,6 +36,9 @@ dependencies = [
 testing = [
     "pytest>=8",
     "pytest-cov>=4",
+    "pytest-asyncio>=0.23",
+    "greenlet>=3.0",
+    "aiosqlite>=0.19",
 ]
 async = [
     "greenlet>=3.0",
