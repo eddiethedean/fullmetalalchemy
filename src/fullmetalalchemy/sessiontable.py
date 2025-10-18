@@ -99,9 +99,7 @@ class SessionTable(BaseTable):
     def update_matching_records(
         self, records: _t.Sequence[_types.Record], match_column_names: _t.Sequence[str]
     ) -> None:
-        _session.update_matching_records(
-            self.sa_table, records, match_column_names, self.session
-        )
+        _session.update_matching_records(self.sa_table, records, match_column_names, self.session)
 
     def update_records(
         self,

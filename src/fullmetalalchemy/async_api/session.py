@@ -28,14 +28,13 @@ import typing as _t
 import sqlalchemy as _sa
 from sqlalchemy.ext.asyncio import AsyncSession as _AsyncSession
 
-import fullmetalalchemy.features as _features
 import fullmetalalchemy.types as _types
 
 # ================== INSERT OPERATIONS ==================
 
 
 async def insert_records(
-    table: _t.Union[_sa.Table, str],
+    table: _sa.Table,
     records: _t.Sequence[_types.Record],
     session: _AsyncSession,
 ) -> None:
@@ -44,8 +43,9 @@ async def insert_records(
 
     Parameters
     ----------
-    table : Union[sqlalchemy.Table, str]
-        The table to insert into. Can be a Table object or table name string.
+    table : sqlalchemy.Table
+        The table to insert into. Must be a Table object (not a string).
+        Use fa.get_table() to get the table object first.
     records : Sequence[Record]
         Records to insert.
     session : AsyncSession
@@ -63,24 +63,20 @@ async def insert_records(
     >>> async def example():
     ...     engine = fa.async_api.create_async_engine('sqlite+aiosqlite:///data.db')
     ...     sess = AsyncSession(engine, expire_on_commit=False)
-    ...     table = await fa.async_api.get_table('users', engine)
+    ...     # Get table using sync get_table (metadata operations are sync)
+    ...     table = fa.get_table('users', engine.sync_engine)
     ...
     ...     records = [{'id': 1, 'name': 'Alice'}, {'id': 2, 'name': 'Bob'}]
     ...     await async_session.insert_records(table, records, sess)
     ...     await sess.commit()
     """
-    if isinstance(table, str):
-        # Get table from session's bind
-        engine = session.get_bind()
-        table = await _features.get_table(table, engine)
-
     stmt = _sa.insert(table).values(records)
     await session.execute(stmt)
 
 
 async def insert_from_table(
-    table1: _t.Union[_sa.Table, str],
-    table2: _t.Union[_sa.Table, str],
+    table1: _sa.Table,
+    table2: _sa.Table,
     session: _AsyncSession,
 ) -> None:
     """
@@ -88,10 +84,10 @@ async def insert_from_table(
 
     Parameters
     ----------
-    table1 : Union[sqlalchemy.Table, str]
-        Source table to copy from.
-    table2 : Union[sqlalchemy.Table, str]
-        Destination table to insert into.
+    table1 : sqlalchemy.Table
+        Source table to copy from. Must be a Table object.
+    table2 : sqlalchemy.Table
+        Destination table to insert into. Must be a Table object.
     session : AsyncSession
         The async session to use.
 
@@ -99,13 +95,6 @@ async def insert_from_table(
     -------
     None
     """
-    engine = session.get_bind()
-
-    if isinstance(table1, str):
-        table1 = await _features.get_table(table1, engine)
-    if isinstance(table2, str):
-        table2 = await _features.get_table(table2, engine)
-
     stmt = table2.insert().from_select(table1.columns.keys(), _sa.select(table1))
     await session.execute(stmt)
 
@@ -114,7 +103,7 @@ async def insert_from_table(
 
 
 async def delete_records(
-    table: _t.Union[_sa.Table, str],
+    table: _sa.Table,
     column_name: str,
     values: _t.Sequence[_t.Any],
     session: _AsyncSession,
@@ -124,8 +113,8 @@ async def delete_records(
 
     Parameters
     ----------
-    table : Union[sqlalchemy.Table, str]
-        The table to delete from.
+    table : sqlalchemy.Table
+        The table to delete from. Must be a Table object.
     column_name : str
         Column name to match.
     values : Sequence
@@ -137,16 +126,12 @@ async def delete_records(
     -------
     None
     """
-    if isinstance(table, str):
-        engine = session.get_bind()
-        table = await _features.get_table(table, engine)
-
     stmt = _sa.delete(table).where(table.c[column_name].in_(values))
     await session.execute(stmt)
 
 
 async def delete_records_by_values(
-    table: _t.Union[_sa.Table, str],
+    table: _sa.Table,
     records: _t.Sequence[_types.Record],
     session: _AsyncSession,
 ) -> None:
@@ -155,8 +140,8 @@ async def delete_records_by_values(
 
     Parameters
     ----------
-    table : Union[sqlalchemy.Table, str]
-        The table to delete from.
+    table : sqlalchemy.Table
+        The table to delete from. Must be a Table object.
     records : Sequence[Record]
         Records with column-value pairs to match for deletion.
     session : AsyncSession
@@ -166,10 +151,6 @@ async def delete_records_by_values(
     -------
     None
     """
-    if isinstance(table, str):
-        engine = session.get_bind()
-        table = await _features.get_table(table, engine)
-
     for record in records:
         stmt = _sa.delete(table)
         for column, value in record.items():
@@ -178,7 +159,7 @@ async def delete_records_by_values(
 
 
 async def delete_all_records(
-    table: _t.Union[_sa.Table, str],
+    table: _sa.Table,
     session: _AsyncSession,
 ) -> None:
     """
@@ -186,8 +167,8 @@ async def delete_all_records(
 
     Parameters
     ----------
-    table : Union[sqlalchemy.Table, str]
-        The table to delete from.
+    table : sqlalchemy.Table
+        The table to delete from. Must be a Table object.
     session : AsyncSession
         The async session to use.
 
@@ -195,10 +176,6 @@ async def delete_all_records(
     -------
     None
     """
-    if isinstance(table, str):
-        engine = session.get_bind()
-        table = await _features.get_table(table, engine)
-
     stmt = _sa.delete(table)
     await session.execute(stmt)
 
@@ -207,7 +184,7 @@ async def delete_all_records(
 
 
 async def update_records(
-    table: _t.Union[_sa.Table, str],
+    table: _sa.Table,
     records: _t.Sequence[_types.Record],
     session: _AsyncSession,
     match_column_names: _t.Optional[_t.Sequence[str]] = None,
@@ -217,8 +194,8 @@ async def update_records(
 
     Parameters
     ----------
-    table : Union[sqlalchemy.Table, str]
-        The table to update.
+    table : sqlalchemy.Table
+        The table to update. Must be a Table object.
     records : Sequence[Record]
         Records with updated values. Must include primary key or match columns.
     session : AsyncSession
@@ -230,10 +207,6 @@ async def update_records(
     -------
     None
     """
-    if isinstance(table, str):
-        engine = session.get_bind()
-        table = await _features.get_table(table, engine)
-
     # Get primary key if match_column_names not provided
     if match_column_names is None:
         pk_cols = [col.name for col in table.primary_key.columns]
@@ -256,7 +229,7 @@ async def update_records(
 
 
 async def update_matching_records(
-    table: _t.Union[_sa.Table, str],
+    table: _sa.Table,
     records: _t.Sequence[_types.Record],
     match_column_names: _t.Sequence[str],
     session: _AsyncSession,
@@ -266,8 +239,8 @@ async def update_matching_records(
 
     Parameters
     ----------
-    table : Union[sqlalchemy.Table, str]
-        The table to update.
+    table : sqlalchemy.Table
+        The table to update. Must be a Table object.
     records : Sequence[Record]
         Records with updated values.
     match_column_names : Sequence[str]
@@ -283,7 +256,7 @@ async def update_matching_records(
 
 
 async def set_column_values(
-    table: _t.Union[_sa.Table, str],
+    table: _sa.Table,
     column_name: str,
     value: _t.Any,
     session: _AsyncSession,
@@ -293,8 +266,8 @@ async def set_column_values(
 
     Parameters
     ----------
-    table : Union[sqlalchemy.Table, str]
-        The table to update.
+    table : sqlalchemy.Table
+        The table to update. Must be a Table object.
     column_name : str
         The column to update.
     value : Any
@@ -306,10 +279,5 @@ async def set_column_values(
     -------
     None
     """
-    if isinstance(table, str):
-        engine = session.get_bind()
-        table = await _features.get_table(table, engine)
-
     stmt = _sa.update(table).values(**{column_name: value})
     await session.execute(stmt)
-

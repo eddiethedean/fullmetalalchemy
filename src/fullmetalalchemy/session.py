@@ -364,9 +364,7 @@ def delete_records_by_values(
         delete_record_by_values(table, record, session)
 
 
-def delete_all_records(
-    table: _t.Union[_sa.Table, str], session: _sa_session.Session
-) -> None:
+def delete_all_records(table: _t.Union[_sa.Table, str], session: _sa_session.Session) -> None:
     """
     Delete all records from the specified table.
 
@@ -702,4 +700,3 @@ def _make_update_statement_column_value(
     """
     new_value = {column_name: value}
     return _sa.update(table).values(**new_value)
-
