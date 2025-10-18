@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fullmetalalchemy"
-version = "2.0.0"
+version = "2.1.0"
 description = "Easy-to-use helpers for SQL table changes with SQLAlchemy."
 readme = "README.md"
 authors = [
@@ -37,9 +37,18 @@ testing = [
     "pytest>=8",
     "pytest-cov>=4",
 ]
+async = [
+    "greenlet>=3.0",
+    "aiosqlite>=0.19",
+    "asyncpg>=0.29",
+    "aiomysql>=0.2",
+]
 dev = [
     "pytest>=8",
     "pytest-cov>=4",
+    "pytest-asyncio>=0.23",
+    "greenlet>=3.0",
+    "aiosqlite>=0.19",
     "mypy>=1.10",
     "ruff>=0.6",
     "tox>=4",
@@ -62,6 +71,8 @@ fullmetalalchemy = ["py.typed"]
 [tool.pytest.ini_options]
 addopts = "--cov=fullmetalalchemy"
 testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.coverage.run]
 branch = true
