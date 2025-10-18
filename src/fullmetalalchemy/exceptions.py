@@ -13,7 +13,7 @@ import fullmetalalchemy.types as _types
 Connection = _t.Union[_sa_session.Session, _sa_engine.Engine]
 
 
-class ForceFail(Exception):
+class ForceFailError(Exception):
     pass
 
 
@@ -21,27 +21,39 @@ class SliceError(IndexError):
     pass
 
 
-class MissingPrimaryKey(Exception):
-    def __init__(self, message='Table must have primary key. Use alterize.create_primary_key to add a primary key to your table.', errors=None):
+class MissingPrimaryKeyError(Exception):
+    def __init__(
+        self,
+        message: str = (
+            'Table must have primary key. Use alterize.create_primary_key '
+            'to add a primary key to your table.'
+        ),
+        errors: _t.Optional[_t.Any] = None
+    ) -> None:
         super().__init__(message, errors)
 
 
-def rollback_on_exception(method):
-    def inner_method(self, *args, **kwargs):
-        try:
-            method(self, *args, **kwargs)
-        except Exception as e:
-            self.rollback()
-            raise e
-    return inner_method
+# Backwards compatibility aliases
+ForceFail = ForceFailError
+MissingPrimaryKey = MissingPrimaryKeyError
 
 
-def check_for_engine(sa_table, engine) -> _sa_engine.Engine:
+def check_for_engine(
+    sa_table: _sa.Table,
+    engine: _t.Optional[_t.Union[_sa_engine.Engine, _types.SqlConnection]]
+) -> _sa_engine.Engine:
     if engine is None:
-        engine = sa_table.bind
+        # Try SQLAlchemy 1.x .bind attribute
+        engine = getattr(sa_table, 'bind', None)
+    if engine is None:
+        # Try table.info['engine'] fallback for SQLAlchemy 2.x
+        engine = sa_table.info.get('engine', None)
     if engine is None:
         raise ValueError('sa_table must be bound to engine or pass engine parameter.')
-    return engine
+    if isinstance(engine, _sa_engine.Engine):
+        return engine
+    # If it's a Connection or Session, extract the engine
+    return _features.get_engine(engine)
 
 
 def convert_table_engine(

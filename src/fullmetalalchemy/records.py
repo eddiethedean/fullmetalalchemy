@@ -3,7 +3,9 @@ Functions for manipulating and comparing records.
 """
 
 import typing as _t
+
 from frozendict import frozendict
+
 import fullmetalalchemy.types as _types
 
 
@@ -68,9 +70,11 @@ def records_equal(
     >>> records_equal(records1, records2)
     True
     """
-    if len(records1) != len(records2): return False
-    if len(records1) == 0: return True
+    if len(records1) != len(records2):
+        return False
+    if len(records1) == 0:
+        return True
 
-    frozen_records1 = set(frozendict(record) for record in records1)
-    frozen_records2 = set(frozendict(record) for record in records2)
+    frozen_records1 = {frozendict(record) for record in records1}
+    frozen_records2 = {frozendict(record) for record in records2}
     return frozen_records1 == frozen_records2

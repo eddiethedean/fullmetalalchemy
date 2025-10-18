@@ -5,13 +5,13 @@ Functions for updating records in SQL tables.
 import typing as _t
 
 import sqlalchemy as _sa
-import sqlalchemy.orm.session as _sa_session
 import sqlalchemy.engine as _sa_engine
+import sqlalchemy.orm.session as _sa_session
 
+import fullmetalalchemy.exceptions as _ex
+import fullmetalalchemy.features as _features
 import fullmetalalchemy.records as _records
 import fullmetalalchemy.types as _types
-import fullmetalalchemy.features as _features
-import fullmetalalchemy.exceptions as _ex
 
 
 def update_matching_records_session(
@@ -126,14 +126,16 @@ def update_records_session(
     Parameters
     ----------
     table : Union[Table, str]
-        The table to update records in. Either an SQLAlchemy Table object or a string name of the table.
+        The table to update records in. Either an SQLAlchemy Table object
+        or a string name of the table.
     records : Sequence[Record]
         The updated records to insert. Each record must have a primary key value.
     session : sqlalchemy.orm.session.Session
         The SQLAlchemy session to use to perform the updates.
     match_column_names : Optional[Sequence[str]], optional
-        A list of column names to match on when updating. If the table has a primary key, this can be left as None.
-        Otherwise, it is required to specify the columns to match on, by default None.
+        A list of column names to match on when updating. If the table has
+        a primary key, this can be left as None. Otherwise, it is required to
+        specify the columns to match on, by default None.
 
     Returns
     -------
@@ -182,7 +184,8 @@ def update_records(
     engine : Optional[sqlalchemy.engine.Engine], optional
         The database engine to use, by default None.
     match_column_names : Optional[Sequence[str]], optional
-        A sequence of column names to match records on. Required if the table has no primary key, by default None.
+        A sequence of column names to match records on. Required if the table
+        has no primary key, by default None.
 
     Returns
     -------
@@ -259,8 +262,8 @@ def _update_records_fast_session(
 
 def _make_update_statement(
     table: _sa.Table,
-    record_values: dict,
-    new_values: dict
+    record_values: _t.Dict[str, _t.Any],
+    new_values: _t.Dict[str, _t.Any]
 ) -> _sa.sql.expression.Update:
     """
     Constructs a SQLAlchemy update statement based on the given table and

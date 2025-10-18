@@ -2,21 +2,20 @@
 Functions for creating SQL tables.
 """
 
-import typing as _t
-import decimal as _decimal
 import datetime as _datetime
+import decimal as _decimal
+import typing as _t
 
 import sqlalchemy as _sa
 import sqlalchemy.engine as _sa_engine
 import sqlalchemy.schema as _sa_schema
-import sqlalchemy.engine as _sa_engine
 from sqlalchemy import create_engine as _create_engine
-from tinytim.rows import row_dicts_to_data as _row_dicts_to_data
-from tinytim.data import column_names as _column_names
+from tinytim.data import column_names as _column_names  # type: ignore[import-untyped]
+from tinytim.rows import row_dicts_to_data as _row_dicts_to_data  # type: ignore[import-untyped]
 
-import fullmetalalchemy.type_convert as _type_convert
 import fullmetalalchemy.features as _features
 import fullmetalalchemy.insert as _insert
+import fullmetalalchemy.type_convert as _type_convert
 from fullmetalalchemy.features import get_session
 
 create_session = get_session
@@ -24,7 +23,7 @@ create_session = get_session
 _Record = _t.Dict[str, _t.Any]
 
 
-def create_engine(url, *args, **kwargs) -> _sa_engine.Engine:
+def create_engine(url: str, *args: _t.Any, **kwargs: _t.Any) -> _sa_engine.Engine:
     """
     Returns a SQLAlchemy engine object for a given connection.
 
@@ -55,13 +54,13 @@ def create_engine(url, *args, **kwargs) -> _sa_engine.Engine:
     >>> engine = get_engine(session)
 
     """
-    return _create_engine(url, future=True, *args, **kwargs) # type: ignore
+    return _create_engine(url, *args, future=True, **kwargs)
 
 
 def create_table(
     table_name: str,
     column_names:  _t.Sequence[str],
-    column_types:  _t.Sequence,
+    column_types:  _t.Sequence[type],
     primary_key: _t.Sequence[str],
     engine: _sa_engine.Engine,
     schema:  _t.Optional[str] = None,
@@ -85,7 +84,7 @@ def create_table(
     Returns
     -------
     sqlalchemy.Table
-    
+
     Example
     -------
     >>> import fullmetalalchemy as fa
@@ -111,28 +110,29 @@ def create_table(
     fullmetalalchemy.create.create_table_from_records
     """
     cols = []
-    
+
     for name, python_type in zip(column_names, column_types):
         sa_type = _type_convert._type_convert[python_type]
         if type(primary_key) is str:
             primary_key = [primary_key]
+        col: _sa.Column[_t.Any]
         if name in primary_key:
-            col = _sa.Column(name, sa_type,
-                            primary_key=True,
-                            autoincrement=autoincrement)
+            # autoincrement accepts bool or Literal['auto', 'ignore_fk']
+            auto_inc = bool(autoincrement) if autoincrement is not None else False
+            col = _sa.Column(name, sa_type, primary_key=True, autoincrement=auto_inc)
         else:
             col = _sa.Column(name, sa_type)
         cols.append(col)
 
-    metadata = _sa.MetaData(engine)
-    table = _sa.Table(table_name, metadata, *cols, schema=schema)
+    metadata = _sa.MetaData(schema=schema)
+    table = _sa.Table(table_name, metadata, *cols)
     if if_exists == 'replace':
         drop_table_sql = _sa_schema.DropTable(table, if_exists=True)
-        with engine.connect() as con:
-            con.execute(drop_table_sql)
+        with engine.begin() as connection:
+            connection.execute(drop_table_sql)
     table_creation_sql = _sa_schema.CreateTable(table)
-    with engine.connect() as con:
-        con.execute(table_creation_sql)
+    with engine.begin() as connection:
+        connection.execute(table_creation_sql)
     return _features.get_table(table_name, engine, schema=schema)
 
 
@@ -141,20 +141,20 @@ def create_table_from_records(
     records:  _t.Sequence[_Record],
     primary_key: _t.Sequence[str],
     engine: _sa_engine.Engine,
-    column_types:  _t.Optional[ _t.Sequence] = None,
+    column_types:  _t.Optional[_t.Sequence[type]] = None,
     schema:  _t.Optional[str] = None,
     autoincrement:  _t.Optional[bool] = False,
     if_exists:  _t.Optional[str] = 'error',
-    columns:  _t.Optional[ _t.Sequence[str]] = None,
+    columns:  _t.Optional[_t.Sequence[str]] = None,
     missing_value:  _t.Optional[_t.Any] = None
 ) -> _sa.Table:
     """
     Create a sql table from specs and insert records.
-    
+
     Returns
     -------
     sqlalchemy.Table
-    
+
     Example
     -------
     >>> import fullmetalalchemy as fa
@@ -188,30 +188,45 @@ def create_table_from_records(
     if column_types is None:
         column_types = [_column_datatype(values) for values in data.values()]
     col_names = _column_names(data)
-    table = create_table(table_name, col_names, column_types, primary_key, engine, schema, autoincrement, if_exists)
+    table = create_table(
+        table_name, col_names, column_types, primary_key,
+        engine, schema, autoincrement, if_exists
+    )
     _insert.insert_records(table, records, engine)
     return table
 
 
-def _column_datatype(values: _t.Iterable) -> type:
-    dtypes = [
+def _column_datatype(values: _t.Iterable[_t.Any]) -> type:
+    dtypes: _t.List[_t.Union[type, _t.Tuple[type, ...]]] = [
         int, str, (int, float), _decimal.Decimal, _datetime.datetime,
-        bytes, bool, _datetime.date, _datetime.time, 
+        bytes, bool, _datetime.date, _datetime.time,
         _datetime.timedelta, list, dict
     ]
     for value in values:
         for dtype in list(dtypes):
-            if not isinstance(value, dtype):
-                dtypes.pop(dtypes.index(dtype))
-    if len(dtypes) == 2:
-        if set([int, _t.Union[float, int]]) == {int, _t.Union[float, int]}:
-            return int
+            try:
+                if not isinstance(value, dtype):
+                    if dtype in dtypes:
+                        dtypes.remove(dtype)
+            except TypeError:
+                # Handle unhashable types
+                pass
+    # Special case: if both int and (int, float) remain, prefer int
+    # This handles all-integer values which match both int and (int, float)
+    if len(dtypes) == 2 and int in dtypes and (int, float) in dtypes:
+        return int
+    # If only one dtype remains, use it
     if len(dtypes) == 1:
-        if dtypes[0] == _t.Union[float, int]:
+        dtype_item = dtypes[0]
+        # Handle tuple (int, float) - means values are mixed int/float
+        if dtype_item == (int, float):
             return float
-        return dtypes[0]
+        # Regular type
+        if isinstance(dtype_item, type):
+            return dtype_item
+    # Multiple types or no types matched - fall back to str
     return str
-    
+
 def copy_table(
     new_name: str,
     table: _sa.Table,
@@ -243,40 +258,48 @@ def copy_table(
     >>> engine = create_engine('sqlite:///:memory:')
     >>> from sqlalchemy import Column, Integer, String, MetaData
     >>> metadata = MetaData()
-    >>> test_table = Table('test', metadata, Column('id', Integer, primary_key=True), Column('name', String))
+    >>> test_table = Table(
+    ...     'test', metadata,
+    ...     Column('id', Integer, primary_key=True),
+    ...     Column('name', String)
+    ... )
     >>> test_table.create(engine)
     >>> copy_table('test_copy', test_table, engine)
-    Table('test_copy', MetaData(bind=None), Column('id', Integer(), table=<test_copy>, primary_key=True, nullable=False), Column('name', String(), table=<test_copy>), schema=None)
+    Table('test_copy', MetaData(bind=None), Column('id', Integer(), ...)
 
     """
     src_engine = engine
-    dest_engine = engine
     schema = table.schema
     src_name = table.name
     dest_schema = schema
     dest_name = new_name
 
     # reflect existing columns, and create table object for oldTable
-    src_engine._metadata = _sa.MetaData(bind=src_engine, schema=schema)  # type: ignore
-    src_engine._metadata.reflect(src_engine)  # type: ignore
-    
-    # get columns from existing table 
-    srcTable = _sa.Table(src_name, src_engine._metadata, schema=schema)  # type: ignore
+    src_metadata = _sa.MetaData(schema=schema)
+    src_metadata.reflect(src_engine, only=[src_name])
+
+    # get columns from existing table
+    if schema:
+        src_table = src_metadata.tables[_sa.schema._get_table_key(src_name, schema)]
+    else:
+        src_table = src_metadata.tables[src_name]
 
     # create engine and table object for newTable
-    dest_engine._metadata = _sa.MetaData(bind=dest_engine, schema=dest_schema)  # type: ignore
-    destTable = _sa.Table(dest_name, dest_engine._metadata, schema=dest_schema)  # type: ignore
+    dest_metadata = _sa.MetaData(schema=dest_schema)
+    dest_table = _sa.Table(dest_name, dest_metadata, schema=dest_schema)
 
     if if_exists == 'replace':
-        drop_table_sql = _sa_schema.DropTable(destTable, if_exists=True)
-        with engine.connect() as con:
+        drop_table_sql = _sa_schema.DropTable(dest_table, if_exists=True)
+        with engine.begin() as con:
             con.execute(drop_table_sql)
 
     # copy schema and create newTable from oldTable
-    for column in srcTable.columns:
-        destTable.append_column(column.copy())
-    destTable.create()
+    for column in src_table.columns:
+        dest_table.append_column(column.copy())
+
+    with engine.begin() as con:
+        dest_table.create(con)
 
     # insert records from oldTable
-    _insert.insert_from_table(srcTable, destTable, engine)
-    return destTable
+    _insert.insert_from_table(src_table, dest_table, engine)
+    return dest_table

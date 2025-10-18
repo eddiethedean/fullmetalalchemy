@@ -5,12 +5,12 @@ Functions for inserting records into SQL tables.
 import typing as _t
 
 import sqlalchemy as _sa
-import sqlalchemy.orm.session as _sa_session
 import sqlalchemy.engine as _sa_engine
+import sqlalchemy.orm.session as _sa_session
 
-import fullmetalalchemy.types as _types
-import fullmetalalchemy.features as _features
 import fullmetalalchemy.exceptions as _ex
+import fullmetalalchemy.features as _features
+import fullmetalalchemy.types as _types
 
 
 def insert_from_table_session(
@@ -24,9 +24,11 @@ def insert_from_table_session(
     Parameters
     ----------
     table1 : Union[sqlalchemy.Table, str]
-        The source table to copy from. If a string is passed, it is used as the table name to fetch from the database.
+        The source table to copy from. If a string is passed, it is used as
+        the table name to fetch from the database.
     table2 : Union[sqlalchemy.Table, str]
-        The destination table to insert into. If a string is passed, it is used as the table name to fetch from the database.
+        The destination table to insert into. If a string is passed, it is used as
+        the table name to fetch from the database.
     session : sqlalchemy.orm.session.Session
         The SQLAlchemy session to use for the database connection.
 
@@ -69,12 +71,14 @@ def insert_from_table(
     Parameters
     ----------
     table1 : Union[sqlalchemy.Table, str]
-        The source table. Can be a string representing the name of the table or the actual table object.
+        The source table. Can be a string representing the name of the table
+        or the actual table object.
     table2 : Union[sqlalchemy.Table, str]
-        The destination table. Can be a string representing the name of the table or the actual table object.
+        The destination table. Can be a string representing the name of the table
+        or the actual table object.
     engine : Optional[sqlalchemy.engine.Engine], optional
-        The engine to be used to create a session, by default None. If None, the function will try to extract the engine
-        from either table1 or table2.
+        The engine to be used to create a session, by default None. If None,
+        the function will try to extract the engine from either table1 or table2.
 
     Returns
     -------
@@ -89,7 +93,7 @@ def insert_from_table(
     >>> table2 = fa.features.get_table('xyz', engine)
     >>> fa.select.select_records_all(table2)
     []
-    
+
     >>> fa.insert.insert_from_table(table1, table2, engine)
     >>> fa.select.select_records_all(table2)
     [{'id': 1, 'x': 1, 'y': 2, 'z': None},
@@ -97,6 +101,11 @@ def insert_from_table(
      {'id': 3, 'x': 4, 'y': 8, 'z': None},
      {'id': 4, 'x': 8, 'y': 11, 'z': None}]
     """
+    # Convert table1 to Table object if it's a string
+    if isinstance(table1, str):
+        if engine is None:
+            raise ValueError('Must provide engine when table1 is a string.')
+        table1 = _features.get_table(table1, engine)
     engine = _ex.check_for_engine(table1, engine)
     session = _features.get_session(engine)
     try:
@@ -105,7 +114,7 @@ def insert_from_table(
     except Exception as e:
         session.rollback()
         raise e
-    
+
 
 def insert_records_session(
     table: _t.Union[_sa.Table, str],
@@ -141,7 +150,7 @@ def insert_records_session(
      {'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
-    
+
     >>> new_records = [{'id': 5, 'x': 11, 'y': 5}, {'id': 6, 'x': 9, 'y': 9}]
     >>> session = fa.features.get_session(engine)
     >>> fa.insert.insert_records_session(table, new_records, session)
@@ -194,7 +203,7 @@ def insert_records(
      {'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
-    
+
     >>> new_records = [{'id': 5, 'x': 11, 'y': 5}, {'id': 6, 'x': 9, 'y': 9}]
     >>> fa.insert.insert_records(table, new_records, engine)
     >>> fa.select.select_records_all(table)
@@ -221,17 +230,20 @@ def _insert_records_fast(
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
     """
-    Inserts records into a database table using a fast method that avoids checking for a missing primary key.
+    Inserts records into a database table using a fast method that avoids
+    checking for a missing primary key.
 
     Parameters
     ----------
     table : sqlalchemy.Table
         The table to insert records into.
     records : Sequence[Dict[str, Any]]
-        A sequence of records to insert into the table. Each record is a dictionary where the keys correspond
-        to the column names and the values correspond to the data to be inserted.
+        A sequence of records to insert into the table. Each record is a dictionary
+        where the keys correspond to the column names and the values correspond
+        to the data to be inserted.
     engine : sqlalchemy.engine.Engine, optional
-        An optional database engine to use for the insertion. If not provided, the engine associated with the table is used.
+        An optional database engine to use for the insertion. If not provided,
+        the engine associated with the table is used.
 
     Returns
     -------
@@ -254,7 +266,7 @@ def _insert_records_fast(
      {'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
-    
+
     >>> new_records = [{'id': 5, 'x': 11, 'y': 5}, {'id': 6, 'x': 9, 'y': 9}]
     >>> fa.insert._insert_records_fast(table, new_records, engine)
     >>> fa.select.select_records_all(table)
@@ -315,7 +327,7 @@ def _insert_records_fast_session(
      {'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
-    
+
     >>> new_records = [{'id': 5, 'x': 11, 'y': 5}, {'id': 6, 'x': 9, 'y': 9}]
     >>> session = features.get_session(engine)
     >>> insert._insert_records_fast_session(table, new_records, session)

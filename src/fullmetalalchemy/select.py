@@ -7,10 +7,10 @@ import typing as _t
 import sqlalchemy as _sa
 import sqlalchemy.sql.elements as sa_elements
 
-import fullmetalalchemy.types as _types
-import fullmetalalchemy.features as _features
-import fullmetalalchemy.exceptions as exceptions
 import fullmetalalchemy.exceptions as _ex
+import fullmetalalchemy.exceptions as exceptions
+import fullmetalalchemy.features as _features
+import fullmetalalchemy.types as _types
 
 
 def select_records_all(
@@ -62,7 +62,7 @@ def select_records_all(
     engine = _features.get_engine(connection)
     with engine.connect() as con:
         results = con.execute(query)
-    return [dict(r) for r in results]
+        return [dict(r._mapping) for r in results]
 
 
 def select_records_chunks(
@@ -120,16 +120,16 @@ def select_records_chunks(
     engine = _features.get_engine(connection)
     with engine.connect() as con:
         stream = con.execute(query, execution_options={'stream_results': True})
-    for results in stream.partitions(chunksize):
-        yield [dict(r) for r in results]
+        for results in stream.partitions(chunksize):
+            yield [dict(r._mapping) for r in results]
 
 
 def select_existing_values(
     table: _t.Union[_sa.Table, str],
     column_name: str,
-    values: _t.Sequence,
+    values: _t.Sequence[_t.Any],
     connection: _t.Optional[_types.SqlConnection] = None
-) -> list:
+) -> _t.List[_t.Any]:
     """
     Selects existing values from a specified column in a database table.
 
@@ -160,7 +160,7 @@ def select_existing_values(
     """
     table, connection = _ex.convert_table_connection(table, connection)
     column = _features.get_column(table, column_name)
-    query = _sa.select([column]).where(column.in_(values))
+    query = _sa.select(column).where(column.in_(values))
     connection = _ex.check_for_engine(table, connection)
     engine = _features.get_engine(connection)
     with engine.connect() as con:
@@ -171,7 +171,7 @@ def select_column_values_all(
     table: _t.Union[_sa.Table, str],
     column_name: str,
     connection: _t.Optional[_types.SqlConnection] = None
-) -> list:
+) -> _t.List[_t.Any]:
     """
     Selects all values in a specified column in a database table.
 
@@ -210,7 +210,7 @@ def select_column_values_chunks(
     column_name: str,
     chunksize: int,
     connection: _t.Optional[_types.SqlConnection] = None,
-) -> _t.Generator[list, None, None]:
+) -> _t.Generator[_t.Sequence[_t.Any], None, None]:
     """
     Select chunks of values in named column.
 
@@ -243,9 +243,10 @@ def select_column_values_chunks(
     """
     table, connection = _ex.convert_table_connection(table, connection)
     query = _sa.select(_features.get_column(table, column_name))
-    stream = connection.execute(query, execution_options={'stream_results': True})
-    for results in stream.scalars().partitions(chunksize):  # type: ignore
-        yield results
+    engine = _features.get_engine(connection)
+    with engine.connect() as conn:
+        stream = conn.execute(query, execution_options={'stream_results': True})
+        yield from stream.scalars().partitions(chunksize)
 
 
 def select_records_slice(
@@ -301,8 +302,10 @@ def select_records_slice(
     if sorted:
         query = query.order_by(*_features.primary_key_columns(table))
     query = query.slice(start, stop)
-    results = connection.execute(query)
-    return [dict(r) for r in results]
+    engine = _features.get_engine(connection)
+    with engine.connect() as conn:
+        results = conn.execute(query)
+        return [dict(r._mapping) for r in results]
 
 
 def select_column_values_by_slice(
@@ -311,7 +314,7 @@ def select_column_values_by_slice(
     start: _t.Optional[int] = None,
     stop: _t.Optional[int] = None,
     connection: _t.Optional[_types.SqlConnection] = None,
-) -> list:
+) -> _t.List[_t.Any]:
     """
     Select a slice of column values from the given table.
 
@@ -346,7 +349,9 @@ def select_column_values_by_slice(
     if stop < start:
         raise exceptions.SliceError('stop cannot be less than start.')
     query = _sa.select(_features.get_column(table, column_name)).slice(start, stop)
-    return connection.execute(query).scalars().all()
+    engine = _features.get_engine(connection)
+    with engine.connect() as conn:
+        return list(conn.execute(query).scalars().all())
 
 
 def select_column_value_by_index(
@@ -391,10 +396,12 @@ def select_column_value_by_index(
     if index < 0:
         row_count = _features.get_row_count(table, connection)
         if index < -row_count:
-            raise IndexError('Index out of range.') 
+            raise IndexError('Index out of range.')
         index = _calc_positive_index(index, row_count)
     query = _sa.select(_features.get_column(table, column_name)).slice(index, index+1)
-    return connection.execute(query).scalars().all()[0]
+    engine = _features.get_engine(connection)
+    with engine.connect() as conn:
+        return conn.execute(query).scalars().all()[0]
 
 
 def select_record_by_index(
@@ -412,7 +419,7 @@ def select_record_by_index(
     index : int
         The index of the record to select. If a negative index is provided, it will count from the end of the table.
     connection : Optional[SqlConnection]
-        The database connection to use for the operation. If not provided, a connection will be obtained from the 
+        The database connection to use for the operation. If not provided, a connection will be obtained from the
         default connection pool.
 
     Returns
@@ -432,11 +439,13 @@ def select_record_by_index(
     if index < 0:
         row_count = _features.get_row_count(table, connection)
         if index < -row_count:
-            raise IndexError('Index out of range.') 
+            raise IndexError('Index out of range.')
         index = _calc_positive_index(index, row_count)
     query = _sa.select(table).slice(index, index+1)
-    results = connection.execute(query)
-    return [dict(x) for x in results][0]
+    engine = _features.get_engine(connection)
+    with engine.connect() as conn:
+        results = conn.execute(query)
+        return next(dict(r._mapping) for r in results)
 
 
 def select_primary_key_records_by_slice(
@@ -480,11 +489,13 @@ def select_primary_key_records_by_slice(
         raise exceptions.SliceError('stop cannot be less than start.')
     primary_key_values = _features.primary_key_columns(table)
     if sorted:
-        query = _sa.select(primary_key_values).order_by(*primary_key_values).slice(start, stop)
+        query = _sa.select(*primary_key_values).order_by(*primary_key_values).slice(start, stop)
     else:
-        query = _sa.select(primary_key_values).slice(start, stop)
-    results = connection.execute(query)
-    return [dict(r) for r in results]
+        query = _sa.select(*primary_key_values).slice(start, stop)
+    engine = _features.get_engine(connection)
+    with engine.connect() as conn:
+        results = conn.execute(query)
+        return [dict(r._mapping) for r in results]
 
 
 def select_record_by_primary_key(
@@ -532,14 +543,16 @@ def select_record_by_primary_key(
         raise exceptions.MissingPrimaryKey('Primary key values missing in table.')
     if include_columns is not None:
         columns = [_features.get_column(table, column_name) for column_name in include_columns]
-        query = _sa.select(*columns).where((sa_elements.and_(*where_clause)))
+        query = _sa.select(*columns).where(sa_elements.and_(*where_clause))
     else:
-        query = _sa.select(table).where((sa_elements.and_(*where_clause)))
-    results = connection.execute(query)
-    results = [dict(x) for x in results]
-    if len(results) == 0:
-        raise exceptions.MissingPrimaryKey('Primary key values missing in table.')
-    return results[0]
+        query = _sa.select(table).where(sa_elements.and_(*where_clause))
+    engine = _features.get_engine(connection)
+    with engine.connect() as conn:
+        result_rows = conn.execute(query)
+        results = [dict(r._mapping) for r in result_rows]
+        if len(results) == 0:
+            raise exceptions.MissingPrimaryKeyError('Primary key values missing in table.')
+        return results[0]
 
 
 def select_records_by_primary_keys(
@@ -588,11 +601,13 @@ def select_records_by_primary_keys(
         return []
     if include_columns is not None:
         columns = [_features.get_column(table, column_name) for column_name in include_columns]
-        query = _sa.select(*columns).where((sa_elements.or_(*where_clauses)))
+        query = _sa.select(*columns).where(sa_elements.or_(*where_clauses))
     else:
-        query = _sa.select(table).where((sa_elements.or_(*where_clauses)))
-    results = connection.execute(query)
-    return [dict(r) for r in results]
+        query = _sa.select(table).where(sa_elements.or_(*where_clauses))
+    engine = _features.get_engine(connection)
+    with engine.connect() as conn:
+        results = conn.execute(query)
+        return [dict(r._mapping) for r in results]
 
 
 def select_column_values_by_primary_keys(
@@ -600,7 +615,7 @@ def select_column_values_by_primary_keys(
     column_name: str,
     primary_keys_values: _t.Sequence[_types.Record],
     connection: _t.Optional[_types.SqlConnection] = None
-) -> list:
+) -> _t.List[_t.Any]:
     """
     Selects the values in a column of a table for rows with specified primary key values.
 
@@ -637,9 +652,11 @@ def select_column_values_by_primary_keys(
 
     if len(where_clauses) == 0:
         return []
-    query = _sa.select(_features.get_column(table, column_name)).where((sa_elements.or_(*where_clauses)))
-    results = connection.execute(query)
-    return results.scalars().fetchall()
+    query = _sa.select(_features.get_column(table, column_name)).where(sa_elements.or_(*where_clauses))
+    engine = _features.get_engine(connection)
+    with engine.connect() as conn:
+        results = conn.execute(query)
+        return list(results.scalars().fetchall())
 
 
 def select_value_by_primary_keys(
@@ -685,8 +702,10 @@ def select_value_by_primary_keys(
     where_clause = _features._get_where_clause(table, primary_key_value)
     if len(where_clause) == 0:
         raise KeyError('No such primary key values exist in table.')
-    query = _sa.select(_features.get_column(table, column_name)).where((sa_elements.and_(*where_clause)))
-    return connection.execute(query).scalars().all()[0]
+    query = _sa.select(_features.get_column(table, column_name)).where(sa_elements.and_(*where_clause))
+    engine = _features.get_engine(connection)
+    with engine.connect() as conn:
+        return conn.execute(query).scalars().all()[0]
 
 
 def _convert_slice_indexes(
@@ -727,7 +746,7 @@ def _convert_slice_indexes(
     # start index is 0 if None
     start = 0 if start is None else start
     row_count = _features.get_row_count(table, connection)
-    
+
     # stop index is row count if None
     stop = row_count if stop is None else stop
     # convert negative indexes
@@ -810,7 +829,7 @@ def _stop_overflow_index(
         return row_count
     return index
 
-    
+
 def _stop_underflow_index(
     index: int,
     row_count: int
