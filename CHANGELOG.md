@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 2025-10-18
+
+### Fixed
+- SQLAlchemy 1.4 compatibility for async features
+  - Replaced `Select[T]` generic type with `Any` for SQLAlchemy 1.4 compatibility
+  - Added fallback import for `async_sessionmaker` (not available in SQLAlchemy 1.4)
+  - GitHub Actions now pass on all SQLAlchemy versions (1.4.* and 2.x)
+- All 336 tests pass with both SQLAlchemy 1.4 and 2.x
+
 ## [2.2.0] - 2025-10-18
 
 ### Added
