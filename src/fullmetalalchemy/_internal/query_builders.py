@@ -11,10 +11,13 @@ import sqlalchemy.sql.elements as sa_elements
 
 from fullmetalalchemy._internal import helpers
 
+# Type alias for Select - works with SQLAlchemy 1.4 and 2.x
+SelectQuery = _t.Any  # Use Any for SQLAlchemy 1.4 compatibility
+
 
 def build_select_all_query(
     table: _sa.Table, sorted: bool = False, include_columns: _t.Optional[_t.Sequence[str]] = None
-) -> _sa.Select[_t.Any]:
+) -> SelectQuery:
     """Build SELECT query for all records.
 
     Parameters
@@ -49,7 +52,7 @@ def build_select_slice_query(
     stop: int,
     sorted: bool = False,
     include_columns: _t.Optional[_t.Sequence[str]] = None,
-) -> _sa.Select[_t.Any]:
+) -> SelectQuery:
     """Build SELECT query for record slice.
 
     Parameters
@@ -82,7 +85,7 @@ def build_select_slice_query(
     return query.slice(start, stop)
 
 
-def build_select_column_query(table: _sa.Table, column_name: str) -> _sa.Select[_t.Any]:
+def build_select_column_query(table: _sa.Table, column_name: str) -> SelectQuery:
     """Build SELECT query for single column.
 
     Parameters
@@ -105,7 +108,7 @@ def build_select_by_primary_key_query(
     table: _sa.Table,
     primary_key_value: _t.Dict[str, _t.Any],
     include_columns: _t.Optional[_t.Sequence[str]] = None,
-) -> _sa.Select[_t.Any]:
+) -> SelectQuery:
     """Build SELECT query filtering by primary key.
 
     Parameters

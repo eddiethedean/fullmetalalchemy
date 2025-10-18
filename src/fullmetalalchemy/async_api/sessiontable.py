@@ -5,7 +5,14 @@ from __future__ import annotations
 import typing as _t
 
 import sqlalchemy as _sa
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
+# Handle SQLAlchemy 1.4 vs 2.0 compatibility
+try:
+    from sqlalchemy.ext.asyncio import async_sessionmaker
+except ImportError:
+    # SQLAlchemy 1.4 doesn't have async_sessionmaker, use sessionmaker
+    from sqlalchemy.orm import sessionmaker as async_sessionmaker  # type: ignore
 
 from fullmetalalchemy.types import Record
 

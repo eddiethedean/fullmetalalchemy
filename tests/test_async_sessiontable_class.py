@@ -1,6 +1,12 @@
 """Tests for AsyncSessionTable class."""
 import pytest
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import create_async_engine
+
+# Handle SQLAlchemy 1.4 vs 2.0 compatibility
+try:
+    from sqlalchemy.ext.asyncio import async_sessionmaker
+except ImportError:
+    from sqlalchemy.orm import sessionmaker as async_sessionmaker  # type: ignore
 
 from fullmetalalchemy.async_api import AsyncSessionTable, create
 
