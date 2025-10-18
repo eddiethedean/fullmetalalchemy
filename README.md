@@ -873,6 +873,24 @@ This project maintains high standards:
 - **Async/Await Ready** - Full async API with AsyncTable/AsyncSessionTable classes
 - **Batch Operations** - Efficient processing with parallel execution support
 
+## Roadmap / Coming Soon
+
+Features planned for future releases:
+
+### v2.4.0 - Async Table Metadata Operations
+- **Async `get_table()` function** - Currently async operations require passing table objects created with sync `get_table()`. This will add native async table metadata reflection.
+- **Full string table name support in async session module** - Allow passing table names as strings to `async_api.session.*` functions without pre-fetching table objects
+- **Async table creation helpers** - Improve async table creation workflow
+
+### Future Considerations
+- **Query Builder Interface** - Fluent API for complex queries
+- **Migration Utilities** - Schema migration helpers
+- **Connection Pooling Utilities** - Advanced connection management
+- **Export/Import Tools** - CSV, JSON, Parquet data exchange
+- **Table Validation** - Schema validation and data integrity checks
+
+Have a feature request? [Open an issue](https://github.com/eddiethedean/fullmetalalchemy/issues) to discuss!
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
