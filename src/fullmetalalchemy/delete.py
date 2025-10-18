@@ -7,17 +7,16 @@ import typing as _t
 import sqlalchemy as _sa
 import sqlalchemy.engine as _sa_engine
 import sqlalchemy.orm.session as _sa_session
-from sqlalchemy.sql.expression import Select as _Select
 
+import fullmetalalchemy.exceptions as _ex
 import fullmetalalchemy.features as _features
 import fullmetalalchemy.types as _types
-import fullmetalalchemy.exceptions as _ex
 
 
 def delete_records_session(
     table: _t.Union[_sa.Table, str],
     column_name: str,
-    values: _t.Sequence,
+    values: _t.Sequence[_t.Any],
     session: _sa_session.Session
 ) -> None:
     """
@@ -64,13 +63,14 @@ def delete_records_session(
     """
     table = _features.str_to_table(table, session)
     col = _features.get_column(table, column_name)
-    session.query(table).filter(col.in_(values)).delete(synchronize_session=False)
+    delete_stmt = _sa.delete(table).where(col.in_(values))
+    session.execute(delete_stmt)
 
- 
+
 def delete_records(
     table: _t.Union[_sa.Table, str],
     column_name: str,
-    values: _t.Sequence,
+    values: _t.Sequence[_t.Any],
     engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
     """
@@ -124,7 +124,7 @@ def delete_records(
 
 def delete_records_by_values(
     table: _t.Union[_sa.Table, str],
-    records: _t.Sequence[dict],
+    records: _t.Sequence[_t.Dict[str, _t.Any]],
     engine: _t.Optional[_sa.engine.Engine] = None
 ) -> None:
     """
@@ -176,7 +176,7 @@ def delete_record_by_values_session(
 ) -> None:
     """
     Deletes a single row from a table based on the values in the specified record.
-    
+
     Parameters
     ----------
     table : Union[sqlalchemy.Table, str]
@@ -201,7 +201,7 @@ def delete_record_by_values_session(
      {'id': 2, 'x': 2, 'y': 4},
      {'id': 3, 'x': 4, 'y': 8},
      {'id': 4, 'x': 8, 'y': 11}]
-    
+
     >>> session = fa.features.get_session(engine)
     >>> fa.delete.delete_record_by_values_session(table, {'id': 1, 'x': 1, 'y': 2}, session)
     >>> session.commit()
@@ -230,7 +230,8 @@ def delete_records_by_values_session(
     table : Union[Table, str]
         The SQLAlchemy table object or name of the table to delete records from.
     records : Sequence[Record]
-        A sequence of records to delete from the table. Each record is a dictionary with keys as column names and values as the value to match.
+        A sequence of records to delete from the table. Each record is a dictionary
+        with keys as column names and values as the value to match.
     session : Session
         The SQLAlchemy session to use for the database operation.
 
@@ -259,47 +260,6 @@ def delete_records_by_values_session(
     table = _features.str_to_table(table, session)
     for record in records:
         delete_record_by_values_session(table, record, session)
-
-        
-def _build_where_from_record(
-    table: _sa.Table,
-    record: _types.Record
-) -> _Select:
-    """
-    Builds a WHERE clause using the given record.
-
-    Parameters
-    ----------
-    table : Union[sqlalchemy.Table, str]
-        The table object or name to build the WHERE clause for.
-    record : Dict[str, Any]
-        The record to use to build the WHERE clause.
-
-    Returns
-    -------
-    sqlalchemy.sql.expression.Select
-        A SQL SELECT statement with the WHERE clause built from the record.
-
-    Example
-    -------
-    >>> from sqlalchemy import Table, Column, Integer, MetaData
-
-    >>> metadata = MetaData()
-    >>> table = Table('mytable', metadata,
-    ...               Column('id', Integer, primary_key=True),
-    ...               Column('name', String))
-    >>> record = {'id': 1, 'name': 'test'}
-    >>> where_clause = _build_where_from_record(table, record)
-    >>> print(where_clause)
-    SELECT mytable.id, mytable.name
-    FROM mytable
-    WHERE mytable.id = :id_1 AND mytable.name = :name_1
-
-    """
-    s = _sa.select(table)
-    for col, val in record.items():
-        s = s.where(table.c[col]==val)
-    return s
 
 
 def _build_delete_from_record(
@@ -351,7 +311,8 @@ def delete_all_records_session(
     Parameters
     ----------
     table : Union[Table, str]
-        The table to delete records from. It can be either a sqlalchemy Table object or a table name.
+        The table to delete records from. It can be either a sqlalchemy
+        Table object or a table name.
     session : Session
         The session to use to execute the query.
 

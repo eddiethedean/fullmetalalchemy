@@ -3,57 +3,78 @@ Functions for getting SQL table features and SqlAlchemy ORM objects.
 """
 
 import typing as _t
+from contextlib import contextmanager
 
 import sqlalchemy as _sa
-import sqlalchemy.orm.session as _sa_session
-import sqlalchemy.ext.automap as _sa_automap
 import sqlalchemy.engine as _sa_engine
+import sqlalchemy.ext.automap as _sa_automap
+import sqlalchemy.orm.session as _sa_session
 from sqlalchemy.orm.decl_api import DeclarativeMeta as _DeclarativeMeta
 
-import fullmetalalchemy.types as _types
 import fullmetalalchemy.exceptions as _ex
+import fullmetalalchemy.types as _types
 
 
-def get_engine(connection) -> _sa_engine.Engine:
-    """
-    Returns a SQLAlchemy engine object for a given connection.
-
-    Parameters
-    ----------
-    connection : Session or Engine
-        A SQLAlchemy Session or Engine object.
-
-    Returns
-    -------
-    Engine
-        A SQLAlchemy Engine object that can be used to communicate with a database.
-
-    Raises
-    ------
-    TypeError
-        If `connection` is not an instance of either Session or Engine.
-
-    Examples
-    --------
-    To get a SQLAlchemy Engine object for a given connection:
-
-    >>> from sqlalchemy import create_engine
-    >>> from sqlalchemy.orm import sessionmaker
-    >>> engine = create_engine('postgresql://user:password@localhost/mydatabase')
-    >>> Session = sessionmaker(bind=engine)
-    >>> session = Session()
-    >>> engine = get_engine(session)
-
-    """
-    if isinstance(connection, _sa_session.Session):
-        return connection.connection()# type: ignore
-    else:
+def _extract_engine(
+    connection: _t.Union[_sa_engine.Engine, _sa.engine.Connection, _sa_session.Session]
+) -> _sa_engine.Engine:
+    if isinstance(connection, _sa_engine.Engine):
         return connection
+    if isinstance(connection, _sa.engine.Connection):
+        return connection.engine
+    if isinstance(connection, _sa_session.Session):
+        bind = connection.get_bind()
+        if bind is None:
+            raise TypeError('Session is not bound to an engine or connection.')
+        if isinstance(bind, _sa.engine.Connection):
+            return bind.engine
+        if isinstance(bind, _sa_engine.Engine):
+            return bind
+        raise TypeError('Unsupported bind object returned from session.')
+    raise TypeError('Unsupported connection type provided.')
+
+
+def get_engine(
+    connection: _t.Union[_sa_engine.Engine, _sa.engine.Connection, _sa_session.Session]
+) -> _sa_engine.Engine:
+    if isinstance(connection, (_sa_engine.Engine, _sa.engine.Connection, _sa_session.Session)):
+        return _extract_engine(connection)
+    raise TypeError('connection must be an Engine, Connection, or Session instance.')
+
+
+def _ensure_connection(
+    connection: _t.Union[_types.SqlConnection, _sa_session.Session]
+) -> _types.SqlConnection:
+    if isinstance(connection, (_sa.engine.Connection, _sa_engine.Engine)):
+        return connection
+    if isinstance(connection, _sa_session.Session):
+        return connection.connection()
+    return connection
+
+
+@contextmanager
+def execution_context(
+    connection: _t.Union[_sa_engine.Engine, _sa.engine.Connection, _sa_session.Session]
+) -> _t.Iterator[_t.Union[_sa.engine.Connection, _sa_session.Session]]:
+    if isinstance(connection, _sa_session.Session):
+        yield connection
+        return
+    if isinstance(connection, _sa.engine.Connection):
+        try:
+            yield connection
+        finally:
+            pass
+        return
+    if isinstance(connection, _sa_engine.Engine):
+        with connection.connect() as conn:
+            yield conn
+        return
+    raise TypeError('Unsupported connection type provided to execution_context.')
 
 
 def primary_key_columns(
     table: _sa.Table
-) ->  _t.List[_sa.Column]:
+) ->  _t.List[_sa.Column[_t.Any]]:
     """
     Return the primary key columns of a SQLAlchemy Table.
 
@@ -106,59 +127,14 @@ def primary_key_names(
 def get_connection(
     connection: _t.Union[_types.SqlConnection, _sa_session.Session]
 ) -> _types.SqlConnection:
-    """
-    Get the engine connection from a SQLAlchemy Session object or return the input connection.
-
-    Parameters
-    ----------
-    connection : Union[sqlalchemy.engine.Connection, sqlalchemy.orm.Session]
-        The connection or session to get the engine connection from.
-
-    Returns
-    -------
-    sqlalchemy.engine.Connection
-        The engine connection associated with the input session, or the input connection if it is already an engine connection.
-
-    Examples
-    --------
-    >>> import fullmetalalchemy as fa
-    >>> engine = fa.create_engine('sqlite:///data/test.db')
-    >>> session = fa.features.get_session(engine)
-    >>> fa.features.get_connection(session)
-    <sqlalchemy.engine.base.Connection at 0x7f9568064550>
-    """
-    if isinstance(connection, _sa_session.Session):
-        return connection.connection()
-    return connection
+    return _ensure_connection(connection)
 
 
 def get_metadata(
     connection: _types.SqlConnection,
     schema: _t.Optional[str] = None
 ) -> _sa.MetaData:
-    """
-    Get a SQLAlchemy MetaData object associated with a given database connection and schema.
-
-    Parameters
-    ----------
-    connection : fullmetalalchemy.types.SqlConnection
-        The database connection to associate with the MetaData object.
-    schema : Optional[str], default None
-        The name of the schema to use with the MetaData object. If None, the default schema is used.
-
-    Returns
-    -------
-    sqlalchemy.MetaData
-        The MetaData object associated with the input connection and schema.
-
-    Examples
-    --------
-    >>> import fullmetalalchemy as fa
-    >>> engine = fa.create_engine('sqlite:///data/test.db')
-    >>> fa.features.get_metadata(engine)
-    MetaData(bind=Engine(sqlite:///data/test.db))
-    """
-    return _sa.MetaData(bind=connection, schema=schema)
+    return _sa.MetaData(schema=schema)
 
 
 def get_table(
@@ -166,41 +142,11 @@ def get_table(
     connection: _types.SqlConnection,
     schema: _t.Optional[str] = None
 ) -> _sa.Table:
-    """
-    Get a SQLAlchemy Table object associated with a given table name, database connection, and schema.
-
-    Parameters
-    ----------
-    table_name : str
-        The name of the table to retrieve.
-    connection : fullmetalalchemy.types.SqlConnection
-        The database connection to use to retrieve the table.
-    schema : Optional[str], default None
-        The name of the schema to use when retrieving the table. If None, the default schema is used.
-
-    Returns
-    -------
-    sqlalchemy.Table
-        The Table object associated with the input table name, database connection, and schema.
-
-    Examples
-    --------
-    >>> import fullmetalalchemy as fa
-    >>> engine = fa.create_engine('sqlite:///data/test.db')
-    >>> fa.features.get_table('xy', engine)
-    Table('xy', MetaData(bind=Engine(sqlite:///data/test.db)),
-        Column('id', INTEGER(), table=<xy>, primary_key=True, nullable=False),
-        Column('x', INTEGER(), table=<xy>),
-        Column('y', INTEGER(), table=<xy>), schema=None)
-    """
-    metadata = get_metadata(connection, schema)
-    autoload_with = get_connection(connection)
-    return _sa.Table(table_name,
-                 metadata,
-                 autoload=True,
-                 autoload_with=autoload_with,
-                 extend_existing=True,
-                 schema=schema)
+    engine = get_engine(connection)
+    metadata = get_metadata(engine, schema)
+    table = _sa.Table(table_name, metadata, autoload_with=engine, schema=schema)
+    table.info.setdefault('engine', engine)
+    return table
 
 
 def get_engine_table(
@@ -209,7 +155,8 @@ def get_engine_table(
     schema: _t.Optional[str] = None
 ) -> _t.Tuple[_sa_engine.Engine, _sa.Table]:
     """
-    Get the engine and table objects from a given connection string, table name, and optional schema.
+    Get the engine and table objects from a given connection string,
+    table name, and optional schema.
 
     Parameters
     ----------
@@ -274,15 +221,14 @@ def get_class(
     >>> fa.features.get_class('xy', engine)
     sqlalchemy.ext.automap.xy
     """
-    metadata = get_metadata(connection, schema)
-    connection = get_connection(connection)
-
-    metadata.reflect(connection, only=[table_name], schema=schema)
-    Base = _sa_automap.automap_base(metadata=metadata)
-    Base.prepare()
-    if table_name not in Base.classes:
-        raise _ex.MissingPrimaryKey()
-    return Base.classes[table_name]
+    engine = get_engine(connection)
+    metadata = get_metadata(engine, schema)
+    metadata.reflect(engine, only=[table_name], schema=schema)
+    base = _sa_automap.automap_base(metadata=metadata)
+    base.prepare()
+    if table_name not in base.classes:
+        raise _ex.MissingPrimaryKeyError()
+    return base.classes[table_name]  # type: ignore[no-any-return]
 
 
 def get_session(
@@ -315,7 +261,7 @@ def get_session(
 def get_column(
     table: _sa.Table,
     column_name: str
-) -> _sa.Column:
+) -> _sa.Column[_t.Any]:
     """
     Retrieve a SQLAlchemy column object from a SQLAlchemy table.
 
@@ -344,7 +290,7 @@ def get_column(
 
 def get_table_constraints(
     table: _sa.Table
-) -> set:
+) -> _t.Set[_t.Any]:
     """
     Get a set of all constraints for a given SQLAlchemy Table object.
 
@@ -371,7 +317,7 @@ def get_table_constraints(
 
 def get_primary_key_constraints(
     table: _sa.Table
-) -> _t.Tuple[str,  _t.List[str]]:
+) -> _t.Union[_t.Tuple[_t.Optional[str], _t.List[str]], _t.Tuple[()]]:
     """
     Get the primary key constraints of a SQLAlchemy table.
 
@@ -382,9 +328,10 @@ def get_primary_key_constraints(
 
     Returns
     -------
-    Tuple[Optional[str], List[str]]
+    Tuple[Optional[str], List[str]] | Tuple[()]
         A tuple with the primary key constraint name (if it exists) and a list of
-        the column names that make up the primary key.
+        the column names that make up the primary key. Returns empty tuple if no
+        primary key exists.
 
     Example
     -------
@@ -397,8 +344,10 @@ def get_primary_key_constraints(
     cons = get_table_constraints(table)
     for con in cons:
         if isinstance(con, _sa.PrimaryKeyConstraint):
-            return con.name, [col.name for col in con.columns]
-    return tuple()
+            pk_name: _t.Optional[str] = con.name  # type: ignore[assignment]
+            col_names: _t.List[str] = [col.name for col in con.columns]
+            return (pk_name, col_names)
+    return ()
 
 
 def missing_primary_key(
@@ -426,12 +375,12 @@ def missing_primary_key(
     False
     """
     pks = get_primary_key_constraints(table)
-    return pks[1] == []
+    return len(pks) == 0 or (len(pks) > 1 and pks[1] == [])
 
 
 def get_column_types(
     table: _sa.Table
-) -> dict:
+) -> _t.Dict[str, _t.Any]:
     """
     Get the types of columns in a SQLAlchemy table.
 
@@ -540,11 +489,12 @@ def get_row_count(
     >>> fa.features.get_row_count(table)
     0
     """
-    session = _ex.check_for_engine(table, session)
+    engine = _ex.check_for_engine(table, session)
     col_name = get_column_names(table)[0]
     col = get_column(table, col_name)
-    result = session.execute(_sa.func.count(col)).scalar()
-    return result if result is not None else 0
+    with engine.connect() as conn:
+        result = conn.execute(_sa.select(_sa.func.count(col))).scalar()
+        return result if result is not None else 0
 
 
 def get_schemas(
@@ -602,15 +552,17 @@ def tables_metadata_equal(
     >>> fa.features.tables_metadata_equal(table, table)
     True
     """
-    if table1.name != table2.name: return False
+    if table1.name != table2.name:
+        return False
 
-    column_types1 = get_column_types(table1)
-    column_types2 = get_column_types(table2)
+    get_column_types(table1)
+    get_column_types(table2)
     # if column_types1 != column_types2: return False
 
     table1_keys = primary_key_names(table1)
     table2_keys = primary_key_names(table2)
-    if set(table1_keys) != set(table2_keys): return False
+    if set(table1_keys) != set(table2_keys):
+        return False
 
     return True
 
@@ -666,9 +618,10 @@ def str_to_table(
 def _get_where_clause(
     sa_table: _sa.Table,
     record: _types.Record
-) -> _t.List:
+) -> _t.List[_t.Any]:
     """
-    Given a record, return a list of SQLAlchemy binary expressions representing the WHERE clause for a SQL query.
+    Given a record, return a list of SQLAlchemy binary expressions
+    representing the WHERE clause for a SQL query.
 
     Parameters
     ----------
@@ -687,7 +640,11 @@ def _get_where_clause(
     >>> from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String
     >>> engine = create_engine('sqlite://')
     >>> metadata = MetaData()
-    >>> test_table = Table('test', metadata, Column('id', Integer, primary_key=True), Column('name', String))
+    >>> test_table = Table(
+    ...     'test', metadata,
+    ...     Column('id', Integer, primary_key=True),
+    ...     Column('name', String)
+    ... )
     >>> metadata.create_all(engine)
     >>> record = {'id': 1, 'name': 'test_name'}
     >>> where_clause = _get_where_clause(test_table, record)

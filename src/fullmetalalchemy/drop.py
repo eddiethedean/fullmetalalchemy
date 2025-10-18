@@ -8,8 +8,8 @@ import sqlalchemy as _sa
 import sqlalchemy.engine as _sa_engine
 import sqlalchemy.schema as _sa_schema
 
-import fullmetalalchemy.features as _features
 import fullmetalalchemy.exceptions as _ex
+import fullmetalalchemy.features as _features
 
 
 def drop_table(
@@ -20,7 +20,7 @@ def drop_table(
 ) -> None:
     """
     Drop a table from SQL database.
-    
+
     Parameters
     ----------
     table : sa.Table | str
@@ -49,13 +49,13 @@ def drop_table(
     []
     """
     if isinstance(table, str):
+        if engine is None:
+            raise ValueError('Must pass engine if table is str.')
         if table not in _sa.inspect(engine).get_table_names(schema=schema):
             if if_exists:
                 return
-        if engine is None:
-            raise ValueError('Must pass engine if table is str.')
         table = _features.get_table(table, engine, schema=schema)
     sql = _sa_schema.DropTable(table, if_exists=if_exists)
     engine = _ex.check_for_engine(table, engine)
-    with engine.connect() as con:
+    with engine.begin() as con:
         con.execute(sql)

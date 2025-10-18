@@ -3,25 +3,25 @@ I am going to provide you with python functions for you to add numpy-style docst
 add the following sections: Parameters, Returns, Examples. Only respond to my functions with the docstring for them.
 """
 
-import typing as _t
-import decimal as _decimal
 import datetime as _datetime
+import decimal as _decimal
+import typing as _t
 
 import sqlalchemy as _sa
-import sqlalchemy.orm.session as _sa_session
-import sqlalchemy.ext.automap as _sa_automap
 import sqlalchemy.engine as _sa_engine
+import sqlalchemy.ext.automap as _sa_automap
+import sqlalchemy.orm.session as _sa_session
 import sqlalchemy.schema as _sa_schema
-from sqlalchemy.orm.decl_api import DeclarativeMeta as _DeclarativeMeta
 from sqlalchemy import create_engine as _create_engine
-from tinytim.rows import row_dicts_to_data as _row_dicts_to_data
+from sqlalchemy.orm.decl_api import DeclarativeMeta as _DeclarativeMeta
 from tinytim.data import column_names as _column_names
+from tinytim.rows import row_dicts_to_data as _row_dicts_to_data
 
-import fullmetalalchemy.type_convert as _type_convert
+import fullmetalalchemy.exceptions as _ex
 import fullmetalalchemy.features as _features
 import fullmetalalchemy.insert as _insert
+import fullmetalalchemy.type_convert as _type_convert
 import fullmetalalchemy.types as _types
-import fullmetalalchemy.exceptions as _ex
 
 
 def get_engine(connection) -> _sa_engine.Engine:
@@ -412,7 +412,7 @@ def get_primary_key_constraints(table: _sa.Table) -> _t.Tuple[str,  _t.List[str]
     for con in cons:
         if isinstance(con, _sa.PrimaryKeyConstraint):
             return con.name, [col.name for col in con.columns]
-    return tuple()
+    return ()
 
 def missing_primary_key(table: _sa.Table,) -> bool:
     """
@@ -688,7 +688,7 @@ def str_to_table(table_name: _t.Union[str, _sa.Table], connection: _t.Optional[_
         return table_name
     else:
         raise TypeError('table_name can only be str or sa.Table')
-    
+
 
 _Record = _t.Dict[str, _t.Any]
 
@@ -879,7 +879,7 @@ def _column_datatype(values: _t.Iterable) -> type:
     """
     dtypes = [
         int, str, (int, float), _decimal.Decimal, _datetime.datetime,
-        bytes, bool, _datetime.date, _datetime.time, 
+        bytes, bool, _datetime.date, _datetime.time,
         _datetime.timedelta, list, dict
     ]
     for value in values:
@@ -887,14 +887,14 @@ def _column_datatype(values: _t.Iterable) -> type:
             if not isinstance(value, dtype):
                 dtypes.pop(dtypes.index(dtype))
     if len(dtypes) == 2:
-        if set([int, _t.Union[float, int]]) == {int, _t.Union[float, int]}:
+        if {int, _t.Union[float, int]} == {int, _t.Union[float, int]}:
             return int
     if len(dtypes) == 1:
         if dtypes[0] == _t.Union[float, int]:
             return float
         return dtypes[0]
     return str
-    
+
 def copy_table(
     new_name: str,
     table: _sa.Table,
@@ -941,8 +941,8 @@ def copy_table(
     # reflect existing columns, and create table object for oldTable
     src_engine._metadata = _sa.MetaData(bind=src_engine, schema=schema)  # type: ignore
     src_engine._metadata.reflect(src_engine)  # type: ignore
-    
-    # get columns from existing table 
+
+    # get columns from existing table
     srcTable = _sa.Table(src_name, src_engine._metadata, schema=schema)  # type: ignore
 
     # create engine and table object for newTable
@@ -1274,7 +1274,7 @@ def delete_all_records(
     except Exception as e:
         session.rollback()
         raise e
-    
+
 def drop_table(
     table: _t.Union[_sa.Table, str],
     engine: _t.Optional[_sa_engine.Engine] = None,
@@ -1417,7 +1417,7 @@ def insert_from_table(
     except Exception as e:
         session.rollback()
         raise e
-    
+
 def insert_records_session(
     table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
@@ -1442,4 +1442,4 @@ def insert_records(
     except Exception as e:
         session.rollback()
         raise e
-    
+

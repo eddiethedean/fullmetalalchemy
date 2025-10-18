@@ -1,16 +1,17 @@
 from __future__ import annotations
+
 import typing as _t
 
-import sqlalchemy.engine as _sa_engine
 import sqlalchemy as _sa
+import sqlalchemy.engine as _sa_engine
 import sqlalchemy.orm.session as _sa_session
 
-from fullmetalalchemy.basetable import BaseTable
 import fullmetalalchemy.delete as _delete
 import fullmetalalchemy.features as _features
 import fullmetalalchemy.insert as _insert
-import fullmetalalchemy.update as _update
 import fullmetalalchemy.types as _types
+import fullmetalalchemy.update as _update
+from fullmetalalchemy.basetable import BaseTable
 
 
 class SessionTable(BaseTable):
@@ -34,7 +35,7 @@ class SessionTable(BaseTable):
     >>> with SessionTable('xy', engine) as table:
     >>>    table.insert_records([{'id': 5, 'x': 5, 'y': 9}])
     >>>    table.update_records([{'id': 2, 'x': 33, 'y': 8}])
-    
+
     See Also
     --------
     fullmetalalchemy.table.Table
@@ -42,8 +43,8 @@ class SessionTable(BaseTable):
     def __init__(
         self,
         name: str,
-        engine: _t.Union[_sa_engine.Engine, _sa_session.Session],
-        schema: _t.Optional[str] = None
+        engine: _sa_engine.Engine | _sa_session.Session,
+        schema: str | None = None
     ) -> None:
         super().__init__(name, engine, schema)
         if type(engine) is _sa_session.Session:
@@ -55,36 +56,45 @@ class SessionTable(BaseTable):
 
     def __enter__(self) -> SessionTable:
         return self
-    
-    def __exit__(self, exc_type, exc_value, traceback):
-        if exc_type:
+
+    def __exit__(
+        self,
+        exc_type: _t.Optional[_t.Type[BaseException]],
+        exc_value: _t.Optional[BaseException],
+        traceback: _t.Optional[_t.Any]
+    ) -> None:
+        if exc_type and exc_value:
             self.rollback()
             raise exc_value
         else:
             self.commit()
 
     def __repr__(self) -> str:
-        return f'SessionTable(name={self.name}, columns={self.column_names}, pks={self.primary_key_names}, types={self.column_types})'
+        return (
+            f'SessionTable(name={self.name}, columns={self.column_names}, '
+            f'pks={self.primary_key_names}, types={self.column_types})'
+        )
 
     def commit(self) -> SessionTable:
         """Commit session, return new SessionTable"""
         self.session.commit()
-        return SessionTable(self.name, self.engine, self.schema) # type: ignore    
+        return SessionTable(self.name, self.engine, self.schema)
+
     def rollback(self) -> SessionTable:
         """Rollback session, return new SessionTable"""
         self.session.rollback()
-        return SessionTable(self.name, self.engine, self.schema) # type: ignore   
+        return SessionTable(self.name, self.engine, self.schema)
 
     def delete_records(
         self,
         column_name: str,
-        values: _t.Sequence
+        values: _t.Sequence[_t.Any]
     ) -> None:
         _delete.delete_records_session(self.sa_table, column_name, values, self.session)
 
     def delete_records_by_values(
         self,
-        records: _t.List[dict]
+        records: _t.List[_t.Dict[str, _t.Any]]
     ) -> None:
         _delete.delete_records_by_values_session(self.sa_table, records, self.session)
 
@@ -114,7 +124,7 @@ class SessionTable(BaseTable):
     def update_records(
         self,
         records: _t.Sequence[_types.Record],
-        match_column_names: _t.Optional[_t.Sequence[str]] = None,
+        match_column_names: _t.Sequence[str] | None = None,
     ) -> None:
         _update.update_records_session(
             self.sa_table, records, self.session, match_column_names)

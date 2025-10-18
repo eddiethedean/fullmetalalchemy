@@ -2,18 +2,18 @@
 Functions for converting between Python and SQL data types.
 """
 
-import decimal as _decimal
 import datetime as _datetime
+import decimal as _decimal
 import typing as _t
 
 from sqlalchemy import sql as _sql
 
 
-def sql_type(t):
+def sql_type(t: type) -> _t.Any:
     return _type_convert[t]
 
 
-def python_type(t):
+def python_type(t: _t.Any) -> type:
     return _sql_to_python[t]
 
 
@@ -66,12 +66,12 @@ _sql_to_python = {
 }
 
 
-def get_sql_types(data: _t.Mapping[str, _t.Sequence]) -> list:
+def get_sql_types(data: _t.Mapping[str, _t.Sequence[_t.Any]]) -> _t.List[_t.Any]:
     return [get_sql_type(values) for values in data.values()]
 
 
-def get_sql_type(values: _t.Sequence) -> _t.Any:
+def get_sql_type(values: _t.Sequence[_t.Any]) -> _t.Any:
     for python_type in _type_convert:
-        if all(type(val) == python_type for val in values):
+        if all(isinstance(val, python_type) for val in values):
             return _type_convert[python_type]
     return _type_convert[str]
