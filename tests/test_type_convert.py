@@ -1,4 +1,5 @@
 """Tests for type_convert module."""
+
 import datetime
 import decimal
 
@@ -74,11 +75,7 @@ def test_python_type_float():
 
 def test_get_sql_types_basic():
     """Test get_sql_types with basic data types."""
-    data = {
-        'id': [1, 2, 3],
-        'name': ['Alice', 'Bob', 'Charlie'],
-        'score': [95.5, 87.3, 92.1]
-    }
+    data = {"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"], "score": [95.5, 87.3, 92.1]}
     results = get_sql_types(data)
     assert len(results) == 3
     assert results[0] == sql.sqltypes.Integer
@@ -95,14 +92,14 @@ def test_get_sql_type_all_int():
 
 def test_get_sql_type_all_str():
     """Test get_sql_type with all string values."""
-    values = ['a', 'b', 'c']
+    values = ["a", "b", "c"]
     result = get_sql_type(values)
     assert result == sql.sqltypes.Unicode
 
 
 def test_get_sql_type_mixed_types_fallback():
     """Test get_sql_type falls back to str for mixed types."""
-    values = [1, 'a', 2.5, None]
+    values = [1, "a", 2.5, None]
     result = get_sql_type(values)
     assert result == sql.sqltypes.Unicode
 
@@ -139,7 +136,6 @@ def test_get_sql_type_bool():
 
 def test_get_sql_type_bytes():
     """Test get_sql_type with bytes values."""
-    values = [b'hello', b'world']
+    values = [b"hello", b"world"]
     result = get_sql_type(values)
     assert result == sql.sqltypes.LargeBinary
-

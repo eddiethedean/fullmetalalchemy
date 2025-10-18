@@ -1,4 +1,3 @@
-
 import pytest
 import sqlalchemy as sa
 
@@ -17,43 +16,50 @@ from fullmetalalchemy.records import records_equal
 @pytest.fixture
 def engine():
     """Create a fresh in-memory SQLite engine for each test."""
-    return sa.create_engine('sqlite://')
+    return sa.create_engine("sqlite://")
 
 
 def test_create_table_sqlite(engine):
     """Test creating a table from specifications."""
     create_table(
-        table_name='xy',
-        column_names=['id', 'x', 'y'],
+        table_name="xy",
+        column_names=["id", "x", "y"],
         column_types=[int, int, int],
-        primary_key=['id'],
+        primary_key=["id"],
         engine=engine,
-        if_exists='replace')
-    table = sz.features.get_table('xy', engine)
-    expected = sa.Table('xy', sa.MetaData(),
-        sa.Column('id', sa.sql.sqltypes.INTEGER(), primary_key=True, nullable=False),
-        sa.Column('x', sa.sql.sqltypes.INTEGER()),
-        sa.Column('y', sa.sql.sqltypes.INTEGER()), schema=None)
+        if_exists="replace",
+    )
+    table = sz.features.get_table("xy", engine)
+    expected = sa.Table(
+        "xy",
+        sa.MetaData(),
+        sa.Column("id", sa.sql.sqltypes.INTEGER(), primary_key=True, nullable=False),
+        sa.Column("x", sa.sql.sqltypes.INTEGER()),
+        sa.Column("y", sa.sql.sqltypes.INTEGER()),
+        schema=None,
+    )
     assert tables_metadata_equal(table, expected)
 
 
 def test_create_table_from_records_sqlite(engine):
     """Test creating a table from records with automatic type inference."""
     records = [
-        {'id': 1, 'x': 1, 'y': 2},
-        {'id': 2, 'x': 2, 'y': 4},
-        {'id': 3, 'x': 4, 'y': 8},
-        {'id': 4, 'x': 8, 'y': 11}]
+        {"id": 1, "x": 1, "y": 2},
+        {"id": 2, "x": 2, "y": 4},
+        {"id": 3, "x": 4, "y": 8},
+        {"id": 4, "x": 8, "y": 11},
+    ]
     table = create_table_from_records(
-        table_name='xy',
-        records=records,
-        primary_key=['id'],
-        engine=engine,
-        if_exists='replace')
-    expected = sa.Table('xy', sa.MetaData(),
-        sa.Column('id', sa.sql.sqltypes.INTEGER(), primary_key=True, nullable=False),
-        sa.Column('x', sa.sql.sqltypes.INTEGER()),
-        sa.Column('y', sa.sql.sqltypes.INTEGER()), schema=None)
+        table_name="xy", records=records, primary_key=["id"], engine=engine, if_exists="replace"
+    )
+    expected = sa.Table(
+        "xy",
+        sa.MetaData(),
+        sa.Column("id", sa.sql.sqltypes.INTEGER(), primary_key=True, nullable=False),
+        sa.Column("x", sa.sql.sqltypes.INTEGER()),
+        sa.Column("y", sa.sql.sqltypes.INTEGER()),
+        schema=None,
+    )
     assert tables_metadata_equal(table, expected)
     selected = sz.select.select_records_all(table, engine)
     assert records_equal(selected, records)
@@ -61,7 +67,7 @@ def test_create_table_from_records_sqlite(engine):
 
 def test_create_engine():
     """Test create_engine wrapper function."""
-    engine = create_engine('sqlite://')
+    engine = create_engine("sqlite://")
     assert isinstance(engine, sa.engine.Engine)
 
 
@@ -70,13 +76,13 @@ def test_copy_table(engine_and_table):
     engine, original_table = engine_and_table
 
     # Copy the table
-    new_table = copy_table('xy_copy', original_table, engine)
+    new_table = copy_table("xy_copy", original_table, engine)
 
-    assert new_table.name == 'xy_copy'
+    assert new_table.name == "xy_copy"
     # Verify data was copied
     records = sz.select.select_records_all(new_table, engine)
     assert len(records) == 4
-    assert records[0] == {'id': 1, 'x': 1, 'y': 2}
+    assert records[0] == {"id": 1, "x": 1, "y": 2}
 
 
 def test_copy_table_with_if_exists_replace(engine_and_table):
@@ -84,11 +90,11 @@ def test_copy_table_with_if_exists_replace(engine_and_table):
     engine, original_table = engine_and_table
 
     # Create table first
-    copy_table('xy_copy', original_table, engine, if_exists='replace')
+    copy_table("xy_copy", original_table, engine, if_exists="replace")
     # Copy again with replace
-    new_table = copy_table('xy_copy', original_table, engine, if_exists='replace')
+    new_table = copy_table("xy_copy", original_table, engine, if_exists="replace")
 
-    assert new_table.name == 'xy_copy'
+    assert new_table.name == "xy_copy"
     records = sz.select.select_records_all(new_table, engine)
     assert len(records) == 4
 
@@ -102,7 +108,7 @@ def test_column_datatype_float():
 
 def test_column_datatype_string():
     """Test _column_datatype with string values."""
-    values = ['hello', 'world', 'test']
+    values = ["hello", "world", "test"]
     result = _column_datatype(values)
     assert result is str
 
@@ -116,14 +122,14 @@ def test_column_datatype_list():
 
 def test_column_datatype_dict():
     """Test _column_datatype with dict values."""
-    values = [{'a': 1}, {'b': 2}]
+    values = [{"a": 1}, {"b": 2}]
     result = _column_datatype(values)
     assert result is dict
 
 
 def test_column_datatype_mixed_fallback():
     """Test _column_datatype falls back to str for mixed types."""
-    values = [1, 'a', 2.5]
+    values = [1, "a", 2.5]
     result = _column_datatype(values)
     assert result is str
 
@@ -131,15 +137,15 @@ def test_column_datatype_mixed_fallback():
 def test_create_table_with_autoincrement(engine):
     """Test creating table with autoincrement primary key."""
     table = create_table(
-        table_name='test_auto',
-        column_names=['id', 'value'],
+        table_name="test_auto",
+        column_names=["id", "value"],
         column_types=[int, str],
-        primary_key=['id'],
+        primary_key=["id"],
         engine=engine,
         autoincrement=True,
-        if_exists='replace'
+        if_exists="replace",
     )
-    assert table.name == 'test_auto'
+    assert table.name == "test_auto"
 
 
 def test_column_datatype_with_unhashable_types():
@@ -166,5 +172,3 @@ def test_column_datatype_mixed_int_and_float():
     values = [1, 2.5, 3, 4.7]
     result = _column_datatype(values)
     assert result is float
-
-

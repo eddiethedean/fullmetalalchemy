@@ -17,7 +17,7 @@ def delete_records_session(
     table: _t.Union[_sa.Table, str],
     column_name: str,
     values: _t.Sequence[_t.Any],
-    session: _sa_session.Session
+    session: _sa_session.Session,
 ) -> None:
     """
     Delete records from SQL table that match passed values in column.
@@ -71,7 +71,7 @@ def delete_records(
     table: _t.Union[_sa.Table, str],
     column_name: str,
     values: _t.Sequence[_t.Any],
-    engine: _t.Optional[_sa_engine.Engine] = None
+    engine: _t.Optional[_sa_engine.Engine] = None,
 ) -> None:
     """
     Delete records from SQL table that match passed values in column.
@@ -125,7 +125,7 @@ def delete_records(
 def delete_records_by_values(
     table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_t.Dict[str, _t.Any]],
-    engine: _t.Optional[_sa.engine.Engine] = None
+    engine: _t.Optional[_sa.engine.Engine] = None,
 ) -> None:
     """
     Deletes records from a SQL table that match the passed records.
@@ -170,9 +170,7 @@ def delete_records_by_values(
 
 
 def delete_record_by_values_session(
-    table: _t.Union[_sa.Table, str],
-    record: _types.Record,
-    session: _sa_session.Session
+    table: _t.Union[_sa.Table, str], record: _types.Record, session: _sa_session.Session
 ) -> None:
     """
     Deletes a single row from a table based on the values in the specified record.
@@ -219,7 +217,7 @@ def delete_record_by_values_session(
 def delete_records_by_values_session(
     table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
-    session: _sa_session.Session
+    session: _sa_session.Session,
 ) -> None:
     """
     Delete records from the specified table that match the given records
@@ -262,10 +260,7 @@ def delete_records_by_values_session(
         delete_record_by_values_session(table, record, session)
 
 
-def _build_delete_from_record(
-    table: _sa.Table,
-    record: _types.Record
-) -> _sa.sql.Delete:
+def _build_delete_from_record(table: _sa.Table, record: _types.Record) -> _sa.sql.Delete:
     """
     Builds a SQL DELETE statement for deleting a record from a table based on a
     dictionary of key-value pairs.
@@ -297,13 +292,12 @@ def _build_delete_from_record(
     """
     d = _sa.delete(table)
     for column, value in record.items():
-        d = d.where(table.c[column]==value)
+        d = d.where(table.c[column] == value)
     return d
 
 
 def delete_all_records_session(
-    table: _t.Union[_sa.Table, str],
-    session: _sa_session.Session
+    table: _t.Union[_sa.Table, str], session: _sa_session.Session
 ) -> None:
     """
     Delete all records from the specified table.
@@ -340,8 +334,7 @@ def delete_all_records_session(
 
 
 def delete_all_records(
-    table: _t.Union[_sa.Table, str],
-    engine: _t.Optional[_sa_engine.Engine] = None
+    table: _t.Union[_sa.Table, str], engine: _t.Optional[_sa_engine.Engine] = None
 ) -> None:
     """
     Delete all records from a table.

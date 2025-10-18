@@ -14,9 +14,7 @@ import fullmetalalchemy.types as _types
 
 
 def insert_from_table_session(
-    table1: _t.Union[_sa.Table, str],
-    table2: _t.Union[_sa.Table, str],
-    session: _sa_session.Session
+    table1: _t.Union[_sa.Table, str], table2: _t.Union[_sa.Table, str], session: _sa_session.Session
 ) -> None:
     """
     Inserts all rows from table1 to table2 using the provided SQLAlchemy session.
@@ -63,7 +61,7 @@ def insert_from_table_session(
 def insert_from_table(
     table1: _t.Union[_sa.Table, str],
     table2: _t.Union[_sa.Table, str],
-    engine: _t.Optional[_sa_engine.Engine] = None
+    engine: _t.Optional[_sa_engine.Engine] = None,
 ) -> None:
     """
     Insert rows from one table into another.
@@ -104,7 +102,7 @@ def insert_from_table(
     # Convert table1 to Table object if it's a string
     if isinstance(table1, str):
         if engine is None:
-            raise ValueError('Must provide engine when table1 is a string.')
+            raise ValueError("Must provide engine when table1 is a string.")
         table1 = _features.get_table(table1, engine)
     engine = _ex.check_for_engine(table1, engine)
     session = _features.get_session(engine)
@@ -119,7 +117,7 @@ def insert_from_table(
 def insert_records_session(
     table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
-    session: _sa_session.Session
+    session: _sa_session.Session,
 ) -> None:
     """
     Insert records into a given table using a provided session.
@@ -173,7 +171,7 @@ def insert_records_session(
 def insert_records(
     table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
-    engine: _t.Optional[_sa_engine.Engine] = None
+    engine: _t.Optional[_sa_engine.Engine] = None,
 ) -> None:
     """
     Insert records into a table.
@@ -227,7 +225,7 @@ def insert_records(
 def _insert_records_fast(
     table: _sa.Table,
     records: _t.Sequence[_types.Record],
-    engine: _t.Optional[_sa_engine.Engine] = None
+    engine: _t.Optional[_sa_engine.Engine] = None,
 ) -> None:
     """
     Inserts records into a database table using a fast method that avoids
@@ -290,9 +288,7 @@ def _insert_records_fast(
 
 
 def _insert_records_fast_session(
-    table: _sa.Table,
-    records: _t.Sequence[_types.Record],
-    session: _sa_session.Session
+    table: _sa.Table, records: _t.Sequence[_types.Record], session: _sa_session.Session
 ) -> None:
     """
     Insert a sequence of new records into a SQLAlchemy Table using bulk insert.
@@ -348,9 +344,7 @@ def _insert_records_fast_session(
 
 
 def _insert_records_slow_session(
-    table: _sa.Table,
-    records: _t.Sequence[_types.Record],
-    session: _sa_session.Session
+    table: _sa.Table, records: _t.Sequence[_types.Record], session: _sa_session.Session
 ) -> None:
     """
     Inserts records into the given table using the provided session and

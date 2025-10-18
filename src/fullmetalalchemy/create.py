@@ -59,13 +59,13 @@ def create_engine(url: str, *args: _t.Any, **kwargs: _t.Any) -> _sa_engine.Engin
 
 def create_table(
     table_name: str,
-    column_names:  _t.Sequence[str],
-    column_types:  _t.Sequence[type],
+    column_names: _t.Sequence[str],
+    column_types: _t.Sequence[type],
     primary_key: _t.Sequence[str],
     engine: _sa_engine.Engine,
-    schema:  _t.Optional[str] = None,
-    autoincrement:  _t.Optional[bool] = False,
-    if_exists:  _t.Optional[str] = 'error'
+    schema: _t.Optional[str] = None,
+    autoincrement: _t.Optional[bool] = False,
+    if_exists: _t.Optional[str] = "error",
 ) -> _sa.Table:
     """
     Create a sql table from specifications.
@@ -126,7 +126,7 @@ def create_table(
 
     metadata = _sa.MetaData(schema=schema)
     table = _sa.Table(table_name, metadata, *cols)
-    if if_exists == 'replace':
+    if if_exists == "replace":
         drop_table_sql = _sa_schema.DropTable(table, if_exists=True)
         with engine.begin() as connection:
             connection.execute(drop_table_sql)
@@ -138,15 +138,15 @@ def create_table(
 
 def create_table_from_records(
     table_name: str,
-    records:  _t.Sequence[_Record],
+    records: _t.Sequence[_Record],
     primary_key: _t.Sequence[str],
     engine: _sa_engine.Engine,
-    column_types:  _t.Optional[_t.Sequence[type]] = None,
-    schema:  _t.Optional[str] = None,
-    autoincrement:  _t.Optional[bool] = False,
-    if_exists:  _t.Optional[str] = 'error',
-    columns:  _t.Optional[_t.Sequence[str]] = None,
-    missing_value:  _t.Optional[_t.Any] = None
+    column_types: _t.Optional[_t.Sequence[type]] = None,
+    schema: _t.Optional[str] = None,
+    autoincrement: _t.Optional[bool] = False,
+    if_exists: _t.Optional[str] = "error",
+    columns: _t.Optional[_t.Sequence[str]] = None,
+    missing_value: _t.Optional[_t.Any] = None,
 ) -> _sa.Table:
     """
     Create a sql table from specs and insert records.
@@ -189,8 +189,7 @@ def create_table_from_records(
         column_types = [_column_datatype(values) for values in data.values()]
     col_names = _column_names(data)
     table = create_table(
-        table_name, col_names, column_types, primary_key,
-        engine, schema, autoincrement, if_exists
+        table_name, col_names, column_types, primary_key, engine, schema, autoincrement, if_exists
     )
     _insert.insert_records(table, records, engine)
     return table
@@ -198,9 +197,18 @@ def create_table_from_records(
 
 def _column_datatype(values: _t.Iterable[_t.Any]) -> type:
     dtypes: _t.List[_t.Union[type, _t.Tuple[type, ...]]] = [
-        int, str, (int, float), _decimal.Decimal, _datetime.datetime,
-        bytes, bool, _datetime.date, _datetime.time,
-        _datetime.timedelta, list, dict
+        int,
+        str,
+        (int, float),
+        _decimal.Decimal,
+        _datetime.datetime,
+        bytes,
+        bool,
+        _datetime.date,
+        _datetime.time,
+        _datetime.timedelta,
+        list,
+        dict,
     ]
     for value in values:
         for dtype in list(dtypes):
@@ -227,11 +235,9 @@ def _column_datatype(values: _t.Iterable[_t.Any]) -> type:
     # Multiple types or no types matched - fall back to str
     return str
 
+
 def copy_table(
-    new_name: str,
-    table: _sa.Table,
-    engine: _sa_engine.Engine,
-    if_exists: str = 'replace'
+    new_name: str, table: _sa.Table, engine: _sa_engine.Engine, if_exists: str = "replace"
 ) -> _sa.Table:
     """
     Create a copy of an existing table with a new name.
@@ -288,7 +294,7 @@ def copy_table(
     dest_metadata = _sa.MetaData(schema=dest_schema)
     dest_table = _sa.Table(dest_name, dest_metadata, schema=dest_schema)
 
-    if if_exists == 'replace':
+    if if_exists == "replace":
         drop_table_sql = _sa_schema.DropTable(dest_table, if_exists=True)
         with engine.begin() as con:
             con.execute(drop_table_sql)

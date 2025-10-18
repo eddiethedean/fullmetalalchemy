@@ -1,4 +1,5 @@
 """Shared pytest fixtures for all tests."""
+
 from typing import Tuple
 
 import pytest
@@ -20,8 +21,7 @@ def engine_and_table() -> Tuple[sa.engine.Engine, sa.Table]:
         - {'id': 3, 'x': 4, 'y': 8}
         - {'id': 4, 'x': 8, 'y': 11}
     """
-    engine = sa.create_engine('sqlite://')
+    engine = sa.create_engine("sqlite://")
     table = create_test_table(engine)
     insert_test_records(table, engine)
     return engine, table
-

@@ -1,4 +1,5 @@
 """Comprehensive async CRUD operation tests."""
+
 import pytest
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -269,9 +270,7 @@ async def test_select_record_by_primary_key(async_table):
         engine,
     )
 
-    record = await async_api.select.select_record_by_primary_key(
-        table, {"id": 2}, engine
-    )
+    record = await async_api.select.select_record_by_primary_key(table, {"id": 2}, engine)
 
     assert record["name"] == "Bob"
     assert record["value"] == 200
@@ -282,9 +281,7 @@ async def test_select_with_include_columns(async_table):
     """Test selecting specific columns."""
     table, engine = async_table
 
-    await async_api.insert.insert_records(
-        table, [{"id": 1, "name": "Alice", "value": 100}], engine
-    )
+    await async_api.insert.insert_records(table, [{"id": 1, "name": "Alice", "value": 100}], engine)
 
     records = await async_api.select.select_records_all(
         table, engine, include_columns=["id", "name"]
@@ -305,9 +302,7 @@ async def test_update_records(async_table):
     table, engine = async_table
 
     # Insert initial data
-    await async_api.insert.insert_records(
-        table, [{"id": 1, "name": "Alice", "value": 100}], engine
-    )
+    await async_api.insert.insert_records(table, [{"id": 1, "name": "Alice", "value": 100}], engine)
 
     # Update
     await async_api.update.update_records(
@@ -336,9 +331,7 @@ async def test_update_matching_records(async_table):
     )
 
     # Update all records with value=100
-    await async_api.update.update_matching_records(
-        table, [{"value": 100}], {"value": 999}, engine
-    )
+    await async_api.update.update_matching_records(table, [{"value": 100}], {"value": 999}, engine)
 
     # Verify both were updated
     records = await async_api.select.select_records_all(table, engine)
@@ -388,9 +381,7 @@ async def test_delete_records(async_table):
     )
 
     # Delete first record
-    await async_api.delete.delete_records(
-        table, [{"id": 1, "name": "Alice", "value": 100}], engine
-    )
+    await async_api.delete.delete_records(table, [{"id": 1, "name": "Alice", "value": 100}], engine)
 
     # Verify
     records = await async_api.select.select_records_all(table, engine)
@@ -462,7 +453,7 @@ async def test_drop_table(async_engine):
 
     # Verify it's gone by trying to drop again with if_exists=False raises SQL error
     import sqlalchemy as sa
-    
+
     with pytest.raises((ValueError, RuntimeError, sa.exc.OperationalError)):
         await async_api.drop.drop_table(table, async_engine, if_exists=False)
 
@@ -472,4 +463,3 @@ async def test_drop_table_if_exists(async_engine):
     """Test dropping non-existent table with if_exists=True."""
     # This should not raise an error
     await async_api.drop.drop_table("nonexistent", async_engine, if_exists=True)
-

@@ -29,7 +29,7 @@ _type_convert = {
     _datetime.time: _sql.sqltypes.Time,
     _datetime.timedelta: _sql.sqltypes.Interval,
     list: _sql.sqltypes.ARRAY,
-    dict: _sql.sqltypes.JSON
+    dict: _sql.sqltypes.JSON,
 }
 
 _sql_to_python = {
@@ -62,7 +62,7 @@ _sql_to_python = {
     _sql.sqltypes.TIME: _datetime.time,
     _sql.sqltypes.Interval: _datetime.timedelta,
     _sql.sqltypes.ARRAY: list,
-    _sql.sqltypes.JSON: dict
+    _sql.sqltypes.JSON: dict,
 }
 
 

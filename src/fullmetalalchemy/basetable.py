@@ -19,11 +19,9 @@ class BaseTable:
     Base table class for fullmetalalchemy.table.Table
     and fullmetalalchemy.sessiontable.SessionTable to inherit
     """
+
     def __init__(
-        self,
-        name: str,
-        engine: _sa_engine.Engine | _sa_session.Session,
-        schema: str | None = None
+        self, name: str, engine: _sa_engine.Engine | _sa_session.Session, schema: str | None = None
     ) -> None:
         self.name = name
         if type(engine) is _sa_session.Session:
@@ -52,7 +50,7 @@ class BaseTable:
         elif type(key) is slice:
             return self.select_records_slice(key.start, key.stop)
         else:
-            raise ValueError('key must be int, str, or slice')
+            raise ValueError("key must be int, str, or slice")
 
     def __add__(
         self, other: _t.Union[_t.Dict[str, _t.Any], _t.Iterable[_t.Dict[str, _t.Any]]]
@@ -122,117 +120,93 @@ class BaseTable:
         return _features.get_column_types(self.sa_table)
 
     def select_records_all(
-        self,
-        sorted: bool = False,
-        include_columns: _t.Sequence[str] | None = None
-    ) ->  _t.List[_types.Record]:
-        return _select.select_records_all(
-            self.sa_table, self.engine, sorted, include_columns)
+        self, sorted: bool = False, include_columns: _t.Sequence[str] | None = None
+    ) -> _t.List[_types.Record]:
+        return _select.select_records_all(self.sa_table, self.engine, sorted, include_columns)
 
     def select_records_chunks(
         self,
         chunksize: int = 2,
         sorted: bool = False,
-        include_columns: _t.Sequence[str] | None = None
+        include_columns: _t.Sequence[str] | None = None,
     ) -> _t.Generator[_t.List[_types.Record], None, None]:
         return _select.select_records_chunks(
-            self.sa_table, self.engine, chunksize, sorted, include_columns)
+            self.sa_table, self.engine, chunksize, sorted, include_columns
+        )
 
     def select_existing_values(
-        self,
-        column_name: str,
-        values: _t.Sequence[_t.Any]
+        self, column_name: str, values: _t.Sequence[_t.Any]
     ) -> _t.List[_t.Any]:
-        return _select.select_existing_values(
-            self.sa_table, column_name, values)
+        return _select.select_existing_values(self.sa_table, column_name, values)
 
-    def select_column_values_all(
-        self,
-        column_name: str
-    ) -> _t.List[_t.Any]:
-        return _select.select_column_values_all(
-            self.sa_table, column_name, self.engine)
+    def select_column_values_all(self, column_name: str) -> _t.List[_t.Any]:
+        return _select.select_column_values_all(self.sa_table, column_name, self.engine)
 
     def select_column_values_chunks(
-        self,
-        column_name: str,
-        chunksize: int
+        self, column_name: str, chunksize: int
     ) -> _t.Generator[_t.Sequence[_t.Any], None, None]:
         return _select.select_column_values_chunks(
-            self.sa_table, column_name, chunksize, self.engine)
+            self.sa_table, column_name, chunksize, self.engine
+        )
 
     def select_records_slice(
         self,
         start: int | None = None,
         stop: int | None = None,
         sorted: bool = False,
-        include_columns: _t.Sequence[str] | None = None
-    ) ->  list[_types.Record]:
+        include_columns: _t.Sequence[str] | None = None,
+    ) -> list[_types.Record]:
         return _select.select_records_slice(
-            self.sa_table, start, stop, self.engine, sorted, include_columns)
+            self.sa_table, start, stop, self.engine, sorted, include_columns
+        )
 
     def select_column_values_by_slice(
-        self,
-        column_name: str,
-        start: int | None = None,
-        stop: int | None = None
+        self, column_name: str, start: int | None = None, stop: int | None = None
     ) -> _t.List[_t.Any]:
         return _select.select_column_values_by_slice(
-            self.sa_table, column_name, start, stop, self.engine)
+            self.sa_table, column_name, start, stop, self.engine
+        )
 
-    def select_column_value_by_index(
-        self,
-        column_name: str,
-        index: int
-    ) -> _t.Any:
-        return _select.select_column_value_by_index(
-            self.sa_table, column_name, index, self.engine)
+    def select_column_value_by_index(self, column_name: str, index: int) -> _t.Any:
+        return _select.select_column_value_by_index(self.sa_table, column_name, index, self.engine)
 
-    def select_record_by_index(
-        self,
-        index: int
-    ) -> dict[str, _t.Any]:
-        return _select.select_record_by_index(
-            self.sa_table, index, self.engine)
+    def select_record_by_index(self, index: int) -> dict[str, _t.Any]:
+        return _select.select_record_by_index(self.sa_table, index, self.engine)
 
     def select_primary_key_records_by_slice(
-        self,
-        _slice: slice,
-        sorted: bool = False
-    ) ->  list[_types.Record]:
+        self, _slice: slice, sorted: bool = False
+    ) -> list[_types.Record]:
         return _select.select_primary_key_records_by_slice(
-            self.sa_table, _slice, self.engine, sorted)
+            self.sa_table, _slice, self.engine, sorted
+        )
 
     def select_record_by_primary_key(
-        self,
-        primary_key_value: _types.Record,
-        include_columns: _t.Sequence[str] | None = None
+        self, primary_key_value: _types.Record, include_columns: _t.Sequence[str] | None = None
     ) -> _types.Record:
         return _select.select_record_by_primary_key(
-            self.sa_table, primary_key_value, self.engine, include_columns)
+            self.sa_table, primary_key_value, self.engine, include_columns
+        )
 
     def select_records_by_primary_keys(
         self,
         primary_keys_values: _t.Sequence[_types.Record],
         schema: str | None = None,
-        include_columns: _t.Sequence[str] | None = None
-    ) ->  list[_types.Record]:
+        include_columns: _t.Sequence[str] | None = None,
+    ) -> list[_types.Record]:
         return _select.select_records_by_primary_keys(
-            self.sa_table, primary_keys_values, self.engine, schema, include_columns)
+            self.sa_table, primary_keys_values, self.engine, schema, include_columns
+        )
 
     def select_column_values_by_primary_keys(
-        self,
-        column_name: str,
-        primary_keys_values: _t.Sequence[_types.Record]
+        self, column_name: str, primary_keys_values: _t.Sequence[_types.Record]
     ) -> _t.List[_t.Any]:
         return _select.select_column_values_by_primary_keys(
-            self.sa_table, column_name, primary_keys_values, self.engine)
+            self.sa_table, column_name, primary_keys_values, self.engine
+        )
 
     def select_value_by_primary_keys(
-        self,
-        column_name: str,
-        primary_key_value: _types.Record,
-        schema: str | None = None
+        self, column_name: str, primary_key_value: _types.Record, schema: str | None = None
     ) -> _t.Any:
         return _select.select_value_by_primary_keys(
-            self.sa_table, column_name, primary_key_value, self.engine, schema)
+            self.sa_table, column_name, primary_key_value, self.engine, schema
+        )

@@ -18,7 +18,7 @@ def update_matching_records_session(
     table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
     match_column_names: _t.Sequence[str],
-    session: _sa_session.Session
+    session: _sa_session.Session,
 ) -> None:
     """
     Update records in the database table that match the specified column names and values
@@ -65,10 +65,10 @@ def update_matching_records_session(
 
 
 def update_matching_records(
-    table:_t.Union[_sa.Table, str],
+    table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
     match_column_names: _t.Sequence[str],
-    engine: _t.Optional[_sa_engine.Engine] = None
+    engine: _t.Optional[_sa_engine.Engine] = None,
 ) -> None:
     """
     Update records in the given table that match the specified columns in the given session.
@@ -160,7 +160,7 @@ def update_records_session(
     table = _features.str_to_table(table, session)
     if _features.missing_primary_key(table):
         if match_column_names is None:
-            raise ValueError('Must provide match_column_names if table has no primary key.')
+            raise ValueError("Must provide match_column_names if table has no primary key.")
         update_matching_records_session(table, records, match_column_names, session)
     else:
         _update_records_fast_session(table, records, session)
@@ -219,7 +219,7 @@ def update_records(
 def _update_records_fast_session(
     table: _t.Union[_sa.Table, str],
     records: _t.Sequence[_types.Record],
-    session: _sa_session.Session
+    session: _sa_session.Session,
 ) -> None:
     """
     Update records in a database table using the SQLAlchemy ORM's bulk_update_mappings function.
@@ -261,9 +261,7 @@ def _update_records_fast_session(
 
 
 def _make_update_statement(
-    table: _sa.Table,
-    record_values: _t.Dict[str, _t.Any],
-    new_values: _t.Dict[str, _t.Any]
+    table: _sa.Table, record_values: _t.Dict[str, _t.Any], new_values: _t.Dict[str, _t.Any]
 ) -> _sa.sql.expression.Update:
     """
     Constructs a SQLAlchemy update statement based on the given table and
@@ -300,14 +298,12 @@ def _make_update_statement(
     """
     update_statement = _sa.update(table)
     for col, val in record_values.items():
-        update_statement = update_statement.where(table.c[col]==val)
+        update_statement = update_statement.where(table.c[col] == val)
     return update_statement.values(**new_values)
 
 
 def _make_update_statement_column_value(
-    table: _sa.Table,
-    column_name: str,
-    value: _t.Any
+    table: _sa.Table, column_name: str, value: _t.Any
 ) -> _sa.sql.expression.Update:
     """
     Create an update statement to set a column's value.
@@ -342,10 +338,7 @@ def _make_update_statement_column_value(
 
 
 def set_column_values_session(
-    table: _t.Union[_sa.Table, str],
-    column_name: str,
-    value: _t.Any,
-    session: _sa_session.Session
+    table: _t.Union[_sa.Table, str], column_name: str, value: _t.Any, session: _sa_session.Session
 ) -> None:
     """
     Update the values of a column for all rows in the table using the given session.
@@ -390,7 +383,7 @@ def set_column_values(
     table: _t.Union[_sa.Table, str],
     column_name: str,
     value: _t.Any,
-    engine: _t.Optional[_sa_engine.Engine] = None
+    engine: _t.Optional[_sa_engine.Engine] = None,
 ) -> None:
     """
     Update the specified records in the given table.

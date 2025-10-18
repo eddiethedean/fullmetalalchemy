@@ -16,7 +16,7 @@ def drop_table(
     table: _t.Union[_sa.Table, str],
     engine: _t.Optional[_sa_engine.Engine] = None,
     if_exists: bool = True,
-    schema: _t.Optional[str] = None
+    schema: _t.Optional[str] = None,
 ) -> None:
     """
     Drop a table from SQL database.
@@ -50,7 +50,7 @@ def drop_table(
     """
     if isinstance(table, str):
         if engine is None:
-            raise ValueError('Must pass engine if table is str.')
+            raise ValueError("Must pass engine if table is str.")
         if table not in _sa.inspect(engine).get_table_names(schema=schema):
             if if_exists:
                 return

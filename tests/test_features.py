@@ -24,7 +24,7 @@ def test_primary_key_columns(engine_and_table):
     results = primary_key_columns(table)
     names = [c.name for c in results]
     types = [type(c.type) for c in results]
-    assert names == ['id']
+    assert names == ["id"]
     assert types == [INTEGER]
 
 
@@ -32,7 +32,7 @@ def test_primary_key_names(engine_and_table):
     """Test getting primary key column names from a table."""
     _engine, table = engine_and_table
     results = primary_key_names(table)
-    assert results == ['id']
+    assert results == ["id"]
 
 
 def test_get_connection(engine_and_table):
@@ -60,20 +60,20 @@ def test_get_metadata(engine_and_table):
 def test_get_table(engine_and_table):
     """Test getting a table object by name."""
     engine, _table = engine_and_table
-    result_table = get_table('xy', engine)
-    results = result_table.name, result_table.info.get('engine'), type(result_table)
-    expected = 'xy', engine, Table
+    result_table = get_table("xy", engine)
+    results = result_table.name, result_table.info.get("engine"), type(result_table)
+    expected = "xy", engine, Table
     assert results == expected
 
 
 def test_get_engine_table():
     """Test getting engine and table from connection string."""
-    con_str = 'sqlite:///data/test.db'
+    con_str = "sqlite:///data/test.db"
     engine = sa.create_engine(con_str)
     table = create_test_table(engine)
     insert_test_records(table, engine)
 
-    results = get_engine_table(con_str, 'xy')
+    results = get_engine_table(con_str, "xy")
     results = tuple(type(x) for x in results)
     expected = Engine, Table
     assert results == expected
@@ -82,5 +82,5 @@ def test_get_engine_table():
 def test_get_class(engine_and_table):
     """Test getting automap class from table name."""
     engine, _table = engine_and_table
-    result = get_class('xy', engine)
+    result = get_class("xy", engine)
     assert isinstance(type(result), type(DeclarativeMeta))

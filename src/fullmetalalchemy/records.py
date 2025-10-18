@@ -9,10 +9,7 @@ from frozendict import frozendict
 import fullmetalalchemy.types as _types
 
 
-def filter_record(
-    record: _types.Record,
-    column_names: _t.Sequence[str]
-) -> _t.Dict[str, _t.Any]:
+def filter_record(record: _types.Record, column_names: _t.Sequence[str]) -> _t.Dict[str, _t.Any]:
     """
     Filter out the given columns from the record.
 
