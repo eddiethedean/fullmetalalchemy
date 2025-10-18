@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2025-10-18
+
+### Added
+- **Session Module** - Fine-grained transaction control without auto-commit
+  - `fullmetalalchemy.session` - Sync session-based operations
+  - `fullmetalalchemy.async_api.session` - Async session-based operations
+  - Functions: `insert_records`, `update_records`, `delete_records`, `insert_from_table`, `update_matching_records`, `set_column_values`, `delete_records_by_values`, `delete_all_records`
+  - Allows multiple operations in a single transaction with manual commit/rollback
+  - Perfect for complex transactions requiring ACID guarantees
+
+### Changed
+- **Code Architecture** - Refactored CRUD modules to eliminate duplication
+  - `insert.py`, `delete.py`, `update.py` now use session module internally
+  - Auto-commit functions wrap session functions for convenience
+  - `SessionTable` and `AsyncSessionTable` use session module directly
+  - Zero code duplication between session and auto-commit functions
+
+### Improved
+- **Documentation** - Added comprehensive session module examples
+  - Sync session operations with manual commit/rollback
+  - Async session operations with AsyncSession
+  - Usage patterns for complex transactions
+  - API reference for all session functions
+
 ## [2.2.3] - 2025-10-18
 
 ### Fixed

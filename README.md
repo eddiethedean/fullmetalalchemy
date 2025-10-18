@@ -20,6 +20,7 @@
 - ⚡ **Async/Await Support** - Full async API for high-performance applications (v2.1.0+)
 - 🏗️ **Async Classes** - AsyncTable and AsyncSessionTable for Pythonic async operations (v2.2.0+)
 - 📦 **Batch Processing** - Efficient bulk operations with progress tracking and parallel execution (v2.2.0+)
+- 🎛️ **Session Module** - Fine-grained transaction control with manual commit/rollback (v2.3.0+)
 - 🎯 **Simple API** - Intuitive functions for common database operations
 - 🔒 **Transaction Management** - Built-in context managers for safe operations
 - 📊 **Pythonic Interface** - Array-like access and familiar Python patterns
@@ -658,6 +659,106 @@ async def main():
 asyncio.run(main())
 ```
 
+## Session Module - Fine-Grained Transaction Control (v2.3.0+)
+
+The `session` module provides direct access to session-based operations without auto-commit, allowing for fine-grained transaction control. This is ideal for advanced users who want to manually manage transaction boundaries.
+
+### Sync Session Operations
+
+```python
+import fullmetalalchemy as fa
+
+# Create engine and session
+engine = fa.create_engine('sqlite:///data.db')
+session = fa.features.get_session(engine)
+table = fa.get_table('users', engine)
+
+# Perform multiple operations in a single transaction
+fa.session.insert_records(table, [
+    {'id': 1, 'name': 'Alice', 'email': 'alice@example.com'},
+    {'id': 2, 'name': 'Bob', 'email': 'bob@example.com'}
+], session)
+
+fa.session.update_records(table, [
+    {'id': 1, 'name': 'Alice Updated'}
+], session)
+
+fa.session.delete_records(table, 'id', [2], session)
+
+# Commit all changes at once
+session.commit()
+
+# Verify results
+records = fa.select.select_records_all(table, engine)
+print(records)
+# Output: [{'id': 1, 'name': 'Alice Updated', 'email': 'alice@example.com'}]
+
+# Or rollback if needed
+# session.rollback()
+```
+
+### Async Session Operations
+
+For async operations, it's recommended to use `AsyncSessionTable` which provides transaction management with async context managers:
+
+```python
+import asyncio
+from fullmetalalchemy import async_api
+
+async def main():
+    engine = async_api.create_async_engine('sqlite+aiosqlite:///data.db')
+    
+    # Using AsyncSessionTable for transaction control
+    async with async_api.AsyncSessionTable('users', engine) as table:
+        # All operations in this context are part of one transaction
+        await table.insert_records([
+            {'id': 1, 'name': 'Alice', 'status': 'active'},
+            {'id': 2, 'name': 'Bob', 'status': 'active'}
+        ])
+        
+        await table.update_records([
+            {'id': 1, 'status': 'inactive'}
+        ])
+        
+        await table.delete_records('id', [2])
+        
+        # Automatically commits on successful exit
+    
+    # Or use manual commit/rollback
+    table = async_api.AsyncSessionTable('users', engine)
+    await table.insert_records([{'id': 3, 'name': 'Charlie', 'status': 'active'}])
+    await table.commit()  # Manually commit
+    
+    await engine.dispose()
+
+asyncio.run(main())
+```
+
+### Available Session Functions
+
+**Sync (`fa.session`):**
+- `insert_records(table, records, session)` - Insert records
+- `insert_from_table(table1, table2, session)` - Copy rows between tables
+- `update_records(table, records, session, match_column_names=None)` - Update records
+- `update_matching_records(table, records, match_column_names, session)` - Update with custom match columns
+- `set_column_values(table, column_name, value, session)` - Set all rows in a column
+- `delete_records(table, column_name, values, session)` - Delete by column values
+- `delete_records_by_values(table, records, session)` - Delete matching all column values
+- `delete_all_records(table, session)` - Delete all records
+
+**Async (`async_api.session`):**
+- All the same functions with `async`/`await` support
+
+### Why Use Session Functions?
+
+1. **Multiple operations in one transaction** - Group related changes
+2. **Manual commit control** - Decide exactly when to commit
+3. **Error handling** - Rollback on any error in the transaction
+4. **Performance** - Reduce database round-trips
+5. **Consistency** - Ensure related changes succeed or fail together
+
+Note: The existing auto-commit functions (`fa.insert.insert_records`, etc.) internally use these session functions, so there's zero code duplication.
+
 ## API Overview
 
 ### Connection & Table Access
@@ -687,6 +788,12 @@ asyncio.run(main())
 ### Delete Operations
 - `fa.delete.delete_records()` - Delete by column values
 - `fa.delete.delete_records_by_values()` - Delete matching records
+
+### Session Operations (v2.3.0+)
+- `fa.session.insert_records()` - Insert without auto-commit
+- `fa.session.update_records()` - Update without auto-commit
+- `fa.session.delete_records()` - Delete without auto-commit
+- `async_api.session.*` - Async session operations
 - `fa.delete.delete_all_records()` - Clear entire table
 
 ### Drop Operations
