@@ -3,6 +3,7 @@
 This module provides async batch processing with concurrent execution
 for improved performance on I/O-bound database operations.
 """
+
 import asyncio
 import typing as _t
 from dataclasses import dataclass
@@ -228,4 +229,3 @@ class AsyncBatchProcessor:
             failed_batches=failed_batches,
             errors=errors,
         )
-

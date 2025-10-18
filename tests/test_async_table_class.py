@@ -1,4 +1,5 @@
 """Tests for AsyncTable class."""
+
 import pytest
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -223,4 +224,3 @@ async def test_async_table_select_column_values(async_engine_with_data):
     async with table:
         values = await table.select_column_values_all("value")
         assert values == [100, 200, 300]
-

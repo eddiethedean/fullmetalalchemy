@@ -1,4 +1,5 @@
 """Tests for async batch processing utilities."""
+
 import asyncio
 
 import pytest
@@ -167,4 +168,3 @@ async def test_async_semaphore_limiting():
 
     # Should never exceed max_concurrent
     assert max_active <= max_concurrent
-

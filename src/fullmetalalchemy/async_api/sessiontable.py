@@ -21,6 +21,7 @@ except ImportError:
     def async_sessionmaker(engine, **kwargs):  # type: ignore
         return sessionmaker(engine, class_=AsyncSession, **kwargs)
 
+
 from fullmetalalchemy.types import Record
 
 

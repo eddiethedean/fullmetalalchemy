@@ -1,4 +1,5 @@
 """Tests for batch processing utilities."""
+
 import pytest
 
 from fullmetalalchemy import BatchProcessor, BatchResult
@@ -160,4 +161,3 @@ def test_chunk_sequence_helper():
     assert chunks[1] == [3, 4, 5]
     assert chunks[2] == [6, 7, 8]
     assert chunks[3] == [9]
-

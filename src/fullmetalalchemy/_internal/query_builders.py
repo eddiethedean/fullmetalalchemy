@@ -219,9 +219,7 @@ def build_update_stmt_bulk(
     return stmts
 
 
-def build_delete_stmt(
-    table: _sa.Table, column_name: str, values: _t.Sequence[_t.Any]
-) -> _t.Any:
+def build_delete_stmt(table: _sa.Table, column_name: str, values: _t.Sequence[_t.Any]) -> _t.Any:
     """Build DELETE statement.
 
     Parameters

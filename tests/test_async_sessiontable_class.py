@@ -1,4 +1,5 @@
 """Tests for AsyncSessionTable class."""
+
 import pytest
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -12,6 +13,7 @@ except ImportError:
 
     def async_sessionmaker(engine, **kwargs):  # type: ignore
         return sessionmaker(engine, class_=AsyncSession, **kwargs)
+
 
 from fullmetalalchemy.async_api import AsyncSessionTable, create
 
@@ -228,4 +230,3 @@ async def test_async_sessiontable_select_column_values(async_engine_with_data):
         names = await table.select_column_values_all("name")
         assert len(names) == 3
         assert "Alice" in names
-

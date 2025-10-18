@@ -3,6 +3,7 @@
 This module provides utilities for processing large datasets in configurable batches
 with optional progress tracking.
 """
+
 import typing as _t
 from dataclasses import dataclass
 
@@ -175,4 +176,3 @@ def chunk_sequence(
     """
     for i in range(0, len(sequence), chunk_size):
         yield sequence[i : i + chunk_size]
-
