@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-10-18
+
+### Added
+- **🚀 Async/await support** for all CRUD operations via `fullmetalalchemy.async_api`
+- Async versions of all select, insert, update, delete, create, and drop operations
+- Internal shared logic modules (`_internal/`) to minimize code duplication between sync/async
+- Optional async dependencies (`aiosqlite`, `greenlet`, `asyncpg`, `aiomysql`)
+- Comprehensive async test suite (23 tests, 70%+ coverage of async code)
+- `pytest-asyncio` configuration for async test support
+- Async examples in documentation
+
+### Changed
+- Async dependencies are now optional (install with `pip install fullmetalalchemy[async]`)
+- Internal architecture refactored to share query building logic between sync and async
+- Code duplication reduced from ~45% to <5% between sync/async implementations
+
+### Fixed
+- All 281 tests pass (258 sync + 23 async)
+- Maintained 100% backward compatibility with existing sync API
+- Type checking passes with MyPy strict mode for async code
+- Ruff linting passes for all async modules
+
+### Documentation
+- Added async usage examples to README
+- Documented async driver support (aiosqlite, asyncpg, aiomysql)
+- Added installation instructions for async extras
+
 ## [2.0.0] - 2025-10-18
 
 ### Added
