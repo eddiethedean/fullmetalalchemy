@@ -17,28 +17,42 @@
 ### Key Features
 
 - 🔄 **SQLAlchemy 1.4+ and 2.x compatible** - Works seamlessly with both versions
+- ⚡ **Async/Await Support** - Full async API for high-performance applications (v2.1.0+)
 - 🎯 **Simple API** - Intuitive functions for common database operations
 - 🔒 **Transaction Management** - Built-in context managers for safe operations
 - 📦 **Pythonic Interface** - Array-like access and familiar Python patterns
 - 🚀 **Memory Efficient** - Chunked iteration for large datasets
 - 🛡️ **Type Safe** - Full type hints with MyPy strict mode compliance
-- ✅ **Thoroughly Tested** - 97% test coverage with 258 passing tests
+- ✅ **Thoroughly Tested** - 85% test coverage with 281 passing tests (258 sync + 23 async)
 - 🎨 **Code Quality** - Ruff and MyPy strict mode verified
 
 ## Installation
 
 ```sh
-# Install from PyPI
+# Install from PyPI (sync operations only)
 pip install fullmetalalchemy
+
+# Install with async support
+pip install fullmetalalchemy[async]
+
+# Install for development
+pip install fullmetalalchemy[dev]
 ```
 
 The source code is hosted on GitHub at: https://github.com/eddiethedean/fullmetalalchemy
 
 ## Dependencies
 
+**Core Dependencies:**
 - **SQLAlchemy** (>=1.4, <3) - Python SQL toolkit and ORM
 - **tinytim** (>=0.1.2) - Data transformation utilities
 - **frozendict** (>=2.4) - Immutable dictionary support
+
+**Optional Async Dependencies** (install with `[async]`):
+- **aiosqlite** (>=0.19) - Async SQLite driver
+- **greenlet** (>=3.0) - Greenlet concurrency support
+- **asyncpg** (>=0.29) - Async PostgreSQL driver (optional)
+- **aiomysql** (>=0.2) - Async MySQL driver (optional)
 
 ## Quick Start
 
@@ -246,6 +260,193 @@ for chunk_num, chunk in enumerate(
 # Chunk 4: 1 records
 ```
 
+## Async/Await Support (v2.1.0+)
+
+FullmetalAlchemy provides full async/await support for high-performance applications. All CRUD operations have async equivalents in the `async_api` namespace.
+
+### Installation for Async
+
+```sh
+# Install with async dependencies
+pip install fullmetalalchemy[async]
+```
+
+### Basic Async Operations
+
+```python
+import asyncio
+from fullmetalalchemy import async_api
+
+async def main():
+    # Create async engine with aiosqlite driver
+    engine = async_api.create_async_engine('sqlite+aiosqlite:///employees.db')
+    
+    # Create table with initial data
+    table = await async_api.create.create_table_from_records(
+        'employees',
+        [
+            {'id': 1, 'name': 'Alice', 'department': 'Engineering', 'salary': 95000},
+            {'id': 2, 'name': 'Bob', 'department': 'Sales', 'salary': 75000}
+        ],
+        primary_key='id',
+        engine=engine
+    )
+    
+    # SELECT: Get all records
+    records = await async_api.select.select_records_all(table, engine)
+    print(records)
+    # Output:
+    # [{'id': 1, 'name': 'Alice', 'department': 'Engineering', 'salary': 95000},
+    #  {'id': 2, 'name': 'Bob', 'department': 'Sales', 'salary': 75000}]
+    
+    # INSERT: Add new records
+    await async_api.insert.insert_records(
+        table,
+        [
+            {'id': 3, 'name': 'Charlie', 'department': 'Engineering', 'salary': 88000},
+            {'id': 4, 'name': 'Diana', 'department': 'Marketing', 'salary': 82000}
+        ],
+        engine
+    )
+    # Total records: 4
+    
+    # UPDATE: Modify existing records
+    await async_api.update.update_records(
+        table,
+        [{'id': 2, 'name': 'Bob', 'department': 'Sales', 'salary': 80000}],
+        engine
+    )
+    record = await async_api.select.select_record_by_primary_key(table, {'id': 2}, engine)
+    print(record)
+    # Output: {'id': 2, 'name': 'Bob', 'department': 'Sales', 'salary': 80000}
+    
+    # DELETE: Remove records
+    await async_api.delete.delete_records_by_values(table, 'id', [1, 3], engine)
+    remaining = await async_api.select.select_records_all(table, engine)
+    print(f"Remaining records: {len(remaining)}")
+    # Output: Remaining records: 2
+    
+    await engine.dispose()
+
+# Run the async function
+asyncio.run(main())
+```
+
+### Concurrent Operations
+
+One of the main benefits of async is the ability to run multiple database operations concurrently:
+
+```python
+import asyncio
+from fullmetalalchemy import async_api
+
+async def main():
+    engine = async_api.create_async_engine('sqlite+aiosqlite:///shop.db')
+    
+    # Create three tables concurrently
+    tables = await asyncio.gather(
+        async_api.create.create_table_from_records(
+            'products',
+            [{'id': 1, 'name': 'Laptop', 'price': 999}],
+            primary_key='id',
+            engine=engine
+        ),
+        async_api.create.create_table_from_records(
+            'customers',
+            [{'id': 1, 'name': 'Alice', 'email': 'alice@example.com'}],
+            primary_key='id',
+            engine=engine
+        ),
+        async_api.create.create_table_from_records(
+            'orders',
+            [{'id': 1, 'product_id': 1, 'customer_id': 1}],
+            primary_key='id',
+            engine=engine
+        )
+    )
+    print(f"Created {len(tables)} tables concurrently")
+    # Output: Created 3 tables concurrently
+    
+    # Query all tables concurrently
+    results = await asyncio.gather(
+        async_api.select.select_records_all(tables[0], engine),
+        async_api.select.select_records_all(tables[1], engine),
+        async_api.select.select_records_all(tables[2], engine)
+    )
+    
+    print("Products:", results[0])
+    # Output: Products: [{'id': 1, 'name': 'Laptop', 'price': 999}]
+    print("Customers:", results[1])
+    # Output: Customers: [{'id': 1, 'name': 'Alice', 'email': 'alice@example.com'}]
+    print("Orders:", results[2])
+    # Output: Orders: [{'id': 1, 'product_id': 1, 'customer_id': 1}]
+    
+    await engine.dispose()
+
+asyncio.run(main())
+```
+
+### Advanced Async Queries
+
+All query operations from the sync API are available in async:
+
+```python
+import asyncio
+from fullmetalalchemy import async_api
+
+async def main():
+    engine = async_api.create_async_engine('sqlite+aiosqlite:///users.db')
+    
+    # Create test data
+    table = await async_api.create.create_table_from_records(
+        'users',
+        [{'id': i, 'name': f'User{i}', 'age': 20 + i * 5} for i in range(1, 6)],
+        primary_key='id',
+        engine=engine
+    )
+    
+    # Select with specific columns
+    records = await async_api.select.select_records_all(
+        table, engine, include_columns=['id', 'name']
+    )
+    print(records[:3])
+    # Output: [{'id': 1, 'name': 'User1'}, {'id': 2, 'name': 'User2'}, {'id': 3, 'name': 'User3'}]
+    
+    # Select by slice
+    records = await async_api.select.select_records_slice(table, 1, 4, engine)
+    print(records)
+    # Output: [{'id': 2, 'name': 'User2', 'age': 30},
+    #          {'id': 3, 'name': 'User3', 'age': 35},
+    #          {'id': 4, 'name': 'User4', 'age': 40}]
+    
+    # Get column values
+    ages = await async_api.select.select_column_values_all(table, 'age', engine)
+    print(ages)
+    # Output: [25, 30, 35, 40, 45]
+    
+    await engine.dispose()
+
+asyncio.run(main())
+```
+
+### Async Database Drivers
+
+FullmetalAlchemy supports multiple async database drivers:
+
+| Database | Driver | Connection String Example |
+|----------|--------|---------------------------|
+| **SQLite** | `aiosqlite` | `sqlite+aiosqlite:///path/to/db.db` |
+| **PostgreSQL** | `asyncpg` | `postgresql+asyncpg://user:pass@localhost/dbname` |
+| **MySQL** | `aiomysql` | `mysql+aiomysql://user:pass@localhost/dbname` |
+
+Install the appropriate driver for your database:
+
+```sh
+pip install fullmetalalchemy[async]  # Includes aiosqlite
+pip install asyncpg  # For PostgreSQL
+pip install aiomysql  # For MySQL
+```
+
 ## API Overview
 
 ### Connection & Table Access
@@ -347,10 +548,11 @@ mypy src/fullmetalalchemy
 ### Code Quality
 
 This project maintains high standards:
-- **97% Test Coverage** - Comprehensive test suite with 258 tests
+- **85% Test Coverage** - Comprehensive test suite with 281 tests (258 sync + 23 async)
 - **MyPy Strict Mode** - Full type safety enforcement
 - **Ruff Verified** - Modern Python code style
 - **SQLAlchemy 1.4/2.x Dual Support** - Backwards compatible
+- **Async/Await Ready** - Full async API with minimal code duplication
 
 ## Contributing
 
