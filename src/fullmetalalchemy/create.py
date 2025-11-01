@@ -6,10 +6,19 @@ import datetime as _datetime
 import decimal as _decimal
 import typing as _t
 
+try:
+    import pandas as pd
+
+    _HAS_PANDAS = True
+except ImportError:
+    _HAS_PANDAS = False
+    pd = None  # type: ignore
+
 import sqlalchemy as _sa
 import sqlalchemy.engine as _sa_engine
 import sqlalchemy.schema as _sa_schema
 from sqlalchemy import create_engine as _create_engine
+from sqlalchemy import sql as _sa_sql
 from tinytim.data import column_names as _column_names  # type: ignore[import-untyped]
 from tinytim.rows import row_dicts_to_data as _row_dicts_to_data  # type: ignore[import-untyped]
 
@@ -192,6 +201,125 @@ def create_table_from_records(
         table_name, col_names, column_types, primary_key, engine, schema, autoincrement, if_exists
     )
     _insert.insert_records(table, records, engine)
+    return table
+
+
+def create_table_from_dataframe(
+    table_name: str,
+    df: _t.Any,
+    primary_key: _t.Union[str, _t.List[str]],
+    engine: _sa_engine.Engine,
+    schema: _t.Optional[str] = None,
+    if_exists: str = "error",
+) -> _sa.Table:
+    """
+    Create a SQL table from a pandas DataFrame.
+
+    Handles:
+    - Empty DataFrames (defaults to String type for columns)
+    - MySQL VARCHAR length requirements (VARCHAR(255) for strings)
+    - SQLite DateTime limitations (converts to String)
+    - Proper pandas dtype to SQLAlchemy type mapping
+    - Composite primary keys
+
+    Parameters
+    ----------
+    table_name : str
+        Name of the table to create
+    df : pd.DataFrame
+        DataFrame to create table from
+    primary_key : Union[str, List[str]]
+        Primary key column name(s)
+    engine : Engine
+        SQLAlchemy engine
+    schema : Optional[str]
+        Schema name
+    if_exists : str
+        What to do if table exists: 'error' or 'replace'
+
+    Returns
+    -------
+    Table
+        SQLAlchemy Table object
+
+    Raises
+    ------
+    ValueError
+        If table exists and if_exists='error'
+        If primary key column(s) not in DataFrame
+    ImportError
+        If pandas is not installed
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import fullmetalalchemy as fa
+    >>> df = pd.DataFrame({'id': [1, 2], 'name': ['Alice', 'Bob']})
+    >>> table = fa.create.create_table_from_dataframe(
+    ...     'users', df, 'id', engine
+    ... )
+    """
+    if not _HAS_PANDAS:
+        raise ImportError(
+            "pandas is required for create_table_from_dataframe. "
+            "Install with: pip install fullmetalalchemy[pandas]"
+        )
+
+    # Normalize primary key to list
+    if isinstance(primary_key, str):
+        primary_key = [primary_key]
+
+    # Validate primary key columns exist
+    for pk_col in primary_key:
+        if pk_col not in df.columns:
+            raise ValueError(f"Primary key column '{pk_col}' not in DataFrame")
+
+    # Convert DataFrame to records and let create_table_from_records handle types
+    # This leverages existing type inference logic
+    records = df.to_dict("records") if len(df) > 0 else []
+
+    # For empty DataFrame, provide column info
+    if len(df) == 0:
+        # Empty DataFrame: default all columns to String
+        column_names = list(df.columns)
+        # Manually create table with String types for empty case
+        # Build columns directly
+        cols = []
+        for name in column_names:
+            if name in primary_key:
+                col = _sa.Column(name, _sa_sql.sqltypes.String, primary_key=True)
+            else:
+                col = _sa.Column(name, _sa_sql.sqltypes.String)
+            cols.append(col)
+
+        # Database-specific adjustments for empty DataFrame
+        dialect = engine.dialect.name
+
+        # MySQL: VARCHAR(255) for strings
+        if dialect == "mysql":
+            for col in cols:
+                if col.type == _sa_sql.sqltypes.String and not col.primary_key:
+                    col.type = _sa_sql.sqltypes.String(255)
+
+        metadata = _sa.MetaData(schema=schema)
+        table = _sa.Table(table_name, metadata, *cols, schema=schema)
+
+        if if_exists == "replace":
+            drop_table_sql = _sa_schema.DropTable(table, if_exists=True)
+            with engine.begin() as connection:
+                connection.execute(drop_table_sql)
+        table_creation_sql = _sa_schema.CreateTable(table)
+        with engine.begin() as connection:
+            connection.execute(table_creation_sql)
+
+        return _features.get_table(table_name, engine, schema=schema)
+
+    # Use create_table_from_records for non-empty DataFrame
+    # It handles type inference and insertion automatically
+    table = create_table_from_records(
+        table_name, records, primary_key, engine, schema=schema, if_exists=if_exists
+    )
+
     return table
 
 

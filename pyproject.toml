@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fullmetalalchemy"
-version = "2.3.0"
+version = "2.4.0"
 description = "Easy-to-use helpers for SQL table changes with SQLAlchemy."
 readme = "README.md"
 authors = [
@@ -55,6 +55,9 @@ dev = [
     "mypy>=1.10",
     "ruff>=0.6",
     "tox>=4",
+]
+pandas = [
+    "pandas>=1.5.0",
 ]
 
 [project.urls]

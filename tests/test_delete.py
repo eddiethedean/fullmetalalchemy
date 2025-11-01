@@ -1,11 +1,13 @@
 from unittest.mock import patch
 
+import pytest
 import sqlalchemy.orm.session as sa_session
 
 from fullmetalalchemy.delete import (
     delete_all_records,
     delete_all_records_session,
     delete_records,
+    delete_records_by_primary_keys,
     delete_records_by_values,
     delete_records_by_values_session,
     delete_records_session,
@@ -195,3 +197,109 @@ def test_delete_all_records_rollback_on_error(engine_and_table):
     # Verify rollback
     results = select_records_all(table, engine)
     assert len(results) == 4
+
+
+def test_delete_records_by_primary_keys_single_pk(engine_and_table):
+    """Test delete by primary keys with single-column PK."""
+    engine, table = engine_and_table
+    delete_records_by_primary_keys(table, [1, 3], engine)
+
+    results = select_records_all(table, engine)
+    assert len(results) == 2
+    assert all(r["id"] in [2, 4] for r in results)
+
+
+def test_delete_records_by_primary_keys_table_name(engine_and_table):
+    """Test delete by primary keys using table name."""
+    engine, table = engine_and_table
+    delete_records_by_primary_keys("xy", [1, 3], engine)
+
+    results = select_records_all(table, engine)
+    assert len(results) == 2
+
+
+def test_delete_records_by_primary_keys_composite_pk():
+    """Test delete by primary keys with composite PK."""
+    import sqlalchemy as sa
+    from sqlalchemy import MetaData, Table
+
+    engine = sa.create_engine("sqlite://")
+    metadata = MetaData()
+    table = Table(
+        "memberships",
+        metadata,
+        sa.Column("user_id", sa.Integer),
+        sa.Column("org_id", sa.Integer),
+        sa.Column("role", sa.String),
+        sa.PrimaryKeyConstraint("user_id", "org_id"),
+    )
+    metadata.create_all(engine)
+
+    # Insert data
+    from fullmetalalchemy import insert
+
+    insert.insert_records(
+        table,
+        [
+            {"user_id": 1, "org_id": 10, "role": "admin"},
+            {"user_id": 2, "org_id": 10, "role": "user"},
+            {"user_id": 1, "org_id": 20, "role": "admin"},
+        ],
+        engine,
+    )
+
+    # Delete by composite PK
+    delete_records_by_primary_keys(table, [(1, 10), (1, 20)], engine)
+
+    results = select_records_all(table, engine)
+    assert len(results) == 1
+    assert results[0]["user_id"] == 2
+
+
+def test_delete_records_by_primary_keys_empty_list(engine_and_table):
+    """Test delete by primary keys with empty list does nothing."""
+    engine, table = engine_and_table
+    delete_records_by_primary_keys(table, [], engine)
+
+    results = select_records_all(table, engine)
+    assert len(results) == 4
+
+
+def test_delete_records_by_primary_keys_invalid_tuple_length():
+    """Test delete by primary keys with wrong tuple length raises error."""
+    import sqlalchemy as sa
+    from sqlalchemy import MetaData, Table
+
+    engine = sa.create_engine("sqlite://")
+    metadata = MetaData()
+    table = Table(
+        "memberships",
+        metadata,
+        sa.Column("user_id", sa.Integer),
+        sa.Column("org_id", sa.Integer),
+        sa.Column("role", sa.String),
+        sa.PrimaryKeyConstraint("user_id", "org_id"),
+    )
+    metadata.create_all(engine)
+
+    with pytest.raises(ValueError, match=r"PK tuple length .* doesn't match"):
+        delete_records_by_primary_keys(
+            table,
+            [(1, 10, 99)],  # Too many values
+            engine,
+        )
+
+
+def test_delete_records_by_primary_keys_no_pk():
+    """Test delete by primary keys on table without PK raises error."""
+    import pytest
+    import sqlalchemy as sa
+    from sqlalchemy import MetaData, Table
+
+    engine = sa.create_engine("sqlite://")
+    metadata = MetaData()
+    table = Table("logs", metadata, sa.Column("id", sa.Integer), sa.Column("message", sa.String))
+    metadata.create_all(engine)
+
+    with pytest.raises(ValueError, match="has no primary key"):
+        delete_records_by_primary_keys(table, [1], engine)

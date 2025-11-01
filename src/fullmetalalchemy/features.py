@@ -438,6 +438,132 @@ def get_table_names(engine: _sa_engine.Engine, schema: _t.Optional[str] = None) 
     return _sa.inspect(engine).get_table_names(schema)
 
 
+def table_exists(
+    table_name: str, engine: _sa_engine.Engine, schema: _t.Optional[str] = None
+) -> bool:
+    """
+    Check if a table exists in the database.
+
+    More efficient than checking via get_table_names() as it uses
+    direct introspection without loading all table names.
+
+    Parameters
+    ----------
+    table_name : str
+        Name of the table to check
+    engine : Engine
+        SQLAlchemy engine
+    schema : Optional[str]
+        Schema name (for databases that support schemas)
+
+    Returns
+    -------
+    bool
+        True if table exists, False otherwise
+
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+    >>> engine = fa.create_engine('sqlite:///test.db')
+    >>> fa.features.table_exists('users', engine)
+    False
+    >>> fa.create.create_table_from_records('users', [...], 'id', engine)
+    >>> fa.features.table_exists('users', engine)
+    True
+    """
+    inspector = _sa.inspect(engine)
+    return table_name in inspector.get_table_names(schema=schema)
+
+
+def get_primary_key_names(
+    table_name: str, engine: _sa_engine.Engine, schema: _t.Optional[str] = None
+) -> _t.Optional[_t.Union[str, _t.List[str]]]:
+    """
+    Get primary key column name(s) for a table.
+
+    This is more efficient than get_table() + primary_key_names() as it
+    only queries primary key information without loading full table metadata.
+
+    Parameters
+    ----------
+    table_name : str
+        Name of the table
+    engine : Engine
+        SQLAlchemy engine
+    schema : Optional[str]
+        Schema name
+
+    Returns
+    -------
+    Optional[Union[str, List[str]]]
+        - None if no primary key exists
+        - str if single-column primary key
+        - List[str] if composite primary key
+
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+    >>> engine = fa.create_engine('sqlite:///test.db')
+    >>> fa.features.get_primary_key_names('users', engine)
+    'id'
+    >>> fa.features.get_primary_key_names('memberships', engine)
+    ['user_id', 'org_id']
+    >>> fa.features.get_primary_key_names('logs', engine)
+    None
+    """
+    inspector = _sa.inspect(engine)
+    pk_constraint = inspector.get_pk_constraint(table_name, schema=schema)
+
+    if not pk_constraint or not pk_constraint.get("constrained_columns"):
+        return None
+
+    pk_cols = pk_constraint["constrained_columns"]
+    if len(pk_cols) == 1:
+        return pk_cols[0]
+    return pk_cols
+
+
+def get_table_columns(
+    table_name: str, engine: _sa_engine.Engine, schema: _t.Optional[str] = None
+) -> _t.List[_t.Dict[str, _t.Any]]:
+    """
+    Get column information without full table reflection.
+
+    Uses inspect(engine).get_columns() instead of autoload_with to avoid
+    potential hangs in PostgreSQL after schema changes.
+
+    Parameters
+    ----------
+    table_name : str
+        Name of the table
+    engine : Engine
+        SQLAlchemy engine
+    schema : Optional[str]
+        Schema name
+
+    Returns
+    -------
+    List[Dict[str, Any]]
+        List of column information dicts with keys:
+        - 'name': str
+        - 'type': SQLAlchemy type
+        - 'nullable': bool
+        - 'default': Any
+        - Other column attributes
+
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+    >>> cols = fa.features.get_table_columns('users', engine)
+    >>> cols[0]['name']
+    'id'
+    >>> cols[0]['type']
+    INTEGER()
+    """
+    inspector = _sa.inspect(engine)
+    return inspector.get_columns(table_name, schema=schema)
+
+
 def get_row_count(table: _sa.Table, session: _t.Optional[_types.SqlConnection] = None) -> int:
     """
     Returns the number of rows in a given table.

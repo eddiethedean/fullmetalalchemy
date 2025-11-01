@@ -1,5 +1,6 @@
-__version__ = "2.3.0"
+__version__ = "2.4.0"
 
+import fullmetalalchemy.connection as connection
 import fullmetalalchemy.create as create
 import fullmetalalchemy.delete as delete
 import fullmetalalchemy.drop as drop
@@ -21,6 +22,7 @@ __all__ = [
     "BatchResult",
     "SessionTable",
     "Table",
+    "connection",
     "create",
     "create_engine",
     "delete",

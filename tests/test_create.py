@@ -1,12 +1,20 @@
 import pytest
 import sqlalchemy as sa
 
+try:
+    import pandas as pd
+
+    _HAS_PANDAS = True
+except ImportError:
+    _HAS_PANDAS = False
+
 import fullmetalalchemy as sz
 from fullmetalalchemy.create import (
     _column_datatype,
     copy_table,
     create_engine,
     create_table,
+    create_table_from_dataframe,
     create_table_from_records,
 )
 from fullmetalalchemy.features import tables_metadata_equal
@@ -172,3 +180,151 @@ def test_column_datatype_mixed_int_and_float():
     values = [1, 2.5, 3, 4.7]
     result = _column_datatype(values)
     assert result is float
+
+
+@pytest.mark.skipif(not _HAS_PANDAS, reason="requires pandas")
+def test_create_table_from_dataframe_basic(engine):
+    """Test creating table from simple DataFrame."""
+    df = pd.DataFrame({"id": [1, 2], "name": ["Alice", "Bob"], "score": [95.5, 87.3]})
+    table = create_table_from_dataframe("users", df, "id", engine)
+
+    # Verify table was created
+    assert sz.features.table_exists("users", engine) is True
+
+    # Check data was inserted
+    records = sz.select.select_records_all(table)
+    assert len(records) == 2
+    assert records[0]["name"] == "Alice"
+
+
+@pytest.mark.skipif(not _HAS_PANDAS, reason="requires pandas")
+def test_create_table_from_dataframe_empty(engine):
+    """Test creating table from empty DataFrame."""
+    df = pd.DataFrame(columns=["id", "name", "score"])
+    table = create_table_from_dataframe("empty_users", df, "id", engine)
+
+    # Verify table was created
+    assert sz.features.table_exists("empty_users", engine) is True
+
+    # Check no data was inserted
+    records = sz.select.select_records_all(table)
+    assert len(records) == 0
+
+
+@pytest.mark.skipif(not _HAS_PANDAS, reason="requires pandas")
+def test_create_table_from_dataframe_dtypes(engine):
+    """Test creating table with various dtypes."""
+    df = pd.DataFrame(
+        {
+            "id": pd.Series([1, 2], dtype="int64"),
+            "float_col": pd.Series([1.5, 2.5], dtype="float64"),
+            "bool_col": pd.Series([True, False], dtype="bool"),
+            "str_col": pd.Series(["a", "b"], dtype="object"),
+        }
+    )
+    create_table_from_dataframe("mixed_types", df, "id", engine)
+
+    # Verify table was created
+    assert sz.features.table_exists("mixed_types", engine) is True
+
+
+@pytest.mark.skipif(not _HAS_PANDAS, reason="requires pandas")
+def test_create_table_from_dataframe_composite_pk(engine):
+    """Test creating table with composite primary key."""
+    df = pd.DataFrame(
+        {"user_id": [1, 2, 3], "org_id": [10, 10, 20], "role": ["admin", "user", "admin"]}
+    )
+    create_table_from_dataframe("memberships", df, ["user_id", "org_id"], engine)
+
+    # Verify table was created
+    assert sz.features.table_exists("memberships", engine) is True
+
+    # Check composite PK was set correctly
+    pk_names = sz.features.get_primary_key_names("memberships", engine)
+    assert isinstance(pk_names, list)
+    assert pk_names == ["user_id", "org_id"]
+
+
+@pytest.mark.skipif(not _HAS_PANDAS, reason="requires pandas")
+def test_create_table_from_dataframe_datetime(engine):
+    """Test creating table with datetime column.
+
+    Note: SQLite doesn't support datetime64[ns] directly, so this test
+    verifies that the basic table creation works. For production use,
+    consider converting datetime to string for SQLite compatibility.
+    """
+    df = pd.DataFrame(
+        {
+            "id": [1, 2],
+            "created": ["2023-01-01", "2023-01-02"],  # Use strings for SQLite compatibility
+        }
+    )
+    create_table_from_dataframe("with_dates", df, "id", engine)
+
+    # Verify table was created
+    assert sz.features.table_exists("with_dates", engine) is True
+
+
+@pytest.mark.skipif(not _HAS_PANDAS, reason="requires pandas")
+def test_create_table_from_dataframe_missing_pk_column(engine):
+    """Test creating table with missing primary key column raises error."""
+    df = pd.DataFrame({"id": [1, 2], "name": ["Alice", "Bob"]})
+
+    # Should raise ValueError for missing PK column
+    with pytest.raises(ValueError, match="Primary key column 'bad_pk' not in DataFrame"):
+        create_table_from_dataframe("users", df, "bad_pk", engine)
+
+
+@pytest.mark.skipif(not _HAS_PANDAS, reason="requires pandas")
+def test_create_table_from_dataframe_replace(engine):
+    """Test creating table with if_exists='replace'."""
+    df1 = pd.DataFrame({"id": [1, 2], "name": ["Alice", "Bob"]})
+    table1 = create_table_from_dataframe("replace_test", df1, "id", engine)
+
+    # Insert more data
+    sz.insert.insert_records(table1, [{"id": 3, "name": "Charlie"}], engine)
+    assert len(sz.select.select_records_all(table1)) == 3
+
+    # Replace with new DataFrame
+    df2 = pd.DataFrame({"id": [10, 20], "name": ["David", "Eve"]})
+    table2 = create_table_from_dataframe("replace_test", df2, "id", engine, if_exists="replace")
+
+    # Should only have new data
+    records = sz.select.select_records_all(table2)
+    assert len(records) == 2
+    assert records[0]["name"] == "David"
+
+
+@pytest.mark.skipif(not _HAS_PANDAS, reason="requires pandas")
+def test_create_table_from_dataframe_error_if_exists(engine):
+    """Test creating table with if_exists='error' raises exception when table exists."""
+    df = pd.DataFrame({"id": [1, 2], "name": ["Alice", "Bob"]})
+    create_table_from_dataframe("error_test", df, "id", engine)
+
+    # Should raise exception if table exists
+    with pytest.raises((ValueError, sa.exc.OperationalError)):
+        create_table_from_dataframe("error_test", df, "id", engine, if_exists="error")
+
+
+def test_create_table_from_dataframe_without_pandas(engine):
+    """Test creating table from DataFrame without pandas raises ImportError."""
+
+    # This test verifies the ImportError is raised when pandas is not available
+    # We'll use a mock DataFrame-like object
+    class FakeDataFrame:
+        def __init__(self):
+            self.columns = ["id", "name"]
+            self.dtype = lambda col: "int64" if col == "id" else "object"
+
+    # Temporarily set _HAS_PANDAS to False to test error handling
+    # This is a bit hacky but tests the actual error path
+    import fullmetalalchemy.create as create_module
+
+    original_has_pandas = create_module._HAS_PANDAS
+    create_module._HAS_PANDAS = False
+
+    try:
+        with pytest.raises(ImportError, match="pandas is required"):
+            create_table_from_dataframe("test", FakeDataFrame(), "id", engine)
+    finally:
+        create_module._HAS_PANDAS = original_has_pandas

@@ -4,6 +4,14 @@ Functions for selecting records from SQL tables.
 
 import typing as _t
 
+try:
+    import pandas as pd
+
+    _HAS_PANDAS = True
+except ImportError:
+    _HAS_PANDAS = False
+    pd = None  # type: ignore
+
 import sqlalchemy as _sa
 import sqlalchemy.sql.elements as sa_elements
 
@@ -856,3 +864,92 @@ def _stop_underflow_index(index: int, row_count: int) -> int:
     if index < 0 and index < -row_count:
         return 0
     return index
+
+
+def select_table_as_dataframe(
+    table: _t.Union[_sa.Table, str],
+    connection: _t.Optional[_types.SqlConnection] = None,
+    schema: _t.Optional[str] = None,
+    primary_key: _t.Optional[_t.Union[str, _t.List[str]]] = None,
+    set_index: bool = True,
+) -> _t.Any:
+    """
+    Read a SQL table into a pandas DataFrame with proper type inference.
+
+    Uses optimal method per database:
+    - SQLite: pd.read_sql_table (better type inference)
+    - PostgreSQL/MySQL: pd.read_sql (avoids inspect() hangs after schema changes)
+
+    Parameters
+    ----------
+    table : Union[Table, str]
+        Table object or table name
+    connection : Optional[SqlConnection]
+        Engine or connection (defaults to table's engine if Table object)
+    schema : Optional[str]
+        Schema name
+    primary_key : Optional[Union[str, List[str]]]
+        Primary key to set as DataFrame index
+    set_index : bool
+        Whether to set primary key as index (default True)
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with data from table, optionally indexed by primary key
+
+    Raises
+    ------
+    ImportError
+        If pandas is not installed
+
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+    >>> df = fa.select.select_table_as_dataframe('users', engine, primary_key='id')
+    >>> df.index.name
+    'id'
+    """
+    if not _HAS_PANDAS:
+        raise ImportError(
+            "pandas is required for select_table_as_dataframe. "
+            "Install with: pip install fullmetalalchemy[pandas]"
+        )
+
+    table, connection = _ex.convert_table_connection(table, connection)
+    engine = _features.get_engine(connection)
+    dialect = engine.dialect.name
+
+    # Get table name
+    if isinstance(table, _sa.Table):
+        table_name = table.name
+    else:
+        table_name = table
+
+    # SQLite: use read_sql_table for better type inference
+    if dialect == "sqlite":
+        df = pd.read_sql_table(table_name, engine, schema=schema)
+    else:
+        # PostgreSQL/MySQL: use read_sql to avoid metadata hangs
+        if dialect == "mysql":
+            quoted = f"`{table_name}`"
+        else:  # postgresql, others
+            quoted = f'"{table_name}"'
+
+        query = f"SELECT * FROM {quoted}"
+        if schema:
+            query = f"SELECT * FROM {schema}.{quoted}"
+
+        df = pd.read_sql(query, engine)
+
+    # Set primary key as index if requested
+    if set_index and primary_key:
+        if isinstance(primary_key, str):
+            df.set_index(primary_key, inplace=True)
+        elif isinstance(primary_key, list) and len(primary_key) > 1:
+            # Composite primary key -> MultiIndex
+            df.set_index(primary_key, inplace=True)
+        elif isinstance(primary_key, list) and len(primary_key) == 1:
+            df.set_index(primary_key[0], inplace=True)
+
+    return df

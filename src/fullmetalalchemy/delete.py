@@ -165,3 +165,87 @@ def delete_all_records(
     except Exception as e:
         session.rollback()
         raise e
+
+
+def delete_records_by_primary_keys(
+    table: _t.Union[_sa.Table, str],
+    primary_key_values: _t.Sequence[_t.Union[_t.Any, _t.Tuple[_t.Any, ...]]],
+    engine: _t.Optional[_sa_engine.Engine] = None,
+) -> None:
+    """
+    Delete records by primary key values (single or composite).
+
+    More efficient than delete_records_by_values() when you only have
+    primary key values, not full records.
+
+    Parameters
+    ----------
+    table : Union[Table, str]
+        Table object or name
+    primary_key_values : Sequence[Union[Any, Tuple[Any, ...]]]
+        For single PK: List[Any]
+        For composite PK: List[Tuple[Any, ...]]
+    engine : Optional[Engine]
+        Engine or connection
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If table has no primary key
+        If PK tuple lengths don't match for composite PK
+
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+    >>> # Single PK
+    >>> fa.delete.delete_records_by_primary_keys(
+    ...     'users', [1, 2, 3], engine
+    ... )
+    >>> # Composite PK
+    >>> fa.delete.delete_records_by_primary_keys(
+    ...     'memberships',
+    ...     [(1, 10), (2, 20)],
+    ...     engine
+    ... )
+    """
+    table, engine = _ex.convert_table_engine(table, engine)
+
+    pk_names = _features.primary_key_names(table)
+    if not pk_names:
+        raise ValueError(f"Table {table.name} has no primary key")
+
+    session = _features.get_session(engine)
+    try:
+        if len(pk_names) == 1:  # Single PK
+            # primary_key_values should be List[Any]
+            column = _features.get_column(table, pk_names[0])
+            stmt = _sa.delete(table).where(column.in_(primary_key_values))
+            session.execute(stmt)
+        else:  # Composite PK
+            # primary_key_values should be List[Tuple[Any, ...]]
+            # Validate tuple lengths
+            for pk_tuple in primary_key_values:
+                if not isinstance(pk_tuple, tuple):
+                    raise ValueError(
+                        f"For composite PK, values must be tuples, got {type(pk_tuple)}"
+                    )
+                if len(pk_tuple) != len(pk_names):
+                    raise ValueError(
+                        f"PK tuple length {len(pk_tuple)} doesn't match "
+                        f"number of PK columns {len(pk_names)}"
+                    )
+
+            # Build (col1, col2) IN ((val1, val2), ...) query
+            pk_columns = [_features.get_column(table, pk_name) for pk_name in pk_names]
+            pk_tuple_expr = _sa.tuple_(*pk_columns)
+            stmt = _sa.delete(table).where(pk_tuple_expr.in_(primary_key_values))
+            session.execute(stmt)
+
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e

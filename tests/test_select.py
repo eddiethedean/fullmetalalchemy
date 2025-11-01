@@ -1,5 +1,12 @@
 import pytest
 
+try:
+    import pandas as pd
+
+    _HAS_PANDAS = True
+except ImportError:
+    _HAS_PANDAS = False
+
 import fullmetalalchemy as fa
 from fullmetalalchemy.records import records_equal
 
@@ -689,3 +696,154 @@ def test_select_records_slice_with_extreme_negative_start(engine_and_table):
     assert len(results) == 2
     assert results[0]["id"] == 1
     assert results[1]["id"] == 2
+
+
+@pytest.mark.skipif(not _HAS_PANDAS, reason="requires pandas")
+def test_select_table_as_dataframe_basic(engine_and_table):
+    """Test select_table_as_dataframe returns DataFrame."""
+    engine, _table = engine_and_table
+    df = fa.select.select_table_as_dataframe("xy", engine)
+
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) == 4
+    assert list(df.columns) == ["id", "x", "y"]
+
+
+@pytest.mark.skipif(not _HAS_PANDAS, reason="requires pandas")
+def test_select_table_as_dataframe_with_index(engine_and_table):
+    """Test select_table_as_dataframe sets primary key as index."""
+    engine, _table = engine_and_table
+    df = fa.select.select_table_as_dataframe("xy", engine, primary_key="id")
+
+    assert df.index.name == "id"
+    assert list(df.index) == [1, 2, 3, 4]
+
+
+@pytest.mark.skipif(not _HAS_PANDAS, reason="requires pandas")
+def test_select_table_as_dataframe_without_index(engine_and_table):
+    """Test select_table_as_dataframe with set_index=False."""
+    engine, _table = engine_and_table
+    df = fa.select.select_table_as_dataframe("xy", engine, primary_key="id", set_index=False)
+
+    assert df.index.name is None
+    assert "id" in df.columns
+
+
+@pytest.mark.skipif(not _HAS_PANDAS, reason="requires pandas")
+def test_select_table_as_dataframe_composite_pk():
+    """Test select_table_as_dataframe with composite primary key."""
+    import sqlalchemy as sa
+    from sqlalchemy import MetaData, Table
+
+    engine = sa.create_engine("sqlite://")
+    metadata = MetaData()
+    table = Table(
+        "memberships",
+        metadata,
+        sa.Column("user_id", sa.Integer),
+        sa.Column("org_id", sa.Integer),
+        sa.Column("role", sa.String),
+        sa.PrimaryKeyConstraint("user_id", "org_id"),
+    )
+    metadata.create_all(engine)
+
+    # Insert data
+    fa.insert.insert_records(
+        table,
+        [
+            {"user_id": 1, "org_id": 10, "role": "admin"},
+            {"user_id": 2, "org_id": 10, "role": "user"},
+        ],
+        engine,
+    )
+
+    df = fa.select.select_table_as_dataframe(
+        "memberships", engine, primary_key=["user_id", "org_id"]
+    )
+
+    # Should have MultiIndex
+    assert isinstance(df.index, pd.MultiIndex)
+    assert df.index.names == ["user_id", "org_id"]
+
+
+@pytest.mark.skipif(not _HAS_PANDAS, reason="requires pandas")
+def test_select_table_as_dataframe_types(engine_and_table):
+    """Test select_table_as_dataframe preserves types."""
+    import sqlalchemy as sa
+    from sqlalchemy import MetaData, Table
+
+    engine = sa.create_engine("sqlite://")
+    metadata = MetaData()
+    table = Table(
+        "mixed_types",
+        metadata,
+        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("value", sa.Float),
+        sa.Column("name", sa.String),
+    )
+    metadata.create_all(engine)
+
+    fa.insert.insert_records(
+        table,
+        [
+            {"id": 1, "value": 1.5, "name": "Alice"},
+            {"id": 2, "value": 2.5, "name": "Bob"},
+        ],
+        engine,
+    )
+
+    df = fa.select.select_table_as_dataframe("mixed_types", engine, primary_key="id")
+
+    # Check types
+    assert df["value"].dtype in ["float64", "float32"]
+    assert df["name"].dtype == "object"
+
+
+@pytest.mark.skipif(not _HAS_PANDAS, reason="requires pandas")
+def test_select_table_as_dataframe_empty_table():
+    """Test select_table_as_dataframe with empty table."""
+    import sqlalchemy as sa
+    from sqlalchemy import MetaData, Table
+
+    engine = sa.create_engine("sqlite://")
+    metadata = MetaData()
+    Table(
+        "empty_table",
+        metadata,
+        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("name", sa.String),
+    )
+    metadata.create_all(engine)
+
+    df = fa.select.select_table_as_dataframe("empty_table", engine)
+
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) == 0
+    assert list(df.columns) == ["id", "name"]
+
+
+@pytest.mark.skipif(not _HAS_PANDAS, reason="requires pandas")
+def test_select_table_as_dataframe_with_table_object(engine_and_table):
+    """Test select_table_as_dataframe with Table object."""
+    engine, table = engine_and_table
+    df = fa.select.select_table_as_dataframe(table, engine)
+
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) == 4
+
+
+def test_select_table_as_dataframe_without_pandas(engine_and_table):
+    """Test select_table_as_dataframe without pandas raises ImportError."""
+    engine, _table = engine_and_table
+
+    # Temporarily set _HAS_PANDAS to False
+    import fullmetalalchemy.select as select_module
+
+    original_has_pandas = select_module._HAS_PANDAS
+    select_module._HAS_PANDAS = False
+
+    try:
+        with pytest.raises(ImportError, match="pandas is required"):
+            fa.select.select_table_as_dataframe("xy", engine)
+    finally:
+        select_module._HAS_PANDAS = original_has_pandas
