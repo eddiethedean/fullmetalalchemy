@@ -561,7 +561,7 @@ def get_table_columns(
     INTEGER()
     """
     inspector = _sa.inspect(engine)
-    return inspector.get_columns(table_name, schema=schema)
+    return _t.cast(_t.List[_t.Dict[str, _t.Any]], inspector.get_columns(table_name, schema=schema))
 
 
 def get_row_count(table: _sa.Table, session: _t.Optional[_types.SqlConnection] = None) -> int:

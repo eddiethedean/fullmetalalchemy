@@ -5,7 +5,7 @@ import typing as _t
 import sqlalchemy as _sa
 import sqlalchemy.engine as _sa_engine
 import sqlalchemy.orm.session as _sa_session
-from hasattrs import has_iterable_attrs  # type: ignore[import-untyped]
+from hasattrs import has_iterable_attrs
 
 import fullmetalalchemy.features as _features
 import fullmetalalchemy.select as _select

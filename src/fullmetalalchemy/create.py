@@ -19,8 +19,8 @@ import sqlalchemy.engine as _sa_engine
 import sqlalchemy.schema as _sa_schema
 from sqlalchemy import create_engine as _create_engine
 from sqlalchemy import sql as _sa_sql
-from tinytim.data import column_names as _column_names  # type: ignore[import-untyped]
-from tinytim.rows import row_dicts_to_data as _row_dicts_to_data  # type: ignore[import-untyped]
+from tinytim.data import column_names as _column_names
+from tinytim.rows import row_dicts_to_data as _row_dicts_to_data
 
 import fullmetalalchemy.features as _features
 import fullmetalalchemy.insert as _insert
@@ -298,7 +298,7 @@ def create_table_from_dataframe(
         # MySQL: VARCHAR(255) for strings
         if dialect == "mysql":
             for col in cols:
-                if col.type == _sa_sql.sqltypes.String and not col.primary_key:
+                if isinstance(col.type, _sa_sql.sqltypes.String) and not col.primary_key:
                     col.type = _sa_sql.sqltypes.String(255)
 
         metadata = _sa.MetaData(schema=schema)
