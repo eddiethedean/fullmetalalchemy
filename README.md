@@ -26,7 +26,8 @@
 - 📊 **Pythonic Interface** - Array-like access and familiar Python patterns
 - 🚀 **Memory Efficient** - Chunked iteration and concurrent processing for large datasets
 - 🛡️ **Type Safe** - Full type hints with MyPy strict mode compliance
-- ✅ **Thoroughly Tested** - 84% test coverage with 336 passing tests (258 sync + 78 async)
+- ✅ **Thoroughly Tested** - 82% test coverage with 388 passing tests
+- 📈 **Aggregate Functions** - Efficient MAX aggregate queries without pulling entire tables (v2.5.0+)
 - 🎨 **Code Quality** - Ruff and MyPy strict mode verified
 
 ## Installation
@@ -261,6 +262,11 @@ for chunk_num, chunk in enumerate(
 # Chunk 2: 3 records
 # Chunk 3: 3 records
 # Chunk 4: 1 records
+
+# Get maximum value efficiently without pulling entire table (v2.5.0+)
+max_id = fa.select.select_column_max(table, 'id', engine)
+print(f"Maximum ID: {max_id}")
+# Output: Maximum ID: 10
 ```
 
 ## Async/Await Support (v2.1.0+)
@@ -422,12 +428,17 @@ async def main():
     #          {'id': 3, 'name': 'User3', 'age': 35},
     #          {'id': 4, 'name': 'User4', 'age': 40}]
     
-    # Get column values
-    ages = await async_api.select.select_column_values_all(table, 'age', engine)
-    print(ages)
-    # Output: [25, 30, 35, 40, 45]
-    
-    await engine.dispose()
+# Get column values
+ages = await async_api.select.select_column_values_all(table, 'age', engine)
+print(ages)
+# Output: [25, 30, 35, 40, 45]
+
+# Get maximum value efficiently (v2.5.0+)
+max_age = await async_api.select.select_column_max(table, 'age', engine)
+print(f"Oldest user age: {max_age}")
+# Output: Oldest user age: 45
+
+await engine.dispose()
 
 asyncio.run(main())
 ```
@@ -777,6 +788,7 @@ Note: The existing auto-commit functions (`fa.insert.insert_records`, etc.) inte
 - `fa.select.select_records_slice()` - Get records by slice
 - `fa.select.select_record_by_primary_key()` - Get single record
 - `fa.select.select_column_values_all()` - Get all values from column
+- `fa.select.select_column_max()` - Get maximum value from column (v2.5.0+)
 
 ### Insert Operations
 - `fa.insert.insert_records()` - Insert multiple records
@@ -866,7 +878,7 @@ mypy src/fullmetalalchemy
 ### Code Quality
 
 This project maintains high standards:
-- **84% Test Coverage** - Comprehensive test suite with 336 tests (258 sync + 78 async)
+- **82% Test Coverage** - Comprehensive test suite with 388 tests
 - **MyPy Strict Mode** - Full type safety enforcement
 - **Ruff Verified** - Modern Python code style
 - **SQLAlchemy 1.4/2.x Dual Support** - Backwards compatible
@@ -877,7 +889,12 @@ This project maintains high standards:
 
 Features planned for future releases:
 
-### v2.4.0 - Async Table Metadata Operations
+### v2.5.0 - Aggregate Functions (Released)
+- **`select_column_max()` function** - Efficient MAX aggregate queries for sync and async operations. Get maximum values from columns without pulling entire tables, ideal for auto-increment primary key generation.
+
+### Future Versions
+
+### v2.6.0 - Async Table Metadata Operations (Planned)
 - **Async `get_table()` function** - Currently async operations require passing table objects created with sync `get_table()`. This will add native async table metadata reflection.
 - **Full string table name support in async session module** - Allow passing table names as strings to `async_api.session.*` functions without pre-fetching table objects
 - **Async table creation helpers** - Improve async table creation workflow

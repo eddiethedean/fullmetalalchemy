@@ -151,6 +151,59 @@ async def select_column_values_all(
         return [row[0] for row in result]
 
 
+async def select_column_max(
+    table: _t.Union[_sa.Table, str],
+    column_name: str,
+    engine: _t.Optional[AsyncEngine] = None,
+    schema: _t.Optional[str] = None,
+) -> _t.Optional[_t.Any]:
+    """Get the maximum value from a column asynchronously.
+
+    This is more efficient than pulling all values and computing max in Python,
+    as it uses SQL aggregate functions.
+
+    Parameters
+    ----------
+    table : Union[Table, str]
+        Table object or table name.
+    column_name : str
+        Column name to get max value from.
+    engine : Optional[AsyncEngine]
+        Async database engine.
+    schema : Optional[str]
+        Schema name (for databases that support schemas).
+
+    Returns
+    -------
+    Optional[Any]
+        Maximum value from the column, or None if table is empty.
+
+    Examples
+    --------
+    >>> import asyncio
+    >>> from fullmetalalchemy import async_api
+    >>>
+    >>> async def main():
+    ...     engine = async_api.create_async_engine('sqlite+aiosqlite:///data.db')
+    ...     table = await async_api.get_table('users', engine)
+    ...     max_id = await async_api.select.select_column_max(table, 'id', engine)
+    ...     print(max_id)
+    >>> asyncio.run(main())
+    """
+    if isinstance(table, str):
+        raise NotImplementedError("String table names require async get_table - coming soon")
+
+    if engine is None:
+        raise ValueError("engine parameter required for async operations")
+
+    column = helpers.get_column(table, column_name)
+    query = _sa.select(_sa.func.max(column))
+
+    async with engine.begin() as conn:
+        result = await conn.execute(query)
+        return result.scalar()
+
+
 async def select_record_by_primary_key(
     table: _t.Union[_sa.Table, str],
     primary_key_value: Record,

@@ -847,3 +847,42 @@ def test_select_table_as_dataframe_without_pandas(engine_and_table):
             fa.select.select_table_as_dataframe("xy", engine)
     finally:
         select_module._HAS_PANDAS = original_has_pandas
+
+
+def test_select_column_max(engine_and_table):
+    """Test select_column_max returns maximum value from column."""
+    engine, table = engine_and_table
+    max_id = fa.select.select_column_max(table, "id", engine)
+    assert max_id == 4
+
+    max_x = fa.select.select_column_max(table, "x", engine)
+    assert max_x == 8
+
+    max_y = fa.select.select_column_max(table, "y", engine)
+    assert max_y == 11
+
+
+def test_select_column_max_table_name(engine_and_table):
+    """Test select_column_max with table name string."""
+    engine, _table = engine_and_table
+    max_id = fa.select.select_column_max("xy", "id", engine)
+    assert max_id == 4
+
+
+def test_select_column_max_empty_table():
+    """Test select_column_max with empty table returns None."""
+    import sqlalchemy as sa
+    from sqlalchemy import MetaData, Table
+
+    engine = sa.create_engine("sqlite://")
+    metadata = MetaData()
+    Table(
+        "empty_table",
+        metadata,
+        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("value", sa.Integer),
+    )
+    metadata.create_all(engine)
+
+    max_value = fa.select.select_column_max("empty_table", "value", engine)
+    assert max_value is None

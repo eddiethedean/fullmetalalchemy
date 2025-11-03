@@ -720,6 +720,52 @@ def select_value_by_primary_keys(
         return conn.execute(query).scalars().all()[0]
 
 
+def select_column_max(
+    table: _t.Union[_sa.Table, str],
+    column_name: str,
+    connection: _t.Optional[_types.SqlConnection] = None,
+    schema: _t.Optional[str] = None,
+) -> _t.Optional[_t.Any]:
+    """
+    Get the maximum value from a column in a table.
+
+    This is more efficient than pulling all values and computing max in Python,
+    as it uses SQL aggregate functions.
+
+    Parameters
+    ----------
+    table : Union[Table, str]
+        The table to query. Can be a SQLAlchemy Table object or table name string.
+    column_name : str
+        The name of the column to get the maximum value from.
+    connection : Optional[SqlConnection]
+        Database connection. If None, a connection will be created from the table's engine.
+    schema : Optional[str]
+        Schema name (for databases that support schemas).
+
+    Returns
+    -------
+    Optional[Any]
+        The maximum value from the column, or None if the table is empty.
+
+    Examples
+    --------
+    >>> import fullmetalalchemy as fa
+    >>> engine, table = fa.get_engine_table('sqlite:///data/test.db', 'xy')
+    >>> fa.select.select_column_max(table, 'id', engine)
+    4
+    >>> fa.select.select_column_max(table, 'x', engine)
+    8
+    """
+    table, connection = _ex.convert_table_connection(table, connection)
+    column = _features.get_column(table, column_name)
+    query = _sa.select(_sa.func.max(column))
+    engine = _features.get_engine(connection)
+    with engine.connect() as conn:
+        result = conn.execute(query).scalar()
+        return result
+
+
 def _convert_slice_indexes(
     table: _t.Union[_sa.Table, str],
     connection: _types.SqlConnection,
