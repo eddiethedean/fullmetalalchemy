@@ -11,6 +11,50 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from fullmetalalchemy.types import Record
 
 
+def _copy_column(column: _sa.Column[_t.Any]) -> _sa.Column[_t.Any]:
+    """Create a copy of a Column without using the deprecated .copy() method.
+
+    This function is compatible with SQLAlchemy 1.4+ and 2.x by manually
+    reconstructing the Column object with all its attributes.
+
+    Parameters
+    ----------
+    column : Column
+        Source column to copy.
+
+    Returns
+    -------
+    Column
+        New Column object with same attributes as source.
+    """
+    # Extract all column attributes
+    kwargs: _t.Dict[str, _t.Any] = {
+        "name": column.name,
+        "type_": column.type,
+        "nullable": column.nullable,
+        "primary_key": column.primary_key,
+        "autoincrement": column.autoincrement,
+    }
+
+    # Add optional attributes if they exist
+    if column.default is not None:
+        kwargs["default"] = column.default
+    if column.server_default is not None:
+        kwargs["server_default"] = column.server_default
+    if column.onupdate is not None:
+        kwargs["onupdate"] = column.onupdate
+    if column.unique is not None:
+        kwargs["unique"] = column.unique
+    if column.index is not None:
+        kwargs["index"] = column.index
+    if hasattr(column, "comment") and column.comment is not None:
+        kwargs["comment"] = column.comment
+    if hasattr(column, "key") and column.key != column.name:
+        kwargs["key"] = column.key
+
+    return _sa.Column(**kwargs)
+
+
 async def create_table(
     table_name: str,
     column_names: _t.Sequence[str],
@@ -209,7 +253,7 @@ async def copy_table(
     # Copy column definitions
     columns = []
     for col in source_table.columns:
-        columns.append(col.copy())
+        columns.append(_copy_column(col))
 
     dest_table = _sa.Table(dest_table_name, metadata, *columns)
 

@@ -1,0 +1,40 @@
+name: Multi-DB Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  multidb:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.11' ]
+        marker: [ 'postgres', 'mysql', 'multidb' ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Ensure PostgreSQL binaries (for testing.postgresql)
+        if: matrix.marker == 'postgres' || matrix.marker == 'multidb'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[testing]"
+
+      - name: Run pytest (${{ matrix.marker }})
+        run: |
+          pytest -m ${{ matrix.marker }} -q
+
