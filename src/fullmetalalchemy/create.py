@@ -73,6 +73,7 @@ def _copy_column(column: _sa.Column[_t.Any]) -> _sa.Column[_t.Any]:
 
     return _sa.Column(**kwargs)
 
+
 _Record = _t.Dict[str, _t.Any]
 
 

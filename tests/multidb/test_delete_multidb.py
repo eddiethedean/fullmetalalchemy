@@ -113,4 +113,3 @@ def test_delete_records_multidb(request: pytest.FixtureRequest, engine_name: str
 def test_delete_all_records_multidb(request: pytest.FixtureRequest, engine_name: str) -> None:
     engine: sa.engine.Engine = request.getfixturevalue(engine_name)
     _test_delete_all_records(engine)
-

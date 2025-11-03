@@ -102,4 +102,3 @@ def test_update_matching_records_multidb(request: pytest.FixtureRequest, engine_
 def test_update_records_multidb(request: pytest.FixtureRequest, engine_name: str) -> None:
     engine: sa.engine.Engine = request.getfixturevalue(engine_name)
     _test_update_records(engine)
-

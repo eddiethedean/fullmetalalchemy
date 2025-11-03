@@ -136,4 +136,3 @@ def test_table_exists_multidb(request: pytest.FixtureRequest, engine_name: str) 
 def test_primary_key_names_multidb(request: pytest.FixtureRequest, engine_name: str) -> None:
     engine: sa.engine.Engine = request.getfixturevalue(engine_name)
     _test_primary_key_names(engine)
-

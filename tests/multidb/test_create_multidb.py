@@ -121,4 +121,3 @@ def test_create_table_composite_key_multidb(
 ) -> None:
     engine: sa.engine.Engine = request.getfixturevalue(engine_name)
     _test_create_table_composite_key(engine)
-

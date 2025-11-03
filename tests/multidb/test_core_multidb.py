@@ -137,4 +137,3 @@ def test_full_workflow_multidb(request: pytest.FixtureRequest, engine_name: str)
 def test_table_features_multidb(request: pytest.FixtureRequest, engine_name: str) -> None:
     engine: sa.engine.Engine = request.getfixturevalue(engine_name)
     _test_table_features(engine)
-

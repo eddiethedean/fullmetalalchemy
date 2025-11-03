@@ -1,2 +1,1 @@
 """Multi-database compatibility tests."""
-

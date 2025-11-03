@@ -186,4 +186,3 @@ def test_select_record_by_primary_key_multidb(
 ) -> None:
     engine: sa.engine.Engine = request.getfixturevalue(engine_name)
     _test_select_record_by_primary_key(engine)
-

@@ -75,4 +75,3 @@ def test_drop_table_multidb(request: pytest.FixtureRequest, engine_name: str) ->
 def test_drop_table_by_name_multidb(request: pytest.FixtureRequest, engine_name: str) -> None:
     engine: sa.engine.Engine = request.getfixturevalue(engine_name)
     _test_drop_table_by_name(engine)
-

@@ -78,4 +78,3 @@ def test_insert_records_multidb(request: pytest.FixtureRequest, engine_name: str
 def test_insert_from_table_multidb(request: pytest.FixtureRequest, engine_name: str) -> None:
     engine: sa.engine.Engine = request.getfixturevalue(engine_name)
     _test_insert_from_table(engine)
-
