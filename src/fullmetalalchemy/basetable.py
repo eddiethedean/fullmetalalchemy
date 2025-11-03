@@ -5,7 +5,7 @@ import typing as _t
 import sqlalchemy as _sa
 import sqlalchemy.engine as _sa_engine
 import sqlalchemy.orm.session as _sa_session
-from hasattrs import has_iterable_attrs
+from hasattrs import has_iterable_attrs  # type: ignore[import-untyped]
 
 import fullmetalalchemy.features as _features
 import fullmetalalchemy.select as _select
@@ -58,10 +58,13 @@ class BaseTable:
         """insert records from other"""
         # dict: insert a record
         if isinstance(other, dict):
-            self.insert_records([other])
+            narrowed: _t.Dict[str, _t.Any] = _t.cast(_t.Dict[str, _t.Any], other)
+            records_list: _t.List[_t.Dict[str, _t.Any]] = [narrowed]
+            self.insert_records(records_list)
         # iterable[dict]: insert each record
         elif has_iterable_attrs(other):
-            self.insert_records(list(other))
+            materialized: _t.List[_t.Dict[str, _t.Any]] = list(other)  # type: ignore[arg-type]
+            self.insert_records(materialized)
 
     def __sub__(
         self, other: _t.Union[_t.Dict[str, _t.Any], _t.Iterable[_t.Dict[str, _t.Any]]]
@@ -69,10 +72,13 @@ class BaseTable:
         """delete record that match other"""
         # dict: delete all records that match values
         if isinstance(other, dict):
-            self.delete_records_by_values([other])
+            narrowed: _t.Dict[str, _t.Any] = _t.cast(_t.Dict[str, _t.Any], other)
+            records_list: _t.List[_t.Dict[str, _t.Any]] = [narrowed]
+            self.delete_records_by_values(records_list)
         # iterable[dict]: delete all records that match each record
         elif has_iterable_attrs(other):
-            self.delete_records_by_values(list(other))
+            materialized: _t.List[_t.Dict[str, _t.Any]] = list(other)  # type: ignore[arg-type]
+            self.delete_records_by_values(materialized)
 
     def __delitem__(self, key: _t.Union[int, slice]) -> None:
         """delete records based on type of key"""

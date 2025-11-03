@@ -19,8 +19,8 @@ import sqlalchemy.engine as _sa_engine
 import sqlalchemy.schema as _sa_schema
 from sqlalchemy import create_engine as _create_engine
 from sqlalchemy import sql as _sa_sql
-from tinytim.data import column_names as _column_names
-from tinytim.rows import row_dicts_to_data as _row_dicts_to_data
+from tinytim.data import column_names as _column_names  # type: ignore[import-untyped]
+from tinytim.rows import row_dicts_to_data as _row_dicts_to_data  # type: ignore[import-untyped]
 
 import fullmetalalchemy.features as _features
 import fullmetalalchemy.insert as _insert
@@ -28,6 +28,50 @@ import fullmetalalchemy.type_convert as _type_convert
 from fullmetalalchemy.features import get_session
 
 create_session = get_session
+
+
+def _copy_column(column: _sa.Column[_t.Any]) -> _sa.Column[_t.Any]:
+    """Create a copy of a Column without using the deprecated .copy() method.
+
+    This function is compatible with SQLAlchemy 1.4+ and 2.x by manually
+    reconstructing the Column object with all its attributes.
+
+    Parameters
+    ----------
+    column : Column
+        Source column to copy.
+
+    Returns
+    -------
+    Column
+        New Column object with same attributes as source.
+    """
+    # Extract all column attributes
+    kwargs: _t.Dict[str, _t.Any] = {
+        "name": column.name,
+        "type_": column.type,
+        "nullable": column.nullable,
+        "primary_key": column.primary_key,
+        "autoincrement": column.autoincrement,
+    }
+
+    # Add optional attributes if they exist
+    if column.default is not None:
+        kwargs["default"] = column.default
+    if column.server_default is not None:
+        kwargs["server_default"] = column.server_default
+    if column.onupdate is not None:
+        kwargs["onupdate"] = column.onupdate
+    if column.unique is not None:
+        kwargs["unique"] = column.unique
+    if column.index is not None:
+        kwargs["index"] = column.index
+    if hasattr(column, "comment") and column.comment is not None:
+        kwargs["comment"] = column.comment
+    if hasattr(column, "key") and column.key != column.name:
+        kwargs["key"] = column.key
+
+    return _sa.Column(**kwargs)
 
 _Record = _t.Dict[str, _t.Any]
 
@@ -298,7 +342,7 @@ def create_table_from_dataframe(
         # MySQL: VARCHAR(255) for strings
         if dialect == "mysql":
             for col in cols:
-                if isinstance(col.type, _sa_sql.sqltypes.String) and not col.primary_key:
+                if col.type == _sa_sql.sqltypes.String and not col.primary_key:
                     col.type = _sa_sql.sqltypes.String(255)
 
         metadata = _sa.MetaData(schema=schema)
@@ -429,7 +473,7 @@ def copy_table(
 
     # copy schema and create newTable from oldTable
     for column in src_table.columns:
-        dest_table.append_column(column.copy())
+        dest_table.append_column(_copy_column(column))
 
     with engine.begin() as con:
         dest_table.create(con)

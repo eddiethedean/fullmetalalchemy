@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2025-11-03
+
+### Added
+- **Multi-Database Testing Support** - Comprehensive PostgreSQL and MySQL compatibility testing
+  - 27 PostgreSQL-specific tests using ephemeral `testing.postgresql` instances
+  - 27 MySQL-specific tests using ephemeral `testing.mysqld` instances
+  - Parametrized multi-database tests that run against both PostgreSQL and MySQL
+  - New pytest markers: `@pytest.mark.postgres`, `@pytest.mark.mysql`, `@pytest.mark.multidb`
+  - Test files organized by operation type: `test_create_multidb.py`, `test_select_multidb.py`, `test_insert_multidb.py`, `test_update_multidb.py`, `test_delete_multidb.py`, `test_features_multidb.py`, `test_drop_multidb.py`
+  - Documentation in `tests/TESTING_MULTI_DB.md` with setup and usage instructions
+- **ty Type Checker Integration** - Fast Rust-based type checking
+  - Added `ty` type checker alongside MyPy for enhanced type safety
+  - Configured `[tool.ty]` in `pyproject.toml` to focus on library source code
+  - All type issues resolved; `ty check` passes cleanly
+
+### Changed
+- **Type Safety Improvements**
+  - `get_primary_key_constraints()` now always returns `(name: str, columns: List[str])` tuple (returns `("", [])` when no PK exists)
+  - `missing_primary_key()` updated to use explicit column list length check
+  - Enhanced type narrowing in `BaseTable.__add__` and `__sub__` methods
+
+### Improved
+- **Test Coverage** - Expanded from 336 to 477 tests (141 new multi-database tests)
+- **Code Quality** - All checks passing: ruff, mypy strict mode, and ty
+- **Testing Infrastructure** - Tox environments and GitHub Actions workflows for multi-database testing
+- **Documentation** - Updated README with multi-database testing information and ty integration
+
+### Testing
+- **Test Suite**: 477 tests passing (all SQLite, PostgreSQL, and MySQL)
+- **Coverage**: 83% overall coverage
+- **Databases Tested**: SQLite (baseline), PostgreSQL, MySQL
+
 ## [2.3.0] - 2025-10-18
 
 ### Added

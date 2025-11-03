@@ -299,7 +299,7 @@ def get_table_constraints(table: _sa.Table) -> _t.Set[_t.Any]:
 
 def get_primary_key_constraints(
     table: _sa.Table,
-) -> _t.Union[_t.Tuple[_t.Optional[str], _t.List[str]], _t.Tuple[()]]:
+) -> _t.Tuple[_t.Optional[str], _t.List[str]]:
     """
     Get the primary key constraints of a SQLAlchemy table.
 
@@ -310,9 +310,9 @@ def get_primary_key_constraints(
 
     Returns
     -------
-    Tuple[Optional[str], List[str]] | Tuple[()]
+    Tuple[Optional[str], List[str]]
         A tuple with the primary key constraint name (if it exists) and a list of
-        the column names that make up the primary key. Returns empty tuple if no
+        the column names that make up the primary key. Returns ("", []) if no
         primary key exists.
 
     Example
@@ -329,7 +329,7 @@ def get_primary_key_constraints(
             pk_name: _t.Optional[str] = con.name  # type: ignore[assignment]
             col_names: _t.List[str] = [col.name for col in con.columns]
             return (pk_name, col_names)
-    return ()
+    return ("", [])
 
 
 def missing_primary_key(
@@ -356,8 +356,8 @@ def missing_primary_key(
     >>> fa.features.missing_primary_key(table)
     False
     """
-    pks = get_primary_key_constraints(table)
-    return len(pks) == 0 or (len(pks) > 1 and pks[1] == [])
+    _pk_name, pk_cols = get_primary_key_constraints(table)
+    return len(pk_cols) == 0
 
 
 def get_column_types(table: _sa.Table) -> _t.Dict[str, _t.Any]:
@@ -561,7 +561,7 @@ def get_table_columns(
     INTEGER()
     """
     inspector = _sa.inspect(engine)
-    return _t.cast(_t.List[_t.Dict[str, _t.Any]], inspector.get_columns(table_name, schema=schema))
+    return inspector.get_columns(table_name, schema=schema)
 
 
 def get_row_count(table: _sa.Table, session: _t.Optional[_types.SqlConnection] = None) -> int:
